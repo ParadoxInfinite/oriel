@@ -1,0 +1,51 @@
+name: Bug report
+description: Something in Oriel isn't working as expected.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please **do not** file
+        security vulnerabilities here — see [SECURITY.md](../blob/main/SECURITY.md).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: Steps to reproduce → expected → actual.
+    validations:
+      required: true
+  - type: input
+    id: oriel-version
+    attributes:
+      label: Oriel version
+      description: Release tag, or the commit you built from.
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: edition
+    attributes:
+      label: Edition
+      options: [Studio, Classic, Other / external theme]
+    validations:
+      required: false
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS + arch, container runtime, and how you run Oriel.
+      placeholder: |
+        - OS: macOS 15 (arm64) / Ubuntu 24.04 (amd64)
+        - Runtime: Colima 0.x / Docker Engine 27.x
+        - Run as: ./oriel / service / behind a reverse proxy (ORIEL_BASE_PATH)
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / console output
+      description: Backend log lines and/or browser console errors. Redact anything sensitive.
+      render: shell
+    validations:
+      required: false
