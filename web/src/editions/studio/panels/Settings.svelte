@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
-  import { self, update, applyUpdate, restartService, confirm } from '../../../platform/index.js'
+  import { self, update, checkNow, applyUpdate, restartService, confirm } from '../../../platform/index.js'
   import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -329,9 +329,12 @@
           <button class="btn btn-primary btn-sm" onclick={doUpdate}>Update now</button>
         </div>
       {:else}
-        <div class="flex items-center justify-between gap-3">
-          <span class="text-[13px] text-[var(--text-3)]">You're on the latest version.</span>
-          <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-[12px] text-[var(--accent)] hover:underline">Releases ↗</a>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-3)]">{update.checking ? 'Checking…' : "You're on the latest version."}</span>
+          <div class="flex items-center gap-3">
+            <button class="btn btn-default btn-sm" onclick={() => checkNow()} disabled={update.checking}>{update.checking ? 'Checking…' : 'Check for updates'}</button>
+            <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-[12px] text-[var(--accent)] hover:underline">Releases ↗</a>
+          </div>
         </div>
       {/if}
       {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}

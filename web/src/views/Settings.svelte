@@ -3,7 +3,7 @@
   import { provider, checkProvider, setProvider, resolveText } from '../lib/provider.svelte.js'
   import { toast } from '../lib/toast.svelte.js'
   import { self } from '../lib/self.svelte.js'
-  import { update, applyUpdate, restartService } from '../lib/update.svelte.js'
+  import { update, checkNow, applyUpdate, restartService } from '../lib/update.svelte.js'
   import { confirm } from '../lib/confirm.svelte.js'
   import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../editions/registry.svelte.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern } from '../lib/discovery.svelte.js'
@@ -273,9 +273,12 @@
           <button class={btnPrimary} onclick={doUpdate}>Update now</button>
         </div>
       {:else}
-        <div class="flex items-center justify-between gap-3">
-          <span class="text-[13px] text-faint">You're on the latest version.</span>
-          <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-xs text-accent hover:underline">Releases ↗</a>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-faint">{update.checking ? 'Checking…' : "You're on the latest version."}</span>
+          <div class="flex items-center gap-3">
+            <button class={btn} onclick={() => checkNow()} disabled={update.checking}>{update.checking ? 'Checking…' : 'Check for updates'}</button>
+            <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-xs text-accent hover:underline">Releases ↗</a>
+          </div>
         </div>
       {/if}
       {#if update.error}<p class="mt-2 text-xs text-danger">{update.error}</p>{/if}
