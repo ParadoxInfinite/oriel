@@ -70,7 +70,7 @@ for optional natural-language control (see below).
 
 - macOS or Linux with [Colima](https://github.com/abiosoft/colima) (or any Docker
   daemon) and the `docker` CLI available.
-- For building: Go 1.26+ and Node 20+.
+- For building: Go 1.26+ and Node 24+ (current LTS).
 
 ## Build & run
 
