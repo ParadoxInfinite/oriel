@@ -1,7 +1,7 @@
 import { apiGet } from './api.js'
 
-// Shared reactive Colima status. Polled while the app is open; also the gate
-// for the running/stopped zero-state across the whole UI.
+// Shared reactive Colima status. Kept current by the live stream (see live.svelte);
+// also the gate for the running/stopped zero-state across the whole UI.
 export const status = $state({
   loading: true,
   running: false,
@@ -9,6 +9,22 @@ export const status = $state({
   error: null,
 })
 
+// applyStatus updates the store from a live-stream "status" event (a statusResult
+// wrapper: { ok, status?, error? }). ok=false means the engine was unreachable.
+export function applyStatus(res) {
+  status.loading = false
+  if (res?.ok && res.status) {
+    status.data = res.status
+    status.running = !!res.status.running
+    status.error = null
+  } else {
+    status.error = res?.error || 'unreachable'
+    status.running = false
+  }
+}
+
+// refreshStatus does a one-off fetch (e.g. right after a start/stop); the live
+// stream also keeps status current.
 export async function refreshStatus() {
   try {
     const d = await apiGet('/api/colima/status')
@@ -21,13 +37,4 @@ export async function refreshStatus() {
   } finally {
     status.loading = false
   }
-}
-
-let timer
-export function startStatusPolling(ms = 10000) {
-  refreshStatus()
-  timer = setInterval(refreshStatus, ms)
-}
-export function stopStatusPolling() {
-  clearInterval(timer)
 }

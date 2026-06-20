@@ -142,9 +142,11 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("POST /api/ops/image-prune", s.handleStartImagePrune)
 	s.mux.HandleFunc("POST /api/ops/volume-prune", s.handleStartVolumePrune)
 
-	// Live data (SSE) + history.
+	// Live data: docker events (push, change-triggered) + one consolidated stream
+	// for everything periodic (stats, history, status, self, outages) so the
+	// client never polls. The plain GETs remain for one-off/manual use.
 	s.mux.HandleFunc("GET /api/events", s.handleEvents)
-	s.mux.HandleFunc("GET /api/stats", s.handleStats)
+	s.mux.HandleFunc("GET /api/live", s.handleLive)
 	s.mux.HandleFunc("GET /api/history", s.handleHistory)
 	s.mux.HandleFunc("GET /api/outages", s.handleOutages)
 

@@ -18,14 +18,20 @@ type selfStats struct {
 	HeapAlloc  int64 `json:"heapAlloc"` // Go heap in use, bytes
 }
 
-func (s *Server) handleSelf(w http.ResponseWriter, r *http.Request) {
+// currentSelf samples this process's footprint. Shared by the REST handler and
+// the live stream.
+func currentSelf(ctx context.Context) selfStats {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	writeJSON(w, http.StatusOK, selfStats{
-		RSS:        processRSS(r.Context()),
+	return selfStats{
+		RSS:        processRSS(ctx),
 		Goroutines: runtime.NumGoroutine(),
 		HeapAlloc:  int64(m.HeapAlloc),
-	})
+	}
+}
+
+func (s *Server) handleSelf(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, currentSelf(r.Context()))
 }
 
 // processRSS reads our own resident memory via `ps` (portable across the

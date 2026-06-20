@@ -36,21 +36,53 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 
 // handleStats broadcasts the recorder's latest per-container snapshot every
 // second. Sampling happens once, centrally, in the recorder — this just relays.
-func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
+// handleLive is the single push channel for all periodic UI data, so the client
+// never polls. On connect it sends a full snapshot (history buffer, stats,
+// status, self, outages); then every second it pushes the latest stats + history
+// point, and every few seconds the slower-changing status/self/outages.
+//
+//	event "history" → []HistoryPoint  (full ~30-min buffer, once on connect)
+//	event "stats"   → []docker.Stat   (per-container, 1s)
+//	event "point"   → HistoryPoint    (newest aggregate sample, 1s)
+//	event "status"  → statusResult    (engine status, ~5s)
+//	event "self"    → selfStats       (gui footprint, ~5s)
+//	event "outages" → []Outage        (downtime log, ~5s)
+func (s *Server) handleLive(w http.ResponseWriter, r *http.Request) {
 	sse, ok := newSSE(w)
 	if !ok {
 		return
 	}
+	ctx := r.Context()
+
+	fast := func() {
+		sse.send("stats", s.recorder.latestSnapshot())
+		if p, ok := s.recorder.latestPoint(); ok {
+			sse.send("point", p)
+		}
+	}
+	slow := func() {
+		sse.send("status", s.currentStatus(ctx))
+		sse.send("self", currentSelf(ctx))
+		sse.send("outages", s.recorder.outagesCopy())
+	}
+
+	sse.send("history", s.recorder.historyCopy())
+	fast()
+	slow()
+
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-
-	sse.send("stats", s.recorder.latestSnapshot())
+	const slowEvery = 5 // status/self/outages cadence, in fast ticks
+	n := 0
 	for {
 		select {
-		case <-r.Context().Done():
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			sse.send("stats", s.recorder.latestSnapshot())
+			fast()
+			if n++; n%slowEvery == 0 {
+				slow()
+			}
 		}
 	}
 }

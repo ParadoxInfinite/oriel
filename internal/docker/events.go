@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"strings"
 
 	"github.com/docker/docker/api/types/events"
 )
@@ -22,6 +23,20 @@ var relevantTypes = map[events.Type]bool{
 	events.NetworkEventType:   true,
 }
 
+// isNoisyAction reports actions that fire constantly but change no list the UI
+// shows — chiefly the exec_* trio every health-check emits per container, plus
+// other inspection/interactive actions. Dropping them avoids a refetch storm.
+func isNoisyAction(a string) bool {
+	if strings.HasPrefix(a, "exec_") {
+		return true
+	}
+	switch a {
+	case "top", "attach", "resize", "export", "save", "commit":
+		return true
+	}
+	return false
+}
+
 // StreamEvents emits relevant docker events until ctx is cancelled. The error
 // channel yields a terminal error (e.g. the daemon going away).
 func (c *Client) StreamEvents(ctx context.Context) (<-chan Event, <-chan error, error) {
@@ -35,7 +50,7 @@ func (c *Client) StreamEvents(ctx context.Context) (<-chan Event, <-chan error, 
 	go func() {
 		defer close(out)
 		for m := range msgs {
-			if !relevantTypes[m.Type] {
+			if !relevantTypes[m.Type] || isNoisyAction(string(m.Action)) {
 				continue
 			}
 			ev := Event{
