@@ -19,7 +19,7 @@
 
 {#if cur}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" role="presentation" onclick={(e) => e.target === e.currentTarget && close()}>
-    <div class="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-[--radius] border border-border bg-surface shadow-2xl">
+    <div class="flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-[var(--overlay-radius)] border border-border bg-surface shadow-[var(--overlay-shadow)]">
       <div class="flex items-center gap-3 border-b border-border px-5 py-3.5">
         {#if !cur.done}
           <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-accent border-t-transparent"></span>
