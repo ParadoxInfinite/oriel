@@ -1,8 +1,22 @@
 name: CI
 
 on:
+  # On main, only re-run when code actually changed (docs-only pushes skip it).
   push:
     branches: [main]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'web/src/**'
+      - 'web/index.html'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/vite.config.js'
+      - 'web/svelte.config.js'
+      - '.github/workflows/ci.yml'
+  # On PRs, always run so it's a reliable required status check for branch
+  # protection (a path-filtered required check would hang docs-only PRs).
   pull_request:
     branches: [main]
 

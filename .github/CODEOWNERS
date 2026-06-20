@@ -1,0 +1,3 @@
+# Default owner for everything in the repo. With "Require review from Code
+# Owners" branch protection, @ParadoxInfinite must approve every PR.
+* @ParadoxInfinite
