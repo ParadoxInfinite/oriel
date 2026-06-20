@@ -14,13 +14,25 @@
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && (open = false)} />
 
-<div class="mx-3 mb-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] p-3 shadow-[var(--shadow-sm)]">
-  <button class="flex w-full items-center justify-between {has ? '' : 'cursor-default'}" disabled={!has} onclick={() => (open = true)}>
+<div
+  class="mx-3 mb-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] p-3 shadow-[var(--shadow-sm)] transition-colors {has ? 'cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--panel-2)]' : ''}"
+  role={has ? 'button' : undefined}
+  tabindex={has ? 0 : undefined}
+  title={has ? 'View all outages' : undefined}
+  onclick={() => has && (open = true)}
+  onkeydown={(e) => {
+    if (has && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault()
+      open = true
+    }
+  }}
+>
+  <div class="flex w-full items-center justify-between">
     <span class="eyebrow">Recent outages</span>
     {#if has}
       <span class="flex items-center gap-1 text-[var(--text-3)]"><span class="count">{outages.list.length}</span><span class="text-[11px]">›</span></span>
     {/if}
-  </button>
+  </div>
 
   {#if !has}
     <div class="mt-2 flex items-center gap-1.5 text-[11px] text-[var(--text-3)]"><span class="h-1.5 w-1.5 rounded-full bg-[var(--green)]"></span> All clear · 30 days</div>

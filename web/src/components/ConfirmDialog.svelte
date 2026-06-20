@@ -59,14 +59,14 @@
       </div>
       <div class="flex justify-end gap-2 border-t border-border bg-surface-2/40 px-5 py-3">
         <button
-          class="rounded-[--radius] border border-border px-3 py-1.5 text-sm text-muted transition-colors hover:bg-surface-2 hover:text-fg"
+          class="rounded-lg border border-border bg-surface px-3.5 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg"
           onclick={() => resolveConfirm(false)}
         >
           Cancel
         </button>
         <button
           bind:this={confirmEl}
-          class="rounded-[--radius] px-3 py-1.5 text-sm font-medium transition-opacity hover:opacity-90 {confirmState.danger
+          class="rounded-lg px-3.5 py-1.5 text-[13px] font-medium shadow-sm transition-[filter] hover:brightness-110 {confirmState.danger
             ? 'bg-danger text-white'
             : 'bg-accent text-accent-fg'}"
           onclick={() => resolveConfirm(true)}
