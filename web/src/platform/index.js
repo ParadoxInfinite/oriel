@@ -1,9 +1,9 @@
 // ============================================================================
 // PLATFORM SDK — the stable contract every edition is built against.
 //
-// An "edition" is a complete, swappable front-end for Oriel (think
-//  ↔ ). The host loads exactly one edition and hands it
-// this module: a single, documented surface of reactive state + actions. As
+// An "edition" is a complete, swappable front-end for Oriel. The host loads
+// exactly one edition and hands it this module: a single, documented surface
+// of reactive state + actions. As
 // long as an edition only imports from `@platform`, the backend, the polling,
 // and the live event plumbing can all change underneath it without the edition
 // noticing — and a third party can ship a totally different look by consuming

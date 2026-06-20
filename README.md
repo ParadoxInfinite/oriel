@@ -22,10 +22,20 @@ themeable browser UI. ~15–30 MB RAM, zero dependencies, binds to `127.0.0.1`.
 
 ## Install
 
-**Download a binary** for your platform from [Releases](https://github.com/ParadoxInfinite/oriel/releases) — `linux`/`darwin`, `amd64`/`arm64`:
+**Download a binary** from [Releases](https://github.com/ParadoxInfinite/oriel/releases) — copy the line for your platform:
 
 ```sh
+# macOS · Apple Silicon (M1+)
 curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-darwin-arm64 -o oriel && chmod +x oriel
+
+# macOS · Intel
+curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-darwin-amd64 -o oriel && chmod +x oriel
+
+# Linux · arm64
+curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-linux-arm64 -o oriel && chmod +x oriel
+
+# Linux · amd64
+curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-linux-amd64 -o oriel && chmod +x oriel
 ```
 
 **Or with Go:**
@@ -66,9 +76,9 @@ Podman, and remote daemons also work — see [docs/DAEMONS.md](docs/DAEMONS.md).
 
 ## Editions & themes
 
-The presentation is a swappable plugin on a stable platform SDK — same idea as
- ↔ . Ships with **Studio** (default; light/dark/system) and
-**Classic** (dark teal); recolor either, or drop in your own. See [docs/THEMES.md](docs/THEMES.md).
+The presentation is a swappable plugin on a stable platform SDK. Ships with
+**Studio** (default; light/dark/system) and **Classic** (dark teal); recolor
+either, or drop in your own. See [docs/THEMES.md](docs/THEMES.md).
 
 <p align="center">
   <img src="docs/img/classic.png" alt="Oriel — Classic edition" width="70%" />
