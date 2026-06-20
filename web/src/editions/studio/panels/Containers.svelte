@@ -11,11 +11,17 @@
   let groupByStack = $state(true)
   let collapsed = $state({})
 
+  // Pull the exit code out of docker's status string ("Exited (137) 2 days ago").
+  const exitCode = (status) => {
+    const m = /Exited \((\d+)\)/.exec(status || '')
+    return m ? Number(m[1]) : null
+  }
+
   const sort = createSort('name')
   // `w` feeds the colgroup so numeric columns stay tight and Name absorbs the rest.
   const columns = [
     { label: 'Name', key: 'name', get: (c) => c.name, w: null },
-    { label: 'Status', key: 'state', get: (c) => c.state, w: '116px' },
+    { label: 'Status', key: 'state', get: (c) => c.state, w: '150px' },
     { label: 'CPU', key: 'cpu', get: (c) => stats.byId[c.id]?.cpu ?? -1, right: true, w: '92px' },
     { label: 'Memory', key: 'memory', get: (c) => stats.byId[c.id]?.mem ?? -1, right: true, w: '104px' },
     { label: 'Ports', w: '150px' },
@@ -167,6 +173,7 @@
 {#snippet row(c)}
   {@const running = c.state === 'running'}
   {@const st = stats.byId[c.id]}
+  {@const code = exitCode(c.status)}
   <tr class="tr cursor-pointer border-b border-[var(--border)] last:border-0 {selectedIds.has(c.id) ? 'bg-[var(--accent-tint)]' : ''}" onclick={() => (selected = c)}>
     <td class="px-4 py-2.5" onclick={(e) => e.stopPropagation()}>
       <input type="checkbox" checked={selectedIds.has(c.id)} onchange={(e) => toggleOne(c.id, e)} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label="Select {c.name}" />
@@ -175,7 +182,17 @@
       <div class="truncate text-[13px] font-medium">{c.name}</div>
       <div class="mono truncate text-[11.5px] text-[var(--text-3)]">{c.image}</div>
     </td>
-    <td class="px-4 py-2.5"><StatusPill state={c.state} /></td>
+    <td class="px-4 py-2.5">
+      <div class="flex items-center gap-1.5">
+        <StatusPill state={c.state} />
+        {#if code != null}
+          <span class="mono text-[11px] font-medium {code === 0 ? 'text-[var(--text-3)]' : 'text-[var(--red)]'}">({code})</span>
+        {/if}
+      </div>
+      {#if !running && c.status}
+        <div class="mono mt-0.5 truncate text-[10.5px] text-[var(--text-3)]" title={c.status}>{c.status}</div>
+      {/if}
+    </td>
     <td class="mono tnum px-4 py-2.5 text-right text-[12.5px] text-[var(--text-2)]">{running && st ? `${st.cpu.toFixed(1)}%` : '—'}</td>
     <td class="mono tnum px-4 py-2.5 text-right text-[12.5px] text-[var(--text-2)]">{running && st ? fmt.bytes(st.mem) : '—'}</td>
     <td class="px-4 py-2.5">
