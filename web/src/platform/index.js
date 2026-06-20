@@ -55,9 +55,10 @@ export { self } from '../lib/self.svelte.js'
  *  where kind is 'down' (colima unreachable) or 'offline' (gui itself wasn't running). */
 export { outages } from '../lib/outages.svelte.js'
 
-/** Streaming-operation overlay state for long-running lifecycle/compose ops, plus
- *  background prune jobs that survive a refresh and can be cancelled. */
-export { op, runOp, dismissOp, cancelOp, resumeOps, startSystemPrune, startImagePrune, startVolumePrune } from '../lib/op.svelte.js'
+/** Operation tracker: lifecycle/compose ops plus background prune jobs that run
+ *  concurrently, survive a refresh, and can be cancelled. `ops.list` feeds the
+ *  modal overlay (ops.focused) and the sidebar tray (the rest). */
+export { ops, runOp, dismissOp, cancelOp, resumeOps, focusOp, minimizeOp, startSystemPrune, startImagePrune, startVolumePrune } from '../lib/op.svelte.js'
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 

@@ -13,6 +13,7 @@
   import { activeEdition, loadExternalThemes } from './editions/registry.svelte.js'
   import { overlayTheme, overlayVars } from './lib/overlayTheme.svelte.js'
   import OpOverlay from './components/OpOverlay.svelte'
+  import OpTray from './components/OpTray.svelte'
   import CommandPalette from './components/CommandPalette.svelte'
   import ConfirmDialog from './components/ConfirmDialog.svelte'
   import Toasts from './components/Toasts.svelte'
@@ -59,6 +60,7 @@
 
 <div style={overlayStyle}>
   <OpOverlay />
+  <OpTray />
   <CommandPalette />
   <ConfirmDialog />
   <Toasts />
