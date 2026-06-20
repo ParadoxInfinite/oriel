@@ -57,32 +57,41 @@ func (r *ghRelease) assetURL(name string) string {
 // The check hits the GitHub API, so cache it: unauthenticated callers are rate
 // limited (~60/hr/IP) and the answer rarely changes.
 var (
-	updateMu     sync.Mutex
-	updateCache  *updateInfo
-	updateExpiry time.Time
+	updateMu      sync.Mutex
+	updateCache   *updateInfo
+	updateFetched time.Time // when we last actually reached GitHub
 )
 
-const updateTTL = 24 * time.Hour
+const (
+	passiveTTL = 24 * time.Hour  // background re-reads reuse the cache for a day
+	manualTTL  = time.Hour       // a forced "check now" can refresh at most hourly
+	errorTTL   = 5 * time.Minute // retry sooner after a failed check
+)
 
-// handleUpdateCheck reports whether a newer release exists. It's lazy (only runs
-// when asked) and cached, so it never reaches out unless the UI requests it.
+// handleUpdateCheck reports whether a newer release exists. Lazy and cached, so
+// it only reaches GitHub when the cache is stale. `?force=1` (the manual "check
+// for updates" button) lowers the staleness floor to an hour, but never below it.
 func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
+	force := r.URL.Query().Has("force")
 	updateMu.Lock()
 	defer updateMu.Unlock()
 
-	if updateCache != nil && time.Now().Before(updateExpiry) {
-		writeJSON(w, http.StatusOK, updateCache)
-		return
+	if updateCache != nil {
+		ttl := passiveTTL
+		if force {
+			ttl = manualTTL
+		}
+		if updateCache.Error != "" && errorTTL < ttl {
+			ttl = errorTTL
+		}
+		if time.Since(updateFetched) < ttl {
+			writeJSON(w, http.StatusOK, updateCache)
+			return
+		}
 	}
 	info := s.fetchLatestRelease(r.Context())
-	// Cache successes for the full TTL; cache errors briefly so a GitHub blip
-	// doesn't wedge the check for an hour.
 	updateCache = &info
-	if info.Error == "" {
-		updateExpiry = time.Now().Add(updateTTL)
-	} else {
-		updateExpiry = time.Now().Add(5 * time.Minute)
-	}
+	updateFetched = time.Now()
 	writeJSON(w, http.StatusOK, info)
 }
 
