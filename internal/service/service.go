@@ -1,6 +1,7 @@
-// Package service installs colima-gui as a per-user background service so it
-// starts on login and stays running: a launchd LaunchAgent on macOS, a systemd
-// user service on Linux. It binds to 127.0.0.1 like the foreground server.
+// Package service installs Oriel as a background service so it starts
+// automatically and stays running: a launchd LaunchAgent on macOS, and a systemd
+// service on Linux (a per-user unit, or a system unit with --system / when run as
+// root). It binds to 127.0.0.1 like the foreground server.
 package service
 
 import (
@@ -24,17 +25,18 @@ func Run(args []string) error {
 	sub := args[0]
 	fs := flag.NewFlagSet("service", flag.ContinueOnError)
 	port := fs.Int("port", 4321, "port the service listens on (127.0.0.1)")
+	system := fs.Bool("system", false, "install a system-wide service (Linux; implied when run as root)")
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
 	}
 
 	switch sub {
 	case "install":
-		return install(*port)
+		return install(*port, *system)
 	case "uninstall", "remove":
-		return uninstall()
+		return uninstall(*system)
 	case "status":
-		return status()
+		return status(*system)
 	default:
 		return usage()
 	}
@@ -44,13 +46,17 @@ func usage() error {
 	fmt.Println(`Usage: oriel service <command>
 
 Commands:
-  install [--port N]   install and start the background service (default port 4321)
-  uninstall            stop and remove the service
-  status               show whether the service is installed and running`)
+  install [--port N] [--system]   install and start the background service
+  uninstall [--system]            stop and remove the service
+  status [--system]               show whether the service is installed and running
+
+  --system   Linux only: install a system unit (starts on boot, runs as the
+             service user). Implied when run as root. Otherwise a per-user
+             systemd unit is installed (needs an active user session).`)
 	return nil
 }
 
-func install(port int) error {
+func install(port int, system bool) error {
 	bin, err := os.Executable()
 	if err != nil {
 		return err
@@ -61,29 +67,29 @@ func install(port int) error {
 	case "darwin":
 		return installDarwin(bin, port)
 	case "linux":
-		return installLinux(bin, port)
+		return installLinux(bin, port, system)
 	default:
 		return fmt.Errorf("service install is not supported on %s", runtime.GOOS)
 	}
 }
 
-func uninstall() error {
+func uninstall(system bool) error {
 	switch runtime.GOOS {
 	case "darwin":
 		return uninstallDarwin()
 	case "linux":
-		return uninstallLinux()
+		return uninstallLinux(system)
 	default:
 		return fmt.Errorf("service is not supported on %s", runtime.GOOS)
 	}
 }
 
-func status() error {
+func status(system bool) error {
 	switch runtime.GOOS {
 	case "darwin":
 		return statusDarwin()
 	case "linux":
-		return statusLinux()
+		return statusLinux(system)
 	default:
 		return fmt.Errorf("service is not supported on %s", runtime.GOOS)
 	}
