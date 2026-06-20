@@ -1,5 +1,6 @@
 <script>
-  import { sse, apiGet, fmt } from '../../../platform/index.js'
+  import { tick } from 'svelte'
+  import { apiGet, fmt, LogsController } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
   import StatusPill from './StatusPill.svelte'
 
@@ -7,31 +8,34 @@
 
   let tab = $state('logs') // 'logs' | 'inspect'
 
-  // ── Logs (streaming) ───────────────────────────────────────────────────────
-  let lines = $state([])
+  // ── Logs (100 latest + lazy older, memory-bounded) ─────────────────────────
+  const logs = new LogsController()
   let paused = $state(false)
   let scroller = $state(null)
-  const MAX = 2000
-  let es
   $effect(() => {
-    lines = []
-    es = sse(`/api/containers/${container.id}/logs`, ['log', 'error'], (name, data) => {
-      if (name === 'error') {
-        lines = [...lines, { stream: 'error', line: data.error || 'stream error' }]
-        return
-      }
-      const next = [...lines, data]
-      lines = next.length > MAX ? next.slice(next.length - MAX) : next
-    })
-    return () => es?.close()
+    logs.start(container.id)
+    return () => logs.stop()
   })
   $effect(() => {
-    void lines.length
+    void logs.lines.length
     if (tab === 'logs' && !paused && scroller) queueMicrotask(() => (scroller.scrollTop = scroller.scrollHeight))
   })
+  async function loadOlder() {
+    if (!scroller) return
+    const before = scroller.scrollHeight
+    const prevTop = scroller.scrollTop
+    const n = await logs.loadOlder()
+    if (n > 0) {
+      await tick()
+      scroller.scrollTop = prevTop + (scroller.scrollHeight - before)
+    }
+  }
   function onScroll() {
     if (!scroller) return
-    paused = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight >= 40
+    const nearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40
+    paused = !nearBottom
+    logs.setFollowing(nearBottom)
+    if (scroller.scrollTop < 60) loadOlder()
   }
   const lineColor = (s) => (s === 'stderr' ? 'text-[var(--amber)]' : s === 'error' ? 'text-[var(--red)]' : 'text-[var(--text)]')
 
@@ -90,16 +94,20 @@
 
     {#if tab === 'logs'}
       <div bind:this={scroller} onscroll={onScroll} class="mono min-h-0 flex-1 overflow-auto bg-[var(--panel-2)] text-[12px] leading-relaxed">
-        {#each lines as l, i}
+        {#if logs.loadingOlder}
+          <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">Loading older lines…</div>
+        {:else if logs.noMore && logs.lines.length}
+          <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">Beginning of available logs</div>
+        {/if}
+        {#each logs.lines as l, i (i)}
           <div class="flex gap-3 px-3 hover:bg-[var(--hover)]">
-            <span class="tnum w-10 shrink-0 select-none border-r border-[var(--border)] py-px pr-2 text-right text-[var(--text-3)]">{i + 1}</span>
             <span class="flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>
           </div>
         {/each}
-        {#if !lines.length}<div class="px-3 py-3 text-[var(--text-3)]">Waiting for logs…</div>{/if}
+        {#if !logs.lines.length}<div class="px-3 py-3 text-[var(--text-3)]">{logs.error || 'Waiting for logs…'}</div>{/if}
       </div>
       {#if paused}
-        <button class="shrink-0 border-t border-[var(--border)] bg-[var(--panel-2)] py-1.5 text-center text-xs text-[var(--accent)]" onclick={() => { paused = false; scroller.scrollTop = scroller.scrollHeight }}>↓ Jump to latest</button>
+        <button class="shrink-0 border-t border-[var(--border)] bg-[var(--panel-2)] py-1.5 text-center text-xs text-[var(--accent)]" onclick={() => { paused = false; logs.setFollowing(true); scroller.scrollTop = scroller.scrollHeight }}>↓ Jump to latest</button>
       {/if}
     {:else}
       <div class="min-h-0 flex-1 overflow-auto p-5">

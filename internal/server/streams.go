@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -99,17 +100,46 @@ func (s *Server) handleOutages(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.recorder.outagesCopy())
 }
 
-// handleContainerLogs follows one container's logs as SSE.
+// handleContainerLogs follows one container's logs as SSE, seeded with the last
+// 100 lines, then live. Older lines load on demand via handleContainerLogsBefore.
 func (s *Server) handleContainerLogs(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	sse, ok := newSSE(w)
 	if !ok {
 		return
 	}
-	err := s.docker.StreamLogs(r.Context(), id, 200, func(stream, line string) {
-		sse.send("log", map[string]string{"stream": stream, "line": line})
+	err := s.docker.StreamLogs(r.Context(), id, 100, true, "", func(stream, ts, line string) {
+		sse.send("log", map[string]string{"stream": stream, "ts": ts, "line": line})
 	})
 	if err != nil && r.Context().Err() == nil {
 		sse.send("error", errorBody(err))
 	}
+}
+
+// handleContainerLogsBefore returns one historical batch of log lines ending just
+// before ?before=<RFC3339Nano> (the cursor), newest-first window. ?limit caps the
+// batch (default 100). Used to lazy-load older lines when scrolling back.
+func (s *Server) handleContainerLogsBefore(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	until := r.URL.Query().Get("before")
+	limit := 100
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 && n <= 1000 {
+			limit = n
+		}
+	}
+	type logLine struct {
+		Stream string `json:"stream"`
+		TS     string `json:"ts"`
+		Line   string `json:"line"`
+	}
+	lines := []logLine{}
+	err := s.docker.StreamLogs(r.Context(), id, limit, false, until, func(stream, ts, line string) {
+		lines = append(lines, logLine{Stream: stream, TS: ts, Line: line})
+	})
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorBody(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, lines)
 }

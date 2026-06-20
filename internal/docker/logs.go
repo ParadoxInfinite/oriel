@@ -11,10 +11,12 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 )
 
-// StreamLogs follows a container's logs, invoking emit per line until ctx is
-// cancelled. Non-TTY logs are multiplexed and demuxed via stdcopy; TTY logs are
-// a raw stream.
-func (c *Client) StreamLogs(ctx context.Context, id string, tail int, emit func(stream, line string)) error {
+// StreamLogs reads a container's logs, invoking emit per line. With follow=true it
+// tails live until ctx is cancelled; with follow=false it returns one historical
+// batch and stops. `until` (RFC3339Nano) bounds the batch to lines before that
+// moment — the cursor for lazy-loading older lines. Timestamps are always on so
+// each line carries the cursor; the ts is split out of the displayed text.
+func (c *Client) StreamLogs(ctx context.Context, id string, tail int, follow bool, until string, emit func(stream, ts, line string)) error {
 	cli, err := c.api(ctx)
 	if err != nil {
 		return err
@@ -24,27 +26,44 @@ func (c *Client) StreamLogs(ctx context.Context, id string, tail int, emit func(
 		return err
 	}
 
-	rc, err := cli.ContainerLogs(ctx, id, container.LogsOptions{
+	opts := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
-		Follow:     true,
+		Timestamps: true,
+		Follow:     follow,
 		Tail:       strconv.Itoa(tail),
-	})
+		Until:      until,
+	}
+	rc, err := cli.ContainerLogs(ctx, id, opts)
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
 
+	onLine := func(stream, raw string) {
+		ts, line := splitTimestamp(raw)
+		emit(stream, ts, line)
+	}
+
 	if insp.Config != nil && insp.Config.Tty {
-		_, err = io.Copy(&lineWriter{stream: "stdout", emit: emit}, rc)
+		_, err = io.Copy(&lineWriter{stream: "stdout", emit: onLine}, rc)
 		return err
 	}
 	_, err = stdcopy.StdCopy(
-		&lineWriter{stream: "stdout", emit: emit},
-		&lineWriter{stream: "stderr", emit: emit},
+		&lineWriter{stream: "stdout", emit: onLine},
+		&lineWriter{stream: "stderr", emit: onLine},
 		rc,
 	)
 	return err
+}
+
+// splitTimestamp peels the RFC3339Nano prefix that Timestamps:true prepends to
+// each line ("2024-01-02T15:04:05.123Z message"). Returns ("", raw) if absent.
+func splitTimestamp(raw string) (ts, line string) {
+	if i := strings.IndexByte(raw, ' '); i > 0 {
+		return raw[:i], raw[i+1:]
+	}
+	return "", raw
 }
 
 // lineWriter buffers writes and emits complete newline-delimited lines.

@@ -102,6 +102,9 @@ export { REGISTRY_SOURCES, REGISTRY_HOSTS, searchRegistry, listImageTags } from 
  *  live search, tag suggestions, streaming pull) so editions render only markup. */
 export { PullController, fmtStars } from '../lib/pull.svelte.js'
 
+/** Headless log buffer: seeds 100 latest, tails live, lazy-loads older, trims memory. */
+export { LogsController } from '../lib/logs.svelte.js'
+
 /** Tell the host how to theme the global overlays for this edition:
  *  setOverlayTheme('classic' | 'light' | 'dark', accent?). */
 export { setOverlayTheme } from '../lib/overlayTheme.svelte.js'

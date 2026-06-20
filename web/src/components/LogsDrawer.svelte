@@ -1,42 +1,47 @@
 <script>
-  import { sse } from '../lib/api.js'
+  import { tick } from 'svelte'
+  import { LogsController } from '../lib/logs.svelte.js'
 
   let { container, onClose } = $props()
 
-  let lines = $state([])
+  const logs = new LogsController()
   let paused = $state(false)
   let scroller = $state(null)
   // Remembered for the browser session only (resets on a full reopen).
   let width = $state(Number(sessionStorage.getItem('cgui.logsWidth')) || 720)
-  let es
-
-  const MAX = 2000 // cap retained lines to keep the DOM light
 
   $effect(() => {
-    lines = []
-    es = sse(`/api/containers/${container.id}/logs`, ['log', 'error'], (name, data) => {
-      if (name === 'error') {
-        lines = [...lines, { stream: 'error', line: data.error || 'stream error' }]
-        return
-      }
-      const next = [...lines, data]
-      lines = next.length > MAX ? next.slice(next.length - MAX) : next
-    })
-    return () => es?.close()
+    logs.start(container.id)
+    return () => logs.stop()
   })
 
   // Auto-scroll to bottom on new lines unless the user scrolled up.
   $effect(() => {
-    void lines.length
+    void logs.lines.length
     if (!paused && scroller) {
       queueMicrotask(() => (scroller.scrollTop = scroller.scrollHeight))
     }
   })
 
+  // Lazy-load older lines when near the top, preserving the viewport position
+  // (content is added above, so shift scrollTop by the height gained).
+  async function loadOlder() {
+    if (!scroller) return
+    const before = scroller.scrollHeight
+    const prevTop = scroller.scrollTop
+    const n = await logs.loadOlder()
+    if (n > 0) {
+      await tick()
+      scroller.scrollTop = prevTop + (scroller.scrollHeight - before)
+    }
+  }
+
   function onScroll() {
     if (!scroller) return
     const nearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40
     paused = !nearBottom
+    logs.setFollowing(nearBottom)
+    if (scroller.scrollTop < 60) loadOlder()
   }
 
   function startResize(e) {
@@ -117,14 +122,18 @@
       onscroll={onScroll}
       class="min-h-0 flex-1 overflow-auto bg-surface font-mono text-xs leading-relaxed"
     >
-      {#each lines as l, i}
+      {#if logs.loadingOlder}
+        <div class="px-3 py-1.5 text-center text-[11px] text-faint">Loading older lines…</div>
+      {:else if logs.noMore && logs.lines.length}
+        <div class="px-3 py-1.5 text-center text-[11px] text-faint">Beginning of available logs</div>
+      {/if}
+      {#each logs.lines as l, i (i)}
         <div class="group flex gap-3 px-3 transition-colors hover:bg-accent/5 {i % 2 ? 'bg-white/[0.015]' : ''}">
-          <span class="w-10 shrink-0 select-none border-r border-border/50 py-px pr-2 text-right text-faint tnum">{i + 1}</span>
           <span class="flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>
         </div>
       {/each}
-      {#if lines.length === 0}
-        <div class="px-3 py-3 text-muted">Waiting for logs…</div>
+      {#if logs.lines.length === 0}
+        <div class="px-3 py-3 text-muted">{logs.error || 'Waiting for logs…'}</div>
       {/if}
     </div>
 
@@ -133,6 +142,7 @@
         class="shrink-0 border-t border-border bg-surface-2 py-1.5 text-center text-xs text-accent"
         onclick={() => {
           paused = false
+          logs.setFollowing(true)
           scroller.scrollTop = scroller.scrollHeight
         }}>↓ Jump to latest</button
       >
