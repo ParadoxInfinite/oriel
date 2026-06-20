@@ -206,7 +206,7 @@
                     <div class="flex flex-col gap-0.5">
                       {#each item.tags as t}
                         <div class="group/tag flex items-center gap-1.5">
-                          <span class="mono truncate text-[13px] font-medium text-[var(--text)]">{t}</span>
+                          <span class="mono truncate text-[13px] font-medium text-[var(--text)]" title={t}>{fmt.shortRef(t)}</span>
                           {#if t !== '<none>' && item.tags.length > 1}
                             <button class="shrink-0 rounded p-0.5 text-[var(--text-3)] opacity-0 transition hover:text-[var(--red)] group-hover/tag:opacity-100" title="Remove this tag" aria-label="Remove tag {t}" onclick={() => c.untag(item, t)}>
                               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>

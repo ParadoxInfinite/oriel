@@ -5,7 +5,7 @@
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
   import { toast } from '../lib/toast.svelte.js'
-  import { bytes, relativeTime } from '../lib/format.js'
+  import { bytes, relativeTime, shortRef } from '../lib/format.js'
   import { btn, btnDanger, btnPrimary, action } from '../lib/ui.js'
   import { createSort, sortRows } from '../lib/sort.svelte.js'
   import ResourceTable from '../components/ResourceTable.svelte'
@@ -101,7 +101,7 @@
         <td class="max-w-[22rem] px-4 py-2.5">
           {#each img.tags as t}
             <div class="group/tag flex items-center gap-1.5">
-              <span class="truncate font-mono text-[13px]">{t}</span>
+              <span class="truncate font-mono text-[13px]" title={t}>{shortRef(t)}</span>
               {#if t !== '<none>' && img.tags.length > 1}
                 <button
                   class="shrink-0 rounded p-0.5 text-faint opacity-0 transition hover:text-danger group-hover/tag:opacity-100"

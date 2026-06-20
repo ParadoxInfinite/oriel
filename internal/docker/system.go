@@ -57,7 +57,16 @@ func (c *Client) SystemUsage(ctx context.Context) (SystemUsage, error) {
 		}
 	}
 	for _, img := range du.Images {
-		if len(img.RepoTags) == 0 || (len(img.RepoTags) == 1 && img.RepoTags[0] == "<none>:<none>") {
+		// Dangling = no usable tag AND no repo digest. A digest-pinned image
+		// (untagged but with a RepoDigest, e.g. compose images) is named and in
+		// use, not reclaimable — matching `docker image prune`'s dangling filter.
+		named := len(img.RepoDigests) > 0
+		for _, t := range img.RepoTags {
+			if t != "<none>:<none>" {
+				named = true
+			}
+		}
+		if !named {
 			u.DanglingImages++
 			u.ImagesSize += img.Size
 		}
