@@ -34,24 +34,34 @@ See [docs/THEMES.md](docs/THEMES.md).
 
 - **Lifecycle** — start / stop / restart Colima with live progress, plus a
   dashboard (CPU history graph, memory, disk, runtime, docker socket).
-- **Containers** — live state, CPU and memory; start / stop / restart / remove;
-  **multi-select bulk actions**; streaming **logs** and a full **inspect** panel
-  (env, mounts, networks, restart policy, health).
+- **Containers** — live state, CPU and memory, plus the **exit code/status** for
+  stopped ones; start / stop / restart / remove; **multi-select bulk actions**;
+  streaming **logs** (last 100 instantly, scroll up to lazy-load older, memory
+  stays bounded) and a full **inspect** panel (env, mounts, networks, restart
+  policy, health).
 - **Images** — list, remove, per-tag untag, prune dangling, and a **pull dialog
   with live registry search and tag suggestions** across Docker Hub, Quay.io and
   AWS ECR Public (plus pull-by-ref for GHCR, GCR, registry.k8s.io, MCR).
+  **Digest-pinned images** (e.g. Compose `image: …@sha256:…`) show their name
+  instead of `<none>`, link their **"in use" count to the containers** actually
+  holding them, and offer a one-click **Tag** (pre-filled from the using container).
 - **Volumes & Networks** — list, sort, remove, prune.
 - **Compose stacks** — running ones discovered from container labels; up / stop /
   restart / down. Plus **directory discovery**: point Oriel at folders (with
   optional recursive traversal, allow/deny filters, and Oriel-only renames) and
   deploy compose projects that have never been started, right from the UI.
-- **Reclaim space** — a guarded `docker system prune` with a preview of exactly
-  what will be freed.
+- **Reclaim space** — pick exactly what to prune (stopped containers, dangling
+  images, build cache, unused networks/volumes — volumes opt-in and warned; build
+  cache dangling-only by default with an all-unused override). Prunes run
+  **server-side as background jobs**: they survive a refresh, show a live progress
+  bar in a **sidebar operations tray**, and can be **cancelled** mid-run.
 - **Command palette** (`⌘K` / `Ctrl+K`) — fuzzy-run any action; optional
   natural-language mode.
 - **Editions & themes** — switch the whole UI (Studio / Classic), light/dark/system
   appearance, custom accent themes, or load an external theme by URL.
-- **Live updates** — docker events and stats stream over SSE; no polling storms.
+- **Live updates** — everything streams over **one SSE connection** (stats, CPU
+  history, status, outages) plus a filtered docker-event channel; the UI **never
+  polls**.
 
 Everything routes through one validated **tool registry**, which is also the seam
 for optional natural-language control (see below).
@@ -60,7 +70,7 @@ for optional natural-language control (see below).
 
 - macOS or Linux with [Colima](https://github.com/abiosoft/colima) (or any Docker
   daemon) and the `docker` CLI available.
-- For building: Go 1.24+ and Node 20+.
+- For building: Go 1.26+ and Node 20+.
 
 ## Build & run
 
@@ -140,7 +150,7 @@ Python; an embedding- or LLM-backed one implements the same one route.
 
 ```
 Browser (Svelte + Tailwind, embedded)  ── one edition, built on the platform SDK
-   │  REST (actions) + SSE (events/stats/logs)   — 127.0.0.1 only
+   │  REST (actions) + SSE (live/events/logs, push-only)   — 127.0.0.1 only
    ▼
 Go single binary
    ├─ server/      net/http + SSE + embedded static files

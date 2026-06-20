@@ -31,9 +31,9 @@ isn't re-exported from the platform SDK, it isn't contract and may change.
 import { status, containers, invoke, lifecycle, fmt } from '../../platform/index.js'
 ```
 
-The host owns polling, the live event streams, and the global overlays (command
-palette, confirm dialog, toasts, operation-progress). Your edition just consumes
-state and renders.
+The host owns data fetching — a single push-based live stream, no polling — and
+the global overlays (command palette, confirm dialog, toasts, operation-progress).
+Your edition just consumes state and renders.
 
 ### Reactive state
 
@@ -43,8 +43,8 @@ markup and it updates as the backend does. Don't reassign; mutate via the action
 | Export | Shape |
 | --- | --- |
 | `status` | `{ loading, running, error, data }`; `data` = `{ engine, profile, runtime, arch, cpu, memory, disk, kubernetes, driver, version, dockerSocket }` |
-| `containers` | `{ list, loading, error }`; item `{ id, name, image, state, status, created, project, ports:[{public,private,type}] }` |
-| `images` | `{ list, … }`; item `{ id, tags:[string], size, containers, created }` |
+| `containers` | `{ list, loading, error }`; item `{ id, name, image, imageId, state, status, created, project, ports:[{public,private,type}] }` |
+| `images` | `{ list, … }`; item `{ id, tags:[string], size, containers, created }` — for a digest-pinned image `tags` holds its `repo@sha256:…` |
 | `volumes` | `{ list, … }`; item `{ name, driver, mountpoint }` |
 | `networks` | `{ list, … }`; item `{ id, name, driver, scope, internal }` |
 | `stacks` | `{ list, … }`; item `{ name, running, total, workingDir, containers:[{id,name,state}] }` |
@@ -52,7 +52,7 @@ markup and it updates as the backend does. Don't reassign; mutate via the action
 | `history` | `{ points: [{ t, cpu, mem, down }] }` (rolling ~30 min) |
 | `self` | `{ rss, goroutines, heapAlloc }` |
 | `outages` | `{ list: [{ start, end, kind }] }` — `kind` ∈ `down` \| `offline` |
-| `op` | streaming-operation overlay state |
+| `ops` | `{ list, focused }` — operation tracker driving the progress modal (`focused`) and the sidebar tray (the rest); items can be cancelled/resumed |
 | `provider` | `{ enabled, url }` — the NL/AI seam |
 
 Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
@@ -62,10 +62,12 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 
 | Export | Use |
 | --- | --- |
-| `invoke(tool, args, { success })` | run a backend tool; tools include `container.start\|stop\|restart\|remove`, `image.remove`, `volume.remove`, `network.remove`. |
+| `invoke(tool, args, { success })` | run a backend tool; tools include `container.start\|stop\|restart\|remove`, `image.remove\|tag`, `volume.remove`, `network.remove`. |
 | `lifecycle('start'\|'stop'\|'restart')` | Colima lifecycle, wired to the op overlay. |
 | `stackOp(name, 'start'\|'stop'\|'restart'\|'down', onDone)` | compose actions. |
 | `runOp(title, path, onDone)` | drive the op overlay for any streaming endpoint. |
+| `startSystemPrune(sel)` / `startImagePrune(items)` / `startVolumePrune(items)` | kick off a server-side prune as a background job (survives refresh, shows in the tray, cancellable). |
+| `cancelOp(id)` / `focusOp(id)` / `minimizeOp()` / `resumeOps()` | control entries in `ops` (cancel, open in the modal, hide to the tray, re-attach on load). |
 | `confirm({ title, message, confirmLabel })` | → `Promise<boolean>`. |
 | `toast(message, 'ok'\|'error'\|'info')` | transient notice. |
 | `openPalette()` / `togglePalette()` | command palette. |
@@ -74,16 +76,18 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 
 ### Helpers
 
-- `fmt` — `bytes`, `duration`, `timeOnly`, `dateTime`, `relativeTime`.
+- `fmt` — `bytes`, `duration`, `timeOnly`, `dateTime`, `relativeTime`, `shortRef` (trim a digest ref for display).
 - `icons` — raw Lucide inner-SVG strings, keyed by name.
 - `createSort`, `toggleSort`, `sortRows` — sortable-table state.
+- `containersForImage(id)`, `isPinnedImage(image)`, `suggestTag(image)` — link an image to the containers using it and propose a tag for a digest-pinned one.
 - `REGISTRY_SOURCES`, `searchRegistry`, `listImageTags` — pull-dialog registry data.
 - `apiGet`, `apiPost`, `streamPost`, `sse` — low-level fetch/stream for endpoints
   without a dedicated store.
-- `PullController` — a headless controller for the image-pull dialog (registry
-  select, live search, tag suggestions, streaming pull). Construct one and render
-  its reactive fields; both built-in editions' pull dialogs are pure markup over
-  it. A model for keeping behavior in the SDK and look in the edition.
+- `PullController` / `LogsController` — headless controllers for the image-pull
+  dialog (registry select, live search, tag suggestions, streaming pull) and the
+  log viewer (100-line tail, scroll-up lazy-load of older lines, memory bounded).
+  Construct one and render its reactive fields; both built-in editions are pure
+  markup over them. The model for keeping behavior in the SDK and look in the edition.
 - `discovery` + `PathField` — compose directory-discovery store (config, scan,
   filter, deploy) and the headless path-typeahead controller. Both built-in
   editions' Settings + Stacks views render the same store; another model for
@@ -123,7 +127,7 @@ window.__orielThemes = [
 
 `component` must be a mounted Svelte component constructor compiled against the
 same Svelte runtime. Loaded URLs are persisted and re-imported on next launch. It
-appears in the switcher alongside the built-ins.
+appears under **Settings → Editions** alongside the built-ins.
 
 ## Appearance
 
