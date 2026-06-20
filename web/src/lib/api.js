@@ -1,0 +1,87 @@
+// Thin fetch wrappers + an SSE-over-POST reader. One place for all backend I/O.
+
+async function parseError(res) {
+  try {
+    const body = await res.json()
+    return body.error || res.statusText
+  } catch {
+    return res.statusText
+  }
+}
+
+export async function apiGet(path) {
+  const res = await fetch(path)
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json()
+}
+
+export async function apiPost(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: body ? { 'Content-Type': 'application/json' } : {},
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json().catch(() => null)
+}
+
+export async function apiPut(path, body) {
+  const res = await fetch(path, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json().catch(() => null)
+}
+
+// streamPost parses a text/event-stream POST response, one onEvent(name, data)
+// per frame. POST (not EventSource) because the action mutates state.
+export async function streamPost(path, { onEvent, signal } = {}) {
+  const res = await fetch(path, { method: 'POST', signal })
+  if (!res.ok) throw new Error(await parseError(res))
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buf = ''
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) break
+    buf += decoder.decode(value, { stream: true })
+    let idx
+    while ((idx = buf.indexOf('\n\n')) >= 0) {
+      const frame = buf.slice(0, idx)
+      buf = buf.slice(idx + 2)
+      let event = 'message'
+      let data = ''
+      for (const line of frame.split('\n')) {
+        if (line.startsWith('event:')) event = line.slice(6).trim()
+        else if (line.startsWith('data:')) data += line.slice(5).trim()
+      }
+      if (data) {
+        try {
+          onEvent?.(event, JSON.parse(data))
+        } catch {
+          /* ignore malformed frame */
+        }
+      }
+    }
+  }
+}
+
+// sse opens an EventSource, listening for the named events. onEvent receives
+// (name, parsedData). Returns the EventSource so callers can close() it.
+export function sse(path, events, onEvent) {
+  const es = new EventSource(path)
+  for (const name of events) {
+    es.addEventListener(name, (e) => {
+      let data = e.data
+      try {
+        data = JSON.parse(e.data)
+      } catch {
+        /* leave as raw string */
+      }
+      onEvent(name, data)
+    })
+  }
+  return es
+}
