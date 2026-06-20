@@ -2,79 +2,97 @@ import { streamPost, apiGet, apiPost, sse } from './api.js'
 import { refreshContainers } from './containers.svelte.js'
 import { refreshImages, refreshVolumes, refreshNetworks } from './resources.svelte.js'
 
-// Generic operation-overlay state, shared by long-running actions that emit live
-// progress. Two flavours feed the same overlay:
+// Operation tracker. Several operations can run at once; `list` holds them all and
+// `focused` is the one shown in the modal overlay (null = modal closed). The rest
+// surface in the sidebar tray. Two flavours share the model:
 //   • request-tied (runOp): colima lifecycle, compose — stream lives with the POST.
 //   • background jobs (attachJob): prune — run server-side, survive a refresh, and
-//     can be cancelled. jobId is set only for the latter (drives the Cancel button).
-// One overlay at a time.
-export const op = $state({
-  active: false,
-  title: null,
-  lines: [],
-  error: null,
-  done: false,
-  jobId: null,
-  cancelling: false,
-})
+//     can be cancelled. `jobId` is set only for these.
+export const ops = $state({ list: [], focused: null })
 
-let es = null // the EventSource for the attached background job, if any
+let seq = 0
+const streams = new Map() // entry id → EventSource (background jobs only)
 
+const find = (id) => ops.list.find((o) => o.id === id)
+
+function add(entry) {
+  ops.list.push(entry)
+  return entry
+}
+
+function drop(id) {
+  const i = ops.list.findIndex((o) => o.id === id)
+  if (i >= 0) ops.list.splice(i, 1)
+  if (ops.focused === id) ops.focused = null
+}
+
+// runOp streams a request-tied operation (the stream lives with the POST, so it
+// can't outlive the page). Kept for colima lifecycle + compose.
 export async function runOp(title, path, onDone) {
-  if (op.active) return
-  resetState(title)
-  op.jobId = null
+  const id = `r${++seq}`
+  add({ id, jobId: null, kind: 'task', title, lines: [], done: false, error: null, cancelling: false })
+  ops.focused = id
   try {
     await streamPost(path, {
       onEvent: (name, data) => {
-        if (name === 'line') op.lines = [...op.lines, data.line]
+        const o = find(id)
+        if (!o) return
+        if (name === 'line') o.lines.push(data.line)
         else if (name === 'done') {
-          op.done = true
-          if (!data.ok) op.error = data.error
+          o.done = true
+          if (!data.ok) o.error = data.error
         }
       },
     })
   } catch (e) {
-    op.error = e.message
-    op.done = true
+    const o = find(id)
+    if (o) {
+      o.error = e.message
+      o.done = true
+    }
   } finally {
-    op.active = false
     onDone?.()
   }
 }
 
-// attachJob streams a server-side background job into the overlay. The stream
-// sends a "snapshot" of progress so far (so reconnect/refresh catches up without
-// duplicates), then live "line" events, then "done". Re-callable to re-attach.
-export function attachJob(id, title, kind) {
-  closeStream()
-  resetState(title)
-  op.jobId = id
-  es = sse(`/api/ops/${id}/stream`, ['snapshot', 'line', 'done'], (name, data) => {
-    if (name === 'snapshot') op.lines = data.lines || []
-    else if (name === 'line') op.lines = [...op.lines, data.line]
+// attachJob streams a server-side background job. The stream sends a "snapshot" of
+// progress so far (so reconnect/refresh catches up without duplicates), then live
+// lines, then "done". focus=false adds it to the tray without opening the modal
+// (used when re-attaching after a refresh).
+export function attachJob(jobId, title, kind, focus = true) {
+  if (streams.has(jobId)) {
+    if (focus) ops.focused = jobId
+    return
+  }
+  if (!find(jobId)) {
+    add({ id: jobId, jobId, kind, title, lines: [], done: false, error: null, cancelling: false })
+  }
+  if (focus) ops.focused = jobId
+  const es = sse(`/api/ops/${jobId}/stream`, ['snapshot', 'line', 'done'], (name, data) => {
+    const o = find(jobId)
+    if (!o) return
+    if (name === 'snapshot') o.lines = data.lines || []
+    else if (name === 'line') o.lines.push(data.line)
     else if (name === 'done') {
-      op.done = true
-      op.active = false
-      op.cancelling = false
-      if (!data.ok) op.error = data.error || 'cancelled'
-      closeStream()
+      o.done = true
+      o.cancelling = false
+      if (!data.ok) o.error = data.error || 'cancelled'
+      closeStream(jobId)
       refreshForKind(kind)
     }
   })
+  streams.set(jobId, es)
 }
 
 // startJob kicks off a background op (POST returns its id), then attaches to it.
 async function startJob(path, body, title, kind) {
-  if (op.active) return
   let res
   try {
     res = await apiPost(path, body)
   } catch (e) {
-    resetState(title)
-    op.error = e.message
-    op.done = true
-    op.active = false
+    const id = `r${++seq}`
+    add({ id, jobId: null, kind, title, lines: [e.message], done: true, error: e.message, cancelling: false })
+    ops.focused = id
     return
   }
   if (res?.id) attachJob(res.id, title, kind)
@@ -92,54 +110,51 @@ export function startVolumePrune(items) {
   return startJob('/api/ops/volume-prune', { items }, `Pruning ${items.length} volume${items.length === 1 ? '' : 's'}`, 'volume-prune')
 }
 
-// cancelOp asks the server to stop the attached job; the "done" event follows.
-export async function cancelOp() {
-  if (!op.jobId || op.done) return
-  op.cancelling = true
+// cancelOp asks the server to stop a background job; its "done" event follows.
+export async function cancelOp(id) {
+  const o = find(id)
+  if (!o?.jobId || o.done) return
+  o.cancelling = true
   try {
-    await apiPost(`/api/ops/${op.jobId}/cancel`, null)
+    await apiPost(`/api/ops/${o.jobId}/cancel`, null)
   } catch {
-    op.cancelling = false
+    o.cancelling = false
   }
 }
 
-// resumeOps re-attaches to any still-running background job after a page load,
-// so an in-flight prune keeps showing its progress across a refresh.
+export function focusOp(id) {
+  ops.focused = id
+}
+
+// minimizeOp closes the modal but keeps every operation running; they show in the
+// sidebar tray until done and dismissed.
+export function minimizeOp() {
+  ops.focused = null
+}
+
+// dismissOp removes a finished operation from the tracker (and its modal/tray row).
+export function dismissOp(id) {
+  closeStream(id)
+  drop(id)
+}
+
+// resumeOps re-attaches to any still-running background jobs after a page load, so
+// in-flight prunes reappear in the tray (not as a modal) across a refresh.
 export async function resumeOps() {
-  if (op.active || op.title) return
   let jobs
   try {
     jobs = await apiGet('/api/ops')
   } catch {
     return
   }
-  const j = jobs?.[0]
-  if (j) attachJob(j.id, j.title, j.kind)
+  for (const j of jobs ?? []) attachJob(j.id, j.title, j.kind, false)
 }
 
-export function dismissOp() {
-  closeStream()
-  op.title = null
-  op.lines = []
-  op.error = null
-  op.done = false
-  op.jobId = null
-  op.cancelling = false
-}
-
-function resetState(title) {
-  op.active = true
-  op.title = title
-  op.lines = []
-  op.error = null
-  op.done = false
-  op.cancelling = false
-}
-
-function closeStream() {
+function closeStream(id) {
+  const es = streams.get(id)
   if (es) {
     es.close()
-    es = null
+    streams.delete(id)
   }
 }
 
