@@ -1,5 +1,6 @@
 <script>
   import { images, refreshImages } from '../lib/resources.svelte.js'
+  import { startImagePrune } from '../lib/op.svelte.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
   import { toast } from '../lib/toast.svelte.js'
@@ -72,19 +73,10 @@
       size: i.size,
     }))
   }
-  async function doPrune(chosen, progress) {
-    let removed = 0
-    let reclaimed = 0
-    let done = 0
-    for (const it of chosen) {
-      if (await invoke('image.remove', { id: it.id, force: true })) {
-        removed++
-        reclaimed += it.size
-      }
-      progress?.(++done)
-    }
-    if (removed) toast(`Pruned ${removed} image(s), reclaimed ${bytes(reclaimed)}`, 'ok')
-    refreshImages()
+  // Prune runs as a background job (survives refresh, cancellable); progress
+  // shows in the op overlay.
+  function doPrune(chosen) {
+    startImagePrune(chosen.map((it) => ({ id: it.id, size: it.size })))
   }
 </script>
 

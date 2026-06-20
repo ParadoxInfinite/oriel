@@ -1,10 +1,10 @@
 <script>
   import { volumes, refreshVolumes } from '../lib/resources.svelte.js'
+  import { startVolumePrune } from '../lib/op.svelte.js'
   import { invoke } from '../lib/invoke.js'
   import { apiGet } from '../lib/api.js'
   import { toast } from '../lib/toast.svelte.js'
   import { confirm } from '../lib/confirm.svelte.js'
-  import { bytes } from '../lib/format.js'
   import { btn, btnDanger } from '../lib/ui.js'
   import { createSort, sortRows } from '../lib/sort.svelte.js'
   import ResourceTable from '../components/ResourceTable.svelte'
@@ -52,19 +52,10 @@
       size: v.size,
     }))
   }
-  async function doPrune(chosen, progress) {
-    let removed = 0
-    let reclaimed = 0
-    let done = 0
-    for (const it of chosen) {
-      if (await invoke('volume.remove', { name: it.id, force: false })) {
-        removed++
-        reclaimed += it.size
-      }
-      progress?.(++done)
-    }
-    if (removed) toast(`Pruned ${removed} volume(s), reclaimed ${bytes(reclaimed)}`, 'ok')
-    refreshVolumes()
+  // Prune runs as a background job (survives refresh, cancellable); progress
+  // shows in the op overlay.
+  function doPrune(chosen) {
+    startVolumePrune(chosen.map((it) => ({ id: it.id, size: it.size })))
   }
 </script>
 

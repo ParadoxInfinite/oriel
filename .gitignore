@@ -8,3 +8,4 @@
 # Editor / OS
 .DS_Store
 *.log
+/oriel-*
