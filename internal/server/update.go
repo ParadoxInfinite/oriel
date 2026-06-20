@@ -62,7 +62,7 @@ var (
 	updateExpiry time.Time
 )
 
-const updateTTL = time.Hour
+const updateTTL = 24 * time.Hour
 
 // handleUpdateCheck reports whether a newer release exists. It's lazy (only runs
 // when asked) and cached, so it never reaches out unless the UI requests it.
