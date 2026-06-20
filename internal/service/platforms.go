@@ -103,11 +103,12 @@ func statusDarwin() error {
 	return nil
 }
 
-// ---- Linux (systemd user service) ----
+// ---- Linux (systemd: per-user unit, or system unit with --system / as root) ----
 
 const linuxUnit = `[Unit]
 Description=Oriel
-After=network.target
+After=network.target{{if .System}} docker.service
+Wants=docker.service{{end}}
 
 [Service]
 ExecStart={{.Bin}} --no-open --port {{.Port}}
@@ -115,10 +116,12 @@ Restart=on-failure
 RestartSec=3
 
 [Install]
-WantedBy=default.target
+WantedBy={{if .System}}multi-user.target{{else}}default.target{{end}}
 `
 
-func linuxUnitPath() (string, error) {
+const systemUnitPath = "/etc/systemd/system/oriel.service"
+
+func linuxUserUnitPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
@@ -126,40 +129,90 @@ func linuxUnitPath() (string, error) {
 	return filepath.Join(home, ".config", "systemd", "user", "oriel.service"), nil
 }
 
-func installLinux(bin string, port int) error {
-	unitPath, err := linuxUnitPath()
-	if err != nil {
+// useSystem picks a system unit when asked, or implicitly when running as root
+// (root has no user session bus, so a user unit can't work).
+func useSystem(system bool) bool { return system || os.Geteuid() == 0 }
+
+// sctl prefixes systemctl with --user for per-user units.
+func sctl(system bool, args ...string) []string {
+	if system {
+		return args
+	}
+	return append([]string{"--user"}, args...)
+}
+
+const userBusHint = `
+Oriel installs a systemd *user* service by default, but this session has no user
+bus — common over SSH/sudo, and always the case for root.
+
+  • Headless or root-only box → install a system service instead (starts on boot):
+        oriel service install --system
+
+  • Or give yourself a user session and retry:
+        sudo loginctl enable-linger "$USER"
+        export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+        oriel service install`
+
+func isUserBusError(err error) bool {
+	s := err.Error()
+	return strings.Contains(s, "user scope bus") ||
+		strings.Contains(s, "XDG_RUNTIME_DIR") ||
+		strings.Contains(s, "DBUS_SESSION_BUS_ADDRESS")
+}
+
+func installLinux(bin string, port int, system bool) error {
+	sys := useSystem(system)
+	unitPath := systemUnitPath
+	if !sys {
+		p, err := linuxUserUnitPath()
+		if err != nil {
+			return err
+		}
+		unitPath = p
+	}
+	if err := render(unitPath, linuxUnit, map[string]any{"Bin": bin, "Port": port, "System": sys}); err != nil {
 		return err
 	}
-	if err := render(unitPath, linuxUnit, map[string]any{"Bin": bin, "Port": port}); err != nil {
+
+	_ = run("systemctl", sctl(sys, "daemon-reload")...)
+	if err := run("systemctl", sctl(sys, "enable", "--now", "oriel.service")...); err != nil {
+		if !sys && isUserBusError(err) {
+			fmt.Fprintln(os.Stderr, userBusHint)
+		}
 		return err
 	}
-	_ = run("systemctl", "--user", "daemon-reload")
-	if err := run("systemctl", "--user", "enable", "--now", "oriel.service"); err != nil {
-		return err
+
+	kind, sub, start := "user", "--user ", "login"
+	if sys {
+		kind, sub, start = "system", "", "boot"
 	}
-	fmt.Printf("✓ installed systemd user service: %s\n", unitPath)
-	fmt.Printf("✓ Oriel is running at http://127.0.0.1:%d and will start on login\n", port)
-	fmt.Println("  logs: journalctl --user -u oriel -f")
+	fmt.Printf("✓ installed systemd %s service: %s\n", kind, unitPath)
+	fmt.Printf("✓ Oriel is running at http://127.0.0.1:%d and will start on %s\n", port, start)
+	fmt.Printf("  logs: journalctl %s-u oriel -f\n", sub)
 	return nil
 }
 
-func uninstallLinux() error {
-	unitPath, err := linuxUnitPath()
-	if err != nil {
-		return err
+func uninstallLinux(system bool) error {
+	sys := useSystem(system)
+	unitPath := systemUnitPath
+	if !sys {
+		p, err := linuxUserUnitPath()
+		if err != nil {
+			return err
+		}
+		unitPath = p
 	}
-	_ = run("systemctl", "--user", "disable", "--now", "oriel.service")
+	_ = run("systemctl", sctl(sys, "disable", "--now", "oriel.service")...)
 	if err := os.Remove(unitPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
-	_ = run("systemctl", "--user", "daemon-reload")
+	_ = run("systemctl", sctl(sys, "daemon-reload")...)
 	fmt.Println("✓ Oriel service removed")
 	return nil
 }
 
-func statusLinux() error {
-	out, _ := exec.Command("systemctl", "--user", "is-active", "oriel.service").CombinedOutput()
+func statusLinux(system bool) error {
+	out, _ := exec.Command("systemctl", sctl(useSystem(system), "is-active", "oriel.service")...).CombinedOutput()
 	state := strings.TrimSpace(string(out))
 	if state == "active" {
 		fmt.Println("● Oriel service is installed (running)")
