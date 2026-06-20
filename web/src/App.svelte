@@ -4,6 +4,7 @@
   import { refreshContainers } from './lib/containers.svelte.js'
   import { refreshStacks } from './lib/stacks.svelte.js'
   import { checkProvider } from './lib/provider.svelte.js'
+  import { checkUpdate } from './lib/update.svelte.js'
   import { togglePalette } from './lib/palette.svelte.js'
   import { resumeOps } from './lib/op.svelte.js'
 
@@ -36,6 +37,7 @@
     refreshContainers()
     refreshStacks()
     checkProvider()
+    checkUpdate()
     loadExternalThemes()
     resumeOps() // re-attach to any prune still running from before a refresh
   })

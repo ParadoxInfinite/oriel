@@ -13,17 +13,19 @@ import (
 // selfStats reports this GUI's own resource footprint, so the dashboard can show
 // what the tool itself costs.
 type selfStats struct {
-	RSS        int64 `json:"rss"` // resident set size, bytes
-	Goroutines int   `json:"goroutines"`
-	HeapAlloc  int64 `json:"heapAlloc"` // Go heap in use, bytes
+	Version    string `json:"version"` // build version ("dev" for local builds)
+	RSS        int64  `json:"rss"`     // resident set size, bytes
+	Goroutines int    `json:"goroutines"`
+	HeapAlloc  int64  `json:"heapAlloc"` // Go heap in use, bytes
 }
 
 // currentSelf samples this process's footprint. Shared by the REST handler and
 // the live stream.
-func currentSelf(ctx context.Context) selfStats {
+func (s *Server) currentSelf(ctx context.Context) selfStats {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 	return selfStats{
+		Version:    s.version,
 		RSS:        processRSS(ctx),
 		Goroutines: runtime.NumGoroutine(),
 		HeapAlloc:  int64(m.HeapAlloc),
@@ -31,7 +33,7 @@ func currentSelf(ctx context.Context) selfStats {
 }
 
 func (s *Server) handleSelf(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, currentSelf(r.Context()))
+	writeJSON(w, http.StatusOK, s.currentSelf(r.Context()))
 }
 
 // processRSS reads our own resident memory via `ps` (portable across the

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
+  import { self, update, applyUpdate, restartService, confirm } from '../../../platform/index.js'
   import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -36,6 +37,21 @@
     { id: 'system', label: 'System' },
   ]
   const swatches = $derived([...ACCENTS, ...appearance.custom])
+
+  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '—')
+  async function doUpdate() {
+    const res = await confirm({
+      title: 'Update Oriel?',
+      message: `Download v${update.latest}, verify its checksum, and replace the binary. Oriel must restart to apply.`,
+      confirmLabel: 'Update',
+      danger: false,
+      checkbox: 'Restart automatically when done',
+      checked: true,
+    })
+    if (!res || !res.ok) return
+    const ok = await applyUpdate()
+    if (ok && res.checked) await restartService()
+  }
 
   // Custom accent form.
   let newColor = $state('#22c55e')
@@ -268,7 +284,7 @@
         {#if provider.enabled}<button class="btn btn-default btn-sm" onclick={() => { urlDraft = ''; saveProvider() }}>Disable</button>{/if}
       </div>
       <p class="mt-2 text-[12px] text-[var(--text-3)]">
-        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="mono">/resolve</span> contract. Or set <span class="mono">COLIMA_GUI_PROVIDER_URL</span> at launch.
+        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="mono">/resolve</span> contract. Or set <span class="mono">ORIEL_PROVIDER_URL</span> at launch.
       </p>
     </div>
 
@@ -288,5 +304,37 @@
         {/if}
       </div>
     {/if}
+  </section>
+
+  <!-- Updates -->
+  <section class="rise card p-5" style="animation-delay:100ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Updates</h2>
+    <p class="mt-0.5 text-[12px] text-[var(--text-3)]">Current version <span class="mono text-[var(--text-2)]">{verLabel}</span>.</p>
+
+    <div class="mt-4">
+      {#if update.phase === 'restarting'}
+        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Restarting Oriel — this page will reconnect…</div>
+      {:else if update.phase === 'applying'}
+        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Downloading &amp; verifying…</div>
+      {:else if update.phase === 'done'}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-2)]">Installed <span class="mono">v{update.latest}</span> — restart to apply.</span>
+          <button class="btn btn-primary btn-sm" onclick={() => restartService()}>Restart now</button>
+        </div>
+      {:else if !update.managed}
+        <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available} A new version <span class="mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+      {:else if update.available}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-2)]">Update available: <span class="mono font-medium text-[var(--text)]">v{update.latest}</span></span>
+          <button class="btn btn-primary btn-sm" onclick={doUpdate}>Update now</button>
+        </div>
+      {:else}
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-3)]">You're on the latest version.</span>
+          <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-[12px] text-[var(--accent)] hover:underline">Releases ↗</a>
+        </div>
+      {/if}
+      {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}
+    </div>
   </section>
 </div>

@@ -12,10 +12,63 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"syscall"
 	"text/template"
 )
 
 const label = "com.oriel"
+
+// unitFiles returns the service config paths Oriel might have installed for the
+// current platform/user.
+func unitFiles() []string {
+	switch runtime.GOOS {
+	case "darwin":
+		if p, err := darwinPlistPath(); err == nil {
+			return []string{p}
+		}
+	case "linux":
+		paths := []string{systemUnitPath}
+		if p, err := linuxUserUnitPath(); err == nil {
+			paths = append(paths, p)
+		}
+		return paths
+	}
+	return nil
+}
+
+// IsManaged reports whether the running executable is the one an installed Oriel
+// service launches — i.e. self-update is safe to replace it and restart. Manual
+// `./oriel` runs (a different binary path) return false.
+func IsManaged() bool {
+	exe, err := os.Executable()
+	if err != nil {
+		return false
+	}
+	exe, _ = filepath.EvalSymlinks(exe)
+	for _, p := range unitFiles() {
+		if data, err := os.ReadFile(p); err == nil && strings.Contains(string(data), exe) {
+			return true
+		}
+	}
+	return false
+}
+
+// Restart restarts the installed service so a freshly-replaced binary takes
+// effect. On macOS a clean exit is enough (launchd KeepAlive relaunches us); on
+// Linux systemd needs an explicit restart (the unit is Restart=on-failure).
+func Restart() error {
+	switch runtime.GOOS {
+	case "darwin":
+		// SIGTERM triggers the server's graceful shutdown; launchd then relaunches.
+		return syscall.Kill(os.Getpid(), syscall.SIGTERM)
+	case "linux":
+		// systemctl stops (SIGTERM) then starts a fresh instance. Don't wait — it
+		// kills this very process mid-command.
+		return exec.Command("systemctl", sctl(useSystem(false), "restart", "oriel.service")...).Start()
+	default:
+		return fmt.Errorf("self-restart is not supported on %s", runtime.GOOS)
+	}
+}
 
 // Run handles the `service` subcommand: install | uninstall | status.
 func Run(args []string) error {

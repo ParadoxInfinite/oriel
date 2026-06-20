@@ -63,7 +63,7 @@ func (s *Server) handleLive(w http.ResponseWriter, r *http.Request) {
 	}
 	slow := func() {
 		sse.send("status", s.currentStatus(ctx))
-		sse.send("self", currentSelf(ctx))
+		sse.send("self", s.currentSelf(ctx))
 		sse.send("outages", s.recorder.outagesCopy())
 	}
 
@@ -95,7 +95,7 @@ func (s *Server) handleHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleOutages returns the persisted downtime log (retained ~30 days), each
-// entry kind "down" (colima) or "offline" (colima-gui).
+// entry kind "down" (colima) or "offline" (Oriel).
 func (s *Server) handleOutages(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.recorder.outagesCopy())
 }

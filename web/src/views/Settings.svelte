@@ -2,6 +2,9 @@
   import { onMount } from 'svelte'
   import { provider, checkProvider, setProvider, resolveText } from '../lib/provider.svelte.js'
   import { toast } from '../lib/toast.svelte.js'
+  import { self } from '../lib/self.svelte.js'
+  import { update, applyUpdate, restartService } from '../lib/update.svelte.js'
+  import { confirm } from '../lib/confirm.svelte.js'
   import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../editions/registry.svelte.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern } from '../lib/discovery.svelte.js'
   import { PathField } from '../lib/pathfield.svelte.js'
@@ -31,6 +34,21 @@
 
   const field =
     'w-full rounded-[--radius] border border-border bg-bg px-3 py-1.5 text-sm outline-none placeholder:text-muted focus:border-accent/50'
+
+  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '—')
+  async function doUpdate() {
+    const res = await confirm({
+      title: 'Update Oriel?',
+      message: `Download v${update.latest}, verify its checksum, and replace the binary. Oriel must restart to apply.`,
+      confirmLabel: 'Update',
+      danger: false,
+      checkbox: 'Restart automatically when done',
+      checked: true,
+    })
+    if (!res || !res.ok) return
+    const ok = await applyUpdate()
+    if (ok && res.checked) await restartService()
+  }
 
   // External theme loader.
   let extUrl = $state('')
@@ -84,9 +102,9 @@
   }
 </script>
 
-<div class="mx-auto flex max-w-2xl flex-col gap-5 pb-4">
+<div class="mx-auto max-w-5xl pb-4 lg:columns-2 lg:gap-5">
   <!-- Editions & themes -->
-  <section class="card rounded-[--radius] p-5">
+  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Editions &amp; themes</h2>
     <p class="mt-0.5 text-xs text-muted">Switch the whole interface, or load an external theme bundle.</p>
 
@@ -135,7 +153,7 @@
   </section>
 
   <!-- Compose discovery -->
-  <section class="card rounded-[--radius] p-5">
+  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Compose discovery</h2>
     <p class="mt-0.5 text-xs text-muted">Find Docker Compose projects on disk so you can deploy them from the Stacks tab.</p>
 
@@ -193,7 +211,7 @@
   </section>
 
   <!-- AI / Natural language -->
-  <section class="card rounded-[--radius] p-5">
+  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
     <div class="flex items-center gap-2.5">
       <h2 class="display text-sm font-semibold tracking-tight">AI · natural language</h2>
       <span class="rounded-full px-2 py-0.5 text-[11px] {provider.enabled ? 'bg-ok/15 text-ok' : 'bg-surface-2 text-muted'}">{provider.enabled ? 'Connected' : 'Not configured'}</span>
@@ -210,7 +228,7 @@
         {#if provider.enabled}<button class={btn} onclick={() => { urlDraft = ''; saveProvider() }}>Disable</button>{/if}
       </div>
       <p class="mt-2 text-xs text-faint">
-        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="font-mono">/resolve</span> contract. Or set <span class="font-mono">COLIMA_GUI_PROVIDER_URL</span> at launch.
+        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="font-mono">/resolve</span> contract. Or set <span class="font-mono">ORIEL_PROVIDER_URL</span> at launch.
       </p>
     </div>
 
@@ -230,5 +248,37 @@
         {/if}
       </div>
     {/if}
+  </section>
+
+  <!-- Updates -->
+  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+    <h2 class="display text-sm font-semibold tracking-tight">Updates</h2>
+    <p class="mt-0.5 text-xs text-muted">Current version <span class="font-mono text-fg/85">{verLabel}</span>.</p>
+
+    <div class="mt-4">
+      {#if update.phase === 'restarting'}
+        <p class="text-[13px] text-muted">Restarting Oriel — this page will reconnect…</p>
+      {:else if update.phase === 'applying'}
+        <p class="text-[13px] text-muted">Downloading &amp; verifying…</p>
+      {:else if update.phase === 'done'}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-muted">Installed <span class="font-mono">v{update.latest}</span> — restart to apply.</span>
+          <button class={btnPrimary} onclick={() => restartService()}>Restart now</button>
+        </div>
+      {:else if !update.managed}
+        <p class="text-[13px] text-faint">In-app updates need a service install (<span class="font-mono">oriel service install</span>).{#if update.available} A new version <span class="font-mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-accent hover:underline">see release ↗</a>.{/if}</p>
+      {:else if update.available}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-muted">Update available: <span class="font-mono font-medium text-fg">v{update.latest}</span></span>
+          <button class={btnPrimary} onclick={doUpdate}>Update now</button>
+        </div>
+      {:else}
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-[13px] text-faint">You're on the latest version.</span>
+          <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-xs text-accent hover:underline">Releases ↗</a>
+        </div>
+      {/if}
+      {#if update.error}<p class="mt-2 text-xs text-danger">{update.error}</p>{/if}
+    </div>
   </section>
 </div>
