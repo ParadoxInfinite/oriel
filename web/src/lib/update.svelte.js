@@ -14,11 +14,12 @@ export const update = $state({
   error: '',
 })
 
-let started = false
+// The backend caches the GitHub result for a day; this interval just keeps a
+// long-open tab in sync with that daily refresh (fresh mounts check immediately).
+const RECHECK_MS = 3 * 60 * 60 * 1000
+let timer = null
 
 export async function checkUpdate() {
-  if (started) return
-  started = true
   try {
     const d = await apiGet('/api/update')
     update.current = d.current || ''
@@ -31,6 +32,20 @@ export async function checkUpdate() {
   } finally {
     update.checked = true
   }
+}
+
+// startUpdateChecks runs an immediate check on mount, then re-checks every few
+// hours — skipping while a self-update is mid-flow so it can't clobber that state.
+export function startUpdateChecks() {
+  checkUpdate()
+  timer = setInterval(() => {
+    if (!update.phase) checkUpdate()
+  }, RECHECK_MS)
+}
+
+export function stopUpdateChecks() {
+  if (timer) clearInterval(timer)
+  timer = null
 }
 
 // applyUpdate downloads + verifies + installs the new binary. Returns true when a
