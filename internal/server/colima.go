@@ -1,28 +1,33 @@
 package server
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/ParadoxInfinite/oriel/internal/colima"
 )
 
-// handleColimaStatus returns engine status — the source of truth for the
-// dashboard gauges and the running/stopped zero-state. With colima present it
-// reports the VM; otherwise it reports the generic Docker engine.
-func (s *Server) handleColimaStatus(w http.ResponseWriter, r *http.Request) {
+// statusResult wraps engine status for the live stream: ok=false carries the
+// reason colima was unreachable (so the UI shows "offline", not "stopped").
+type statusResult struct {
+	OK     bool           `json:"ok"`
+	Status *colima.Status `json:"status,omitempty"`
+	Error  string         `json:"error,omitempty"`
+}
+
+// currentStatus computes engine status once. Shared by the REST handler and the
+// live stream so both report identically.
+func (s *Server) currentStatus(ctx context.Context) statusResult {
 	if colima.Installed() {
-		st, err := colima.GetStatus(r.Context())
+		st, err := colima.GetStatus(ctx)
 		if err != nil {
-			writeJSON(w, http.StatusInternalServerError, errorBody(err))
-			return
+			return statusResult{OK: false, Error: err.Error()}
 		}
 		st.Engine = "colima"
-		writeJSON(w, http.StatusOK, st)
-		return
+		return statusResult{OK: true, Status: &st}
 	}
-
-	info := s.docker.EngineInfo(r.Context())
-	writeJSON(w, http.StatusOK, colima.Status{
+	info := s.docker.EngineInfo(ctx)
+	return statusResult{OK: true, Status: &colima.Status{
 		Engine:       "docker",
 		Profile:      "docker",
 		Running:      info.Reachable,
@@ -33,7 +38,18 @@ func (s *Server) handleColimaStatus(w http.ResponseWriter, r *http.Request) {
 		Driver:       info.Driver,
 		DockerSocket: info.Host,
 		Version:      info.ServerVersion,
-	})
+	}}
+}
+
+// handleColimaStatus returns engine status — the source of truth for the
+// dashboard gauges and the running/stopped zero-state.
+func (s *Server) handleColimaStatus(w http.ResponseWriter, r *http.Request) {
+	res := s.currentStatus(r.Context())
+	if !res.OK {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": res.Error})
+		return
+	}
+	writeJSON(w, http.StatusOK, res.Status)
 }
 
 // handleColimaLifecycle streams the output of `colima start|stop|restart` as SSE

@@ -1,12 +1,9 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
-  import { startStatusPolling, stopStatusPolling } from './lib/status.svelte.js'
   import { startLive, stopLive } from './lib/live.svelte.js'
   import { refreshContainers } from './lib/containers.svelte.js'
   import { refreshStacks } from './lib/stacks.svelte.js'
   import { checkProvider } from './lib/provider.svelte.js'
-  import { startSelfPolling, stopSelfPolling } from './lib/self.svelte.js'
-  import { startOutagesPolling, stopOutagesPolling } from './lib/outages.svelte.js'
   import { togglePalette } from './lib/palette.svelte.js'
   import { resumeOps } from './lib/op.svelte.js'
 
@@ -33,21 +30,17 @@
   }
 
   onMount(() => {
-    startStatusPolling()
+    // One live stream feeds status/self/outages/stats/history; docker events drive
+    // list refreshes. No polling loops.
     startLive()
     refreshContainers()
     refreshStacks()
     checkProvider()
-    startSelfPolling()
-    startOutagesPolling()
     loadExternalThemes()
     resumeOps() // re-attach to any prune still running from before a refresh
   })
   onDestroy(() => {
-    stopStatusPolling()
     stopLive()
-    stopSelfPolling()
-    stopOutagesPolling()
   })
 </script>
 

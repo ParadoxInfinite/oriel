@@ -233,6 +233,16 @@ func (r *recorder) latestSnapshot() []docker.Stat {
 	return r.latest
 }
 
+// latestPoint returns the most recent aggregate sample, ok=false if none yet.
+func (r *recorder) latestPoint() (HistoryPoint, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if len(r.history) == 0 {
+		return HistoryPoint{}, false
+	}
+	return r.history[len(r.history)-1], true
+}
+
 func (r *recorder) historyCopy() []HistoryPoint {
 	r.mu.Lock()
 	defer r.mu.Unlock()
