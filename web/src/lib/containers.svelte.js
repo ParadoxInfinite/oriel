@@ -14,3 +14,13 @@ export async function refreshContainers() {
     containers.loading = false
   }
 }
+
+const stripDigest = (s) => (s || '').replace(/^sha256:/, '')
+
+// Match by digest (not tag) so even a dangling <none> image resolves to the
+// containers actually holding it.
+export function containersForImage(imageId) {
+  const id = stripDigest(imageId)
+  if (!id) return []
+  return containers.list.filter((c) => stripDigest(c.imageId) === id)
+}

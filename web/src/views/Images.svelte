@@ -1,6 +1,7 @@
 <script>
   import { images, refreshImages } from '../lib/resources.svelte.js'
   import { startImagePrune } from '../lib/op.svelte.js'
+  import { containersForImage } from '../lib/containers.svelte.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
   import { toast } from '../lib/toast.svelte.js'
@@ -10,10 +11,15 @@
   import ResourceTable from '../components/ResourceTable.svelte'
   import PullDialog from '../components/PullDialog.svelte'
   import PrunePreview from '../components/PrunePreview.svelte'
+  import LogsDrawer from '../components/LogsDrawer.svelte'
+  import StateBadge from '../components/StateBadge.svelte'
 
   let showPull = $state(false)
   let pullRef = $state('')
   let pruneItems = $state(null) // null = closed
+  let usedByImage = $state(null) // image whose "used by" list is open
+  let drawerContainer = $state(null) // container shown in the logs drawer
+  const usingContainers = $derived(usedByImage ? containersForImage(usedByImage.id) : [])
 
   const columns = [
     { label: 'Repository', key: 'repo', get: (i) => i.tags[0] },
@@ -110,7 +116,11 @@
           {/each}
         </td>
         <td class="px-4 py-2.5 font-mono text-xs text-muted">{bytes(img.size)}</td>
-        <td class="px-4 py-2.5 text-xs text-muted">{img.containers > 0 ? `${img.containers}` : '—'}</td>
+        <td class="px-4 py-2.5 text-xs text-muted">
+          {#if img.containers > 0}
+            <button class="font-mono font-medium text-accent hover:underline" title="See which containers use this image" onclick={() => (usedByImage = img)}>{img.containers} →</button>
+          {:else}—{/if}
+        </td>
         <td class="px-4 py-2.5 text-xs text-muted">{relativeTime(img.created)}</td>
         <td class="px-4 py-2.5 text-right">
           <div class="flex items-center justify-end gap-1.5">
@@ -137,4 +147,35 @@
     onClose={() => (pruneItems = null)}
     onPrune={doPrune}
   />
+{/if}
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && usedByImage && (usedByImage = null)} />
+
+{#if usedByImage}
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4" role="presentation" onclick={(e) => e.target === e.currentTarget && (usedByImage = null)}>
+    <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-[--radius] border border-border bg-surface shadow-2xl">
+      <div class="border-b border-border px-5 py-3">
+        <h2 class="display text-sm font-semibold tracking-tight">Used by {usingContainers.length} container{usingContainers.length === 1 ? '' : 's'}</h2>
+        <p class="mt-0.5 truncate font-mono text-[11px] text-faint">{usedByImage.tags?.[0] && usedByImage.tags[0] !== '<none>' ? usedByImage.tags[0] : shortId(usedByImage.id)}</p>
+      </div>
+      <div class="min-h-0 flex-1 overflow-auto">
+        {#each usingContainers as ct (ct.id)}
+          <button class="flex w-full items-center gap-3 border-b border-border/60 px-5 py-3 text-left transition-colors last:border-0 hover:bg-surface-2/40" onclick={() => { drawerContainer = ct; usedByImage = null }}>
+            <StateBadge state={ct.state} />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-[13px] font-medium text-fg">{ct.name}</span>
+              <span class="block truncate text-[11px] text-faint">{ct.status}{ct.project ? ` · ${ct.project}` : ''}</span>
+            </span>
+            <svg class="shrink-0 text-faint" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        {:else}
+          <div class="px-5 py-10 text-center text-sm text-muted">No matching containers found — the list may be refreshing.</div>
+        {/each}
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if drawerContainer}
+  <LogsDrawer container={drawerContainer} onClose={() => (drawerContainer = null)} />
 {/if}

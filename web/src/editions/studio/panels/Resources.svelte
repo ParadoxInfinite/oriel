@@ -15,11 +15,14 @@
     sortRows,
     startImagePrune,
     startVolumePrune,
+    containersForImage,
   } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import SortHeader from '../lib/SortHeader.svelte'
   import PrunePreview from '../lib/PrunePreview.svelte'
   import PullDialog from '../lib/PullDialog.svelte'
+  import StatusPill from '../lib/StatusPill.svelte'
+  import ContainerDrawer from '../lib/ContainerDrawer.svelte'
 
   let { kind } = $props()
 
@@ -144,6 +147,9 @@
 
   let pullRef = $state(null) // null = closed; string = open with that initial ref
   let pruneItems = $state(null) // null = closed
+  let usedByImage = $state(null) // image whose "used by" list is open
+  let drawerContainer = $state(null) // container shown in the drawer
+  const usingContainers = $derived(usedByImage ? containersForImage(usedByImage.id) : [])
   async function openPrune() {
     try {
       const items = await c.prune.collect()
@@ -209,6 +215,8 @@
                         </div>
                       {/each}
                     </div>
+                  {:else if col.key === 'inuse' && item.containers > 0}
+                    <button class="mono tnum text-[12.5px] font-medium text-[var(--accent)] hover:underline" title="See which containers use this image" onclick={() => (usedByImage = item)}>{item.containers} →</button>
                   {:else}
                     <span class="{col.mono ? 'mono' : ''} {col.right ? 'tnum' : ''} {col.strong ? 'text-[13px] font-medium text-[var(--text)]' : 'text-[12.5px] text-[var(--text-2)]'} {col.grow ? 'block truncate' : ''}">{col.render ? col.render(item) : col.get(item)}</span>
                     {#if col.badge?.(item)}<span class="chip ml-2">{col.badge(item)}</span>{/if}
@@ -239,4 +247,35 @@
 
 {#if pullRef !== null}
   <PullDialog initial={pullRef} onClose={() => (pullRef = null)} />
+{/if}
+
+<svelte:window onkeydown={(e) => e.key === 'Escape' && usedByImage && (usedByImage = null)} />
+
+{#if usedByImage}
+  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (usedByImage = null)}>
+    <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+      <div class="border-b border-[var(--border)] px-5 py-3.5">
+        <h2 class="text-[14px] font-semibold tracking-tight">Used by {usingContainers.length} container{usingContainers.length === 1 ? '' : 's'}</h2>
+        <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]">{usedByImage.tags?.[0] && usedByImage.tags[0] !== '<none>' ? usedByImage.tags[0] : shortId(usedByImage.id)}</p>
+      </div>
+      <div class="min-h-0 flex-1 overflow-auto">
+        {#each usingContainers as ct (ct.id)}
+          <button class="flex w-full items-center gap-3 border-b border-[var(--border)] px-5 py-3 text-left transition-colors last:border-0 hover:bg-[var(--panel-2)]" onclick={() => { drawerContainer = ct; usedByImage = null }}>
+            <StatusPill state={ct.state} />
+            <span class="min-w-0 flex-1">
+              <span class="block truncate text-[13px] font-medium text-[var(--text)]">{ct.name}</span>
+              <span class="block truncate text-[11px] text-[var(--text-3)]">{ct.status}{ct.project ? ` · ${ct.project}` : ''}</span>
+            </span>
+            <svg class="shrink-0 text-[var(--text-3)]" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+          </button>
+        {:else}
+          <div class="px-5 py-10 text-center text-sm text-[var(--text-2)]">No matching containers found — the list may be refreshing.</div>
+        {/each}
+      </div>
+    </div>
+  </div>
+{/if}
+
+{#if drawerContainer}
+  <ContainerDrawer container={drawerContainer} onClose={() => (drawerContainer = null)} />
 {/if}
