@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"io/fs"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/ParadoxInfinite/oriel/internal/actions"
 	"github.com/ParadoxInfinite/oriel/internal/docker"
@@ -18,6 +20,7 @@ import (
 type Server struct {
 	mux      *http.ServeMux
 	web      fs.FS
+	base     string
 	docker   *docker.Client
 	tools    *tools.Registry
 	provider *provider.Provider
@@ -31,6 +34,7 @@ func New(web fs.FS) *Server {
 	s := &Server{
 		mux:      http.NewServeMux(),
 		web:      web,
+		base:     normalizeBase(os.Getenv("ORIEL_BASE_PATH")),
 		docker:   dc,
 		tools:    actions.New(dc),
 		provider: provider.New(),
@@ -62,6 +66,22 @@ func (s *Server) Close() {
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// When served under a subpath, strip it before routing so the mux and the
+	// static handler see root-relative paths. This is tolerant: if the reverse
+	// proxy already strips the prefix, the request arrives root-relative and the
+	// TrimPrefix is a no-op — so it works with proxies that strip and those that
+	// don't.
+	if s.base != "/" {
+		prefix := strings.TrimSuffix(s.base, "/") // e.g. "/oriel"
+		if r.URL.Path == prefix {
+			// Bare "/oriel" → "/oriel/" so the base resolves consistently.
+			http.Redirect(w, r, s.base, http.StatusMovedPermanently)
+			return
+		}
+		if rest, ok := strings.CutPrefix(r.URL.Path, prefix+"/"); ok {
+			r.URL.Path = "/" + rest
+		}
+	}
 	s.mux.ServeHTTP(w, r)
 }
 
