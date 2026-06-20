@@ -1,0 +1,10 @@
+Oriel
+Copyright 2026 The Oriel contributors
+
+This product includes software developed by the Oriel contributors.
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This software depends on third-party components, including the Docker Engine
+Go SDK (github.com/docker/docker, Apache-2.0). Those components are distributed
+under their own licenses.
