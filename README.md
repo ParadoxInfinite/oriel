@@ -22,7 +22,15 @@ themeable browser UI. ~15–30 MB RAM, zero dependencies, binds to `127.0.0.1`.
 
 ## Install
 
-**Download a binary** from [Releases](https://github.com/ParadoxInfinite/oriel/releases) — copy the line for your platform:
+**Quick install** — detects your platform, verifies the checksum, installs to your PATH:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ParadoxInfinite/oriel/main/install.sh | sh
+```
+
+> ⚠️ This pipes a script into your shell, which runs as you. **[Read `install.sh`](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh) before running it** — or use the explicit per-platform commands below, which do the same thing, one intentional step at a time.
+
+**Manual** — copy the line for your platform:
 
 ```sh
 # macOS · Apple Silicon (M1+)
