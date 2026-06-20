@@ -25,6 +25,7 @@ type Server struct {
 	tools    *tools.Registry
 	provider *provider.Provider
 	recorder *recorder
+	jobs     *jobManager
 	cancel   context.CancelFunc
 }
 
@@ -39,6 +40,7 @@ func New(web fs.FS) *Server {
 		tools:    actions.New(dc),
 		provider: provider.New(),
 		recorder: newRecorder(dc),
+		jobs:     newJobManager(),
 	}
 	// The env var wins as an explicit override; otherwise restore a URL the user
 	// configured at runtime (Settings → AI) so it survives restarts.
@@ -127,9 +129,18 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/volumes/prune/preview", s.handleVolumesPrunePreview)
 	s.mux.HandleFunc("GET /api/networks", s.handleNetworks)
 
-	// System-wide disk usage + prune.
+	// System-wide disk usage.
 	s.mux.HandleFunc("GET /api/system/df", s.handleSystemUsage)
-	s.mux.HandleFunc("POST /api/system/prune", s.handleSystemPrune)
+
+	// Background operations: prune jobs run server-side (survive client refresh),
+	// stream progress, and can be cancelled. List + stream + cancel let a client
+	// re-attach to whatever it left running.
+	s.mux.HandleFunc("GET /api/ops", s.handleListOps)
+	s.mux.HandleFunc("GET /api/ops/{id}/stream", s.handleOpStream)
+	s.mux.HandleFunc("POST /api/ops/{id}/cancel", s.handleCancelOp)
+	s.mux.HandleFunc("POST /api/ops/system-prune", s.handleStartSystemPrune)
+	s.mux.HandleFunc("POST /api/ops/image-prune", s.handleStartImagePrune)
+	s.mux.HandleFunc("POST /api/ops/volume-prune", s.handleStartVolumePrune)
 
 	// Live data (SSE) + history.
 	s.mux.HandleFunc("GET /api/events", s.handleEvents)

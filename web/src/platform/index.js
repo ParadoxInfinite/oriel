@@ -55,8 +55,9 @@ export { self } from '../lib/self.svelte.js'
  *  where kind is 'down' (colima unreachable) or 'offline' (gui itself wasn't running). */
 export { outages } from '../lib/outages.svelte.js'
 
-/** Streaming-operation overlay state for long-running lifecycle/compose ops. */
-export { op, runOp, dismissOp } from '../lib/op.svelte.js'
+/** Streaming-operation overlay state for long-running lifecycle/compose ops, plus
+ *  background prune jobs that survive a refresh and can be cancelled. */
+export { op, runOp, dismissOp, cancelOp, resumeOps, startSystemPrune, startImagePrune, startVolumePrune } from '../lib/op.svelte.js'
 
 // ── Actions ─────────────────────────────────────────────────────────────────
 

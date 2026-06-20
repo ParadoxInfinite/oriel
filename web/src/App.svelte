@@ -8,6 +8,7 @@
   import { startSelfPolling, stopSelfPolling } from './lib/self.svelte.js'
   import { startOutagesPolling, stopOutagesPolling } from './lib/outages.svelte.js'
   import { togglePalette } from './lib/palette.svelte.js'
+  import { resumeOps } from './lib/op.svelte.js'
 
   import { activeEdition, loadExternalThemes } from './editions/registry.svelte.js'
   import { overlayTheme, overlayVars } from './lib/overlayTheme.svelte.js'
@@ -40,6 +41,7 @@
     startSelfPolling()
     startOutagesPolling()
     loadExternalThemes()
+    resumeOps() // re-attach to any prune still running from before a refresh
   })
   onDestroy(() => {
     stopStatusPolling()

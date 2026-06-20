@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { apiGet, runOp, fmt, refreshContainers, refreshImages, refreshVolumes } from '../../../platform/index.js'
+  import { apiGet, startSystemPrune, fmt } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   let { onClose } = $props()
@@ -32,18 +32,14 @@
 
   function run() {
     const vol = includeVolumes
-    onClose() // hand off to the op overlay, which streams per-step progress
-    runOp('Reclaiming disk space', `/api/system/prune?volumes=${vol}`, () => {
-      refreshContainers()
-      refreshImages()
-      refreshVolumes()
-    })
+    onClose() // hand off to the background-job op overlay (streams per-step progress)
+    startSystemPrune(vol)
   }
 </script>
 
-<svelte:window onkeydown={(e) => e.key === 'Escape' && !busy && onClose()} />
+<svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
 
-<div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && !busy && onClose()}>
+<div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
   <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
     <div class="flex items-center gap-2.5 border-b border-[var(--border)] px-5 py-3.5">
       <div class="grid h-7 w-7 place-items-center rounded-lg bg-[var(--amber-tint)] text-[var(--amber)]"><Icon name="broom" size={15} /></div>

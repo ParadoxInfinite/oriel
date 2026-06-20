@@ -1,5 +1,9 @@
 <script>
-  import { op, dismissOp } from '../lib/op.svelte.js'
+  import { op, dismissOp, cancelOp } from '../lib/op.svelte.js'
+
+  // Background jobs (op.jobId set) keep running server-side, so they can be
+  // hidden while in flight and cancelled explicitly. Request-tied ops can't.
+  const closeDisabled = $derived(op.active && !op.jobId)
 </script>
 
 {#if op.title}
@@ -20,15 +24,31 @@
 {/each}{#if op.error}
 {op.error}{/if}</pre>
 
-      <div class="flex justify-end border-t border-border px-5 py-3">
-        <button
-          class="rounded-[--radius] px-3 py-1.5 text-sm transition-colors disabled:opacity-40
-            {op.error ? 'bg-danger/15 text-danger hover:bg-danger/25' : 'bg-surface-2 text-fg hover:bg-border'}"
-          disabled={op.active}
-          onclick={dismissOp}
-        >
-          {op.active ? 'Working…' : 'Close'}
-        </button>
+      <div class="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+        {#if op.jobId && !op.done}
+          <span class="text-[11px] text-faint">Runs in the background — safe to close.</span>
+        {:else}
+          <span></span>
+        {/if}
+        <div class="flex gap-2">
+          {#if op.jobId && !op.done}
+            <button
+              class="rounded-[--radius] bg-danger/15 px-3 py-1.5 text-sm text-danger transition-colors hover:bg-danger/25 disabled:opacity-40"
+              disabled={op.cancelling}
+              onclick={cancelOp}
+            >
+              {op.cancelling ? 'Cancelling…' : 'Cancel operation'}
+            </button>
+          {/if}
+          <button
+            class="rounded-[--radius] px-3 py-1.5 text-sm transition-colors disabled:opacity-40
+              {op.error ? 'bg-danger/15 text-danger hover:bg-danger/25' : 'bg-surface-2 text-fg hover:bg-border'}"
+            disabled={closeDisabled}
+            onclick={dismissOp}
+          >
+            {closeDisabled ? 'Working…' : op.active ? 'Hide' : 'Close'}
+          </button>
+        </div>
       </div>
     </div>
   </div>

@@ -6,7 +6,6 @@
 
   let selected = $state(new Set(items.map((i) => i.id)))
   let busy = $state(false)
-  let done = $state(0)
 
   const chosen = $derived(items.filter((i) => selected.has(i.id)))
   const total = $derived(chosen.reduce((a, i) => a + (i.size || 0), 0))
@@ -23,8 +22,8 @@
   async function run() {
     if (!chosen.length || busy) return
     busy = true
-    done = 0
-    await onPrune(chosen, (n) => (done = n))
+    // Hand the chosen items to a background job; progress shows in the op overlay.
+    await onPrune(chosen)
     busy = false
     onClose()
   }
@@ -59,19 +58,12 @@
       {/each}
     </div>
 
-    {#if busy}
-      <div class="border-t border-[var(--border)] px-5 pt-3">
-        <div class="meter"><span style="width:{chosen.length ? (done / chosen.length) * 100 : 0}%;background:var(--accent)"></span></div>
-        <div class="mono mt-1.5 text-[11px] text-[var(--text-3)]">Removing {done} of {chosen.length}…</div>
-      </div>
-    {/if}
-
     <div class="flex items-center justify-between gap-3 border-t border-[var(--border)] px-5 py-3">
       <span class="text-xs text-[var(--text-2)]">{chosen.length} of {items.length} · <span class="mono font-medium text-[var(--green)]">{fmt.bytes(total)}</span> reclaimable</span>
       <div class="flex gap-2">
         <button class="btn btn-default btn-sm" onclick={onClose} disabled={busy}>Cancel</button>
         <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick={run} disabled={busy || chosen.length === 0}>
-          {busy ? `Pruning ${done}/${chosen.length}…` : `Prune ${chosen.length}`}
+          {busy ? 'Starting…' : `Prune ${chosen.length}`}
         </button>
       </div>
     </div>

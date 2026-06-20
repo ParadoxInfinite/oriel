@@ -6,7 +6,6 @@
 
   let selected = $state(new Set(items.map((i) => i.id)))
   let busy = $state(false)
-  let done = $state(0)
 
   const chosen = $derived(items.filter((i) => selected.has(i.id)))
   const total = $derived(chosen.reduce((a, i) => a + (i.size || 0), 0))
@@ -23,8 +22,8 @@
   async function run() {
     if (!chosen.length || busy) return
     busy = true
-    done = 0
-    await onPrune(chosen, (n) => (done = n))
+    // Hand the chosen items to a background job; progress shows in the op overlay.
+    await onPrune(chosen)
     busy = false
     onClose()
   }
@@ -70,15 +69,6 @@
       {/each}
     </div>
 
-    {#if busy}
-      <div class="border-t border-border px-5 pt-3">
-        <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-          <div class="h-full rounded-full bg-accent transition-all" style="width:{chosen.length ? (done / chosen.length) * 100 : 0}%"></div>
-        </div>
-        <div class="mt-1.5 font-mono text-[11px] text-faint">Removing {done} of {chosen.length}…</div>
-      </div>
-    {/if}
-
     <div class="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
       <span class="text-xs text-muted">
         {chosen.length} of {items.length} · <span class="font-mono text-ok">{bytes(total)}</span> reclaimable
@@ -94,7 +84,7 @@
           onclick={run}
           disabled={busy || chosen.length === 0}
         >
-          {busy ? `Pruning ${done}/${chosen.length}…` : `Prune ${chosen.length}`}
+          {busy ? 'Starting…' : `Prune ${chosen.length}`}
         </button>
       </div>
     </div>
