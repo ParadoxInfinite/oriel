@@ -1,5 +1,12 @@
 // Thin fetch wrappers + an SSE-over-POST reader. One place for all backend I/O.
 
+// Prefix backend paths with the SPA base so one build works at the host root or
+// behind a reverse-proxy subpath. Vite bakes a sentinel base into the bundle;
+// the Go server rewrites it to ORIEL_BASE_PATH (or "/") when serving, so BASE_URL
+// is "/" at root or e.g. "/oriel/" under a subpath.
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
+const url = (path) => BASE + path
+
 async function parseError(res) {
   try {
     const body = await res.json()
@@ -10,13 +17,13 @@ async function parseError(res) {
 }
 
 export async function apiGet(path) {
-  const res = await fetch(path)
+  const res = await fetch(url(path))
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
 }
 
 export async function apiPost(path, body) {
-  const res = await fetch(path, {
+  const res = await fetch(url(path), {
     method: 'POST',
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
@@ -26,7 +33,7 @@ export async function apiPost(path, body) {
 }
 
 export async function apiPut(path, body) {
-  const res = await fetch(path, {
+  const res = await fetch(url(path), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -38,7 +45,7 @@ export async function apiPut(path, body) {
 // streamPost parses a text/event-stream POST response, one onEvent(name, data)
 // per frame. POST (not EventSource) because the action mutates state.
 export async function streamPost(path, { onEvent, signal } = {}) {
-  const res = await fetch(path, { method: 'POST', signal })
+  const res = await fetch(url(path), { method: 'POST', signal })
   if (!res.ok) throw new Error(await parseError(res))
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
@@ -71,7 +78,7 @@ export async function streamPost(path, { onEvent, signal } = {}) {
 // sse opens an EventSource, listening for the named events. onEvent receives
 // (name, parsedData). Returns the EventSource so callers can close() it.
 export function sse(path, events, onEvent) {
-  const es = new EventSource(path)
+  const es = new EventSource(url(path))
   for (const name of events) {
     es.addEventListener(name, (e) => {
       let data = e.data
