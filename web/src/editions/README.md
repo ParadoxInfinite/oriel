@@ -1,16 +1,16 @@
 # Editions (theme plugins)
 
-An **edition** is a complete, swappable front-end for colima-gui. The host mounts
-exactly one at a time; the floating switcher (bottom-left) changes it live and
-remembers the choice in `localStorage`. This is the same idea as  ↔
-: the data/control layer is fixed, the presentation is a plugin.
+An **edition** is a complete, swappable front-end for Oriel. The host mounts
+exactly one at a time; **Settings** changes it live and remembers the choice in
+`localStorage`. This is the same idea as  ↔ : the
+data/control layer is fixed, the presentation is a plugin.
 
 Two ship in the box:
 
-| id        | look                                            |
-| --------- | ----------------------------------------------- |
-| `studio`  | Clean, native-feel light control panel (default) |
-| `classic` | Calm teal dark control panel                    |
+| id        | look                                                  |
+| --------- | ----------------------------------------------------- |
+| `studio`  | Clean, native-feel light/dark control panel (default) |
+| `classic` | Calm teal dark control panel                          |
 
 ## The contract
 
@@ -21,15 +21,29 @@ import { status, containers, stats, invoke, lifecycle, fmt } from '@platform'
 // (relative: ../../platform/index.js)
 ```
 
-That module is the entire stable surface — reactive state (`status`,
-`containers`, `images`, `volumes`, `networks`, `stacks`, `stats`, `history`,
-`self`, `op`) plus actions (`invoke`, `lifecycle`, `stackOp`, `confirm`,
-`toast`, `openPalette`) and helpers (`fmt`, `icons`). Never reach into `../lib/*`
-directly; if it isn't re-exported from `platform/index.js`, it isn't contract.
+That module is the entire stable surface. Highlights:
 
-An edition is just a Svelte component that renders the whole app from that state.
-It does not own polling or the global overlays (op progress, command palette,
-confirm dialog, toasts) — the host provides those around it.
+- **Reactive state:** `status`, `containers`, `images`, `volumes`, `networks`,
+  `stacks`, `stats`, `history`, `self`, `outages`, `ops` (the multi-op tracker
+  that drives the progress modal + sidebar tray).
+- **Actions:** `invoke`, `lifecycle`, `stackOp`, `confirm`, `toast`,
+  `openPalette`; prune starters `startSystemPrune` / `startImagePrune` /
+  `startVolumePrune`; op controls `cancelOp` / `resumeOps` / `focusOp` /
+  `minimizeOp`.
+- **Headless controllers:** `PullController`, `LogsController` — own the stateful
+  logic so editions stay presentational.
+- **Helpers:** `fmt`, `icons`, `containersForImage`, `isPinnedImage`,
+  `suggestTag`, `setOverlayTheme`, plus the discovery store.
+
+Never reach into `../lib/*` directly; if it isn't re-exported from
+`platform/index.js`, it isn't contract.
+
+An edition is a Svelte component that renders the whole app from that state. It
+does **not** own data fetching or the global overlays (op progress, command
+palette, confirm dialog, toasts) — the host owns the single push-based live
+stream (no polling) and mounts the overlays around the edition. It *does* publish
+how those overlays should look via `setOverlayTheme(scheme, accent)` so they
+match the active edition (see `lib/overlayTheme.svelte.js`).
 
 ## Add a built-in edition
 

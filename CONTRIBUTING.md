@@ -7,7 +7,7 @@ layer.
 
 ## Getting set up
 
-Requirements: Go 1.24+, Node 20+, and a working `docker` CLI (via Colima or any
+Requirements: Go 1.26+, Node 20+, and a working `docker` CLI (via Colima or any
 daemon).
 
 ```sh
