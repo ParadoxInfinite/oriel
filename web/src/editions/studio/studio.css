@@ -1,0 +1,322 @@
+/* ============================================================================
+   STUDIO — a calm, native-feeling control panel for colima-gui.
+   Design language borrowed from tools developers like living in: OrbStack's
+   airy surfaces, Linear's restraint, Docker Desktop's familiarity.
+   A single --accent drives the whole accent ramp (via color-mix), every gray is
+   a variable, and a full dark palette ships under .studio-root.dark. Scoped so
+   it never leaks into other editions.
+   ========================================================================== */
+
+.studio-root {
+  /* Surfaces. */
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --panel-2: #fafbfc;
+  --sidebar: #fbfbfd;
+  --hover: #eef0f3;
+  --chip-bg: #f1f2f5;
+  --track: #eaecef;
+  --scroll: #d3d6dd;
+  --scroll-hover: #bcc0c9;
+
+  /* Hairlines + elevation. */
+  --border: #e9eaee;
+  --border-strong: #dfe1e6;
+  --shadow-sm: 0 1px 2px rgba(18, 22, 31, 0.04), 0 1px 3px rgba(18, 22, 31, 0.05);
+  --shadow-md: 0 4px 12px -3px rgba(18, 22, 31, 0.1), 0 2px 6px -3px rgba(18, 22, 31, 0.06);
+  --shadow-lg: 0 12px 32px -8px rgba(18, 22, 31, 0.16);
+
+  /* Ink. */
+  --text: #15181e;
+  --text-2: #545b68;
+  --text-3: #868d9a;
+
+  /* Accent — set one colour; the ramp derives from it. */
+  --accent: #5b5bd6;
+  --accent-hover: color-mix(in srgb, var(--accent) 86%, #000);
+  --accent-press: color-mix(in srgb, var(--accent) 74%, #000);
+  --accent-text: #ffffff;
+  --accent-tint: color-mix(in srgb, var(--accent) 9%, #fff);
+  --accent-tint-2: color-mix(in srgb, var(--accent) 16%, #fff);
+  --ring: color-mix(in srgb, var(--accent) 30%, transparent);
+
+  /* Semantic states. */
+  --green: #1f9d57;
+  --amber: #b06f1a;
+  --red: #d23c3c;
+  --green-tint: color-mix(in srgb, var(--green) 12%, #fff);
+  --amber-tint: color-mix(in srgb, var(--amber) 13%, #fff);
+  --red-tint: color-mix(in srgb, var(--red) 11%, #fff);
+  --slate-dot: #9aa1ad;
+
+  --font: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', monospace;
+
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow: hidden;
+  color: var(--text);
+  background: var(--bg);
+  font-family: var(--font);
+  font-feature-settings: 'cv01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  color-scheme: light;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+/* ── Dark palette ────────────────────────────────────────────────────────── */
+.studio-root.dark {
+  --bg: #0e0f13;
+  --panel: #16181d;
+  --panel-2: #1b1d23;
+  --sidebar: #121318;
+  --hover: #21232b;
+  --chip-bg: #21232b;
+  --track: #282b34;
+  --scroll: #3a3d47;
+  --scroll-hover: #4a4e5a;
+
+  --border: #25272f;
+  --border-strong: #33363f;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 18px -6px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 18px 44px -14px rgba(0, 0, 0, 0.7);
+
+  --text: #e9ebef;
+  --text-2: #9ea4b0;
+  --text-3: #6a717e;
+
+  --accent-text: #0c0d11;
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #fff);
+  --accent-press: color-mix(in srgb, var(--accent) 78%, #fff);
+  --accent-tint: color-mix(in srgb, var(--accent) 20%, #16181d);
+  --accent-tint-2: color-mix(in srgb, var(--accent) 30%, #16181d);
+
+  --green: #36c97f;
+  --amber: #e0a02a;
+  --red: #f06a6a;
+  --green-tint: color-mix(in srgb, var(--green) 16%, #16181d);
+  --amber-tint: color-mix(in srgb, var(--amber) 16%, #16181d);
+  --red-tint: color-mix(in srgb, var(--red) 16%, #16181d);
+  --slate-dot: #6a717e;
+
+  color-scheme: dark;
+}
+
+.studio-root .mono { font-family: var(--mono); }
+.studio-root .tnum { font-variant-numeric: tabular-nums; }
+.studio-root .eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────────── */
+.studio-root .card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.studio-root .card-link { transition: box-shadow 0.18s ease, border-color 0.18s ease, transform 0.18s ease; }
+.studio-root .card-link:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.studio-root .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+  padding: 8px 13px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.08s ease;
+}
+.studio-root .btn:active { transform: translateY(0.5px); }
+.studio-root .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
+.studio-root .btn:disabled { opacity: 0.5; cursor: default; }
+
+.studio-root .btn-primary { background: var(--accent); color: var(--accent-text); box-shadow: var(--shadow-sm); }
+.studio-root .btn-primary:hover { background: var(--accent-hover); }
+.studio-root .btn-primary:active { background: var(--accent-press); }
+
+.studio-root .btn-default { background: var(--panel); color: var(--text-2); border-color: var(--border-strong); box-shadow: var(--shadow-sm); }
+.studio-root .btn-default:hover { background: var(--panel-2); color: var(--text); border-color: var(--text-3); }
+
+.studio-root .btn-ghost { background: transparent; color: var(--text-2); }
+.studio-root .btn-ghost:hover { background: var(--hover); color: var(--text); }
+
+.studio-root .btn-danger { background: var(--panel); color: var(--red); border-color: color-mix(in srgb, var(--red) 40%, var(--border)); }
+.studio-root .btn-danger:hover { background: var(--red-tint); }
+
+.studio-root .btn-sm { padding: 5px 9px; font-size: 12px; border-radius: 7px; gap: 5px; }
+.studio-root .btn-icon { padding: 6px; }
+
+/* ── Status pill ─────────────────────────────────────────────────────────── */
+.studio-root .pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.studio-root .pill .dot { width: 6px; height: 6px; border-radius: 999px; }
+.studio-root .pill.on { background: var(--green-tint); color: var(--green); }
+.studio-root .pill.on .dot { background: var(--green); }
+.studio-root .pill.off { background: var(--hover); color: var(--text-2); }
+.studio-root .pill.off .dot { background: var(--slate-dot); }
+.studio-root .pill.warn { background: var(--amber-tint); color: var(--amber); }
+.studio-root .pill.warn .dot { background: var(--amber); }
+.studio-root .pill.bad { background: var(--red-tint); color: var(--red); }
+.studio-root .pill.bad .dot { background: var(--red); }
+
+.studio-root .beacon { position: relative; width: 9px; height: 9px; border-radius: 999px; background: var(--green); }
+.studio-root .beacon::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 999px;
+  border: 2px solid var(--green);
+  opacity: 0;
+  animation: s-ping 2.4s ease-out infinite;
+}
+@keyframes s-ping { 0% { opacity: 0.5; transform: scale(0.6); } 70%, 100% { opacity: 0; transform: scale(1.4); } }
+
+/* ── Sidebar nav ─────────────────────────────────────────────────────────── */
+.studio-root .nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+.studio-root .nav:hover { background: var(--hover); color: var(--text); }
+.studio-root .nav.on { background: var(--accent-tint); color: var(--accent); }
+.studio-root .nav.on .nav-i { color: var(--accent); }
+.studio-root .nav-i { color: var(--text-3); transition: color 0.14s ease; }
+.studio-root .nav:hover .nav-i { color: var(--text-2); }
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.studio-root .th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  text-align: left;
+  padding: 9px 16px;
+  white-space: nowrap;
+}
+.studio-root .th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  color: inherit;
+  transition: color 0.14s ease;
+}
+.studio-root .th-sort:hover { color: var(--text-2); }
+.studio-root .th-sort.active { color: var(--accent); }
+.studio-root .th-arrow { font-size: 9px; line-height: 1; opacity: 0; transition: opacity 0.14s ease; }
+.studio-root .th-sort:hover .th-arrow { opacity: 0.6; }
+.studio-root .th-sort.active .th-arrow { opacity: 1; }
+.studio-root .tr { transition: background 0.12s ease; }
+.studio-root .tr:hover { background: var(--panel-2); }
+.studio-root .chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--chip-bg);
+  border: 1px solid var(--border);
+  padding: 1px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.studio-root .count {
+  display: inline-block;
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--track);
+  padding: 0 7px;
+  border-radius: 999px;
+  line-height: 18px;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────── */
+.studio-root .input {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 12px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.studio-root .input::placeholder { color: var(--text-3); }
+.studio-root .input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--ring); }
+/* Higher specificity than .input so its padding shorthand can't swallow the icon gutter. */
+.studio-root .input.has-icon { padding-left: 35px; }
+
+/* ── Progress meter ──────────────────────────────────────────────────────── */
+.studio-root .meter { height: 8px; border-radius: 999px; background: var(--track); overflow: hidden; }
+.studio-root .meter > span { display: block; height: 100%; border-radius: 999px; transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* ── Segmented control (appearance toggle) ───────────────────────────────── */
+.studio-root .seg { display: inline-flex; padding: 3px; gap: 2px; background: var(--track); border-radius: 9px; }
+.studio-root .seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.studio-root .seg-btn:hover { color: var(--text); }
+.studio-root .seg-btn.on { background: var(--panel); color: var(--text); box-shadow: var(--shadow-sm); }
+
+/* ── Accent swatch ───────────────────────────────────────────────────────── */
+.studio-root .swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.studio-root .swatch:hover { transform: translateY(-1px); }
+.studio-root .swatch.on { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px currentColor; }
+
+/* ── Entrance ────────────────────────────────────────────────────────────── */
+@keyframes s-rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.studio-root .rise { animation: s-rise 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
+.studio-root *::-webkit-scrollbar { width: 11px; height: 11px; }
+.studio-root *::-webkit-scrollbar-thumb { background: var(--scroll); border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; }
+.studio-root *::-webkit-scrollbar-thumb:hover { background: var(--scroll-hover); background-clip: padding-box; }
+.studio-root * { scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }

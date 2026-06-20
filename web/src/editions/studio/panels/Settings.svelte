@@ -1,0 +1,292 @@
+<script>
+  import { onMount } from 'svelte'
+  import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
+  import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
+  import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../../../editions/registry.svelte.js'
+  import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
+  import Icon from '../lib/Icon.svelte'
+  import PathInput from '../lib/PathInput.svelte'
+
+  ensureDiscovery()
+  const pf = new PathField()
+  function addDir() {
+    if (pf.value.trim()) {
+      addRoot(pf.value)
+      pf.reset()
+    }
+  }
+  let newPattern = $state('')
+  function addPat() {
+    addPattern(newPattern)
+    newPattern = ''
+  }
+  const FILTER_MODES = [
+    ['off', 'Off'],
+    ['allow', 'Allow-list'],
+    ['deny', 'Deny-list'],
+  ]
+
+  // Accent is per-theme; reflect the base that's actually showing.
+  const base = $derived(appearance.mode === 'system' ? (systemPref.dark ? 'dark' : 'light') : appearance.mode)
+  const activeAccent = $derived(appearance.accents[base])
+
+  const MODES = [
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
+    { id: 'system', label: 'System' },
+  ]
+  const swatches = $derived([...ACCENTS, ...appearance.custom])
+
+  // Custom accent form.
+  let newColor = $state('#22c55e')
+  let newName = $state('')
+  function addAccent() {
+    addCustomAccent(newName, newColor)
+    newName = ''
+  }
+
+  // External theme form.
+  let extUrl = $state('')
+  let extBusy = $state(false)
+  let extErr = $state('')
+  async function loadExt() {
+    if (!extUrl.trim()) return
+    extBusy = true
+    extErr = ''
+    try {
+      const m = await addExternalTheme(extUrl)
+      toast(`Loaded theme “${m.name}”`, 'ok')
+      extUrl = ''
+    } catch (e) {
+      extErr = e.message
+    } finally {
+      extBusy = false
+    }
+  }
+
+  // AI provider.
+  let urlDraft = $state('')
+  let testText = $state('')
+  let testBusy = $state(false)
+  let testErr = $state('')
+  let testResult = $state(null)
+  onMount(async () => {
+    await checkProvider()
+    urlDraft = provider.url
+  })
+  async function saveProvider() {
+    try {
+      await setProvider(urlDraft.trim())
+      toast(urlDraft.trim() ? 'Provider connected' : 'Provider disabled', 'ok')
+    } catch (e) {
+      toast(e.message, 'error')
+    }
+  }
+  async function runTest() {
+    if (!testText.trim()) return
+    testBusy = true
+    testErr = ''
+    testResult = null
+    try {
+      testResult = await resolveText(testText.trim())
+    } catch (e) {
+      testErr = e.message
+    } finally {
+      testBusy = false
+    }
+  }
+</script>
+
+<div class="mx-auto grid max-w-5xl gap-4 md:grid-cols-2 md:items-start">
+  <!-- Appearance -->
+  <section class="rise card p-5">
+    <h2 class="text-[14px] font-semibold tracking-tight">Appearance</h2>
+    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">How Studio looks. Saved to this browser.</p>
+
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <span class="text-[13px] font-medium">Theme</span>
+      <div class="seg">
+        {#each MODES as m}
+          <button class="seg-btn {appearance.mode === m.id ? 'on' : ''}" onclick={() => setMode(m.id)}>{m.label}</button>
+        {/each}
+      </div>
+    </div>
+
+    <div class="mt-5 border-t border-[var(--border)] pt-4">
+      <div class="flex items-center justify-between">
+        <span class="text-[13px] font-medium">Accent <span class="font-normal text-[var(--text-3)]">· {base} theme</span></span>
+        <span class="mono text-[11px] text-[var(--text-3)]">{activeAccent}</span>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2.5">
+        {#each swatches as sw (sw.id)}
+          <div class="group relative">
+            <button
+              class="swatch {activeAccent === sw.value ? 'on' : ''}"
+              style="background:{sw.value};color:{sw.value}"
+              title={sw.name}
+              aria-label={sw.name}
+              onclick={() => setAccent(sw.value)}
+            ></button>
+            {#if sw.id?.startsWith('custom-')}
+              <button class="absolute -right-1.5 -top-1.5 grid h-4 w-4 place-items-center rounded-full border border-[var(--border)] bg-[var(--panel)] text-[var(--text-3)] opacity-0 shadow-[var(--shadow-sm)] transition-opacity hover:text-[var(--red)] group-hover:opacity-100" title="Remove" aria-label="Remove accent" onclick={() => removeCustomAccent(sw.id)}>
+                <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              </button>
+            {/if}
+          </div>
+        {/each}
+      </div>
+
+      <div class="mt-4 flex flex-wrap items-end gap-2.5">
+        <label class="flex items-center gap-2">
+          <input type="color" bind:value={newColor} class="h-9 w-9 cursor-pointer rounded-lg border border-[var(--border-strong)] bg-transparent p-0.5" />
+        </label>
+        <input bind:value={newName} placeholder="Name (optional)" class="input w-44" />
+        <button class="btn btn-default btn-sm" onclick={addAccent}><Icon name="sparkles" size={14} /> Add accent</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Editions & themes -->
+  <section class="rise card p-5" style="animation-delay:40ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Editions &amp; themes</h2>
+    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Switch the whole interface, or load an external theme bundle.</p>
+
+    <div class="mt-4 grid gap-2 sm:grid-cols-2">
+      {#each editions() as e (e.id)}
+        {@const on = edition.active === e.id}
+        <button class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {on ? 'border-[var(--accent)] bg-[var(--accent-tint)]' : 'border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-[var(--panel-2)]'}" onclick={() => setEdition(e.id)}>
+          <span class="h-3 w-3 shrink-0 rounded-full" style="background:{e.accent};box-shadow:0 0 8px -1px {e.accent}"></span>
+          <span class="min-w-0 flex-1">
+            <span class="block text-[13px] font-medium">{e.name}{#if e.external}<span class="ml-1.5 text-[10px] font-normal text-[var(--text-3)]">external</span>{/if}</span>
+            <span class="block truncate text-[12px] text-[var(--text-3)]">{e.tagline}</span>
+          </span>
+          {#if on}<span class="text-[var(--accent)]"><Icon name="play" size={13} /></span>{/if}
+        </button>
+      {/each}
+    </div>
+
+    <div class="mt-5 border-t border-[var(--border)] pt-4">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-[13px] font-medium">Load external theme</span>
+        <a href={THEMES_DOC_URL} target="_blank" rel="noopener" class="text-[11.5px] font-medium text-[var(--accent)] hover:underline">Build your own ↗</a>
+      </div>
+      <p class="mt-0.5 text-[12px] text-[var(--text-3)]">An ES-module URL that default-exports a manifest <span class="mono">{'{ id, name, component }'}</span>.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <input bind:value={extUrl} placeholder="https://example.com/theme.js" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && loadExt()} />
+        <button class="btn btn-default btn-sm" onclick={loadExt} disabled={extBusy}>{extBusy ? 'Loading…' : 'Load'}</button>
+      </div>
+      {#if extErr}<p class="mt-2 text-[12px] text-[var(--red)]">{extErr}</p>{/if}
+      {#if externalThemes.urls.length}
+        <div class="mt-3 flex flex-col gap-1.5">
+          {#each externalThemes.urls as url (url)}
+            {@const loaded = externalThemes.list.find((x) => x._url === url)}
+            <div class="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
+              <span class="h-2 w-2 shrink-0 rounded-full" style="background:{externalThemes.errors[url] ? 'var(--red)' : 'var(--green)'}"></span>
+              <span class="mono min-w-0 flex-1 truncate text-[12px] text-[var(--text-2)]">{loaded?.name || url}</span>
+              {#if externalThemes.errors[url]}<span class="text-[11px] text-[var(--red)]">failed</span>{/if}
+              <button class="btn btn-ghost btn-icon btn-sm" title="Remove" aria-label="Remove theme" onclick={() => removeExternalTheme(url)}><Icon name="trash" size={13} /></button>
+            </div>
+          {/each}
+        </div>
+      {/if}
+    </div>
+  </section>
+
+  <!-- Compose discovery -->
+  <section class="rise card p-5" style="animation-delay:60ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Compose discovery</h2>
+    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Find Docker Compose projects on disk so you can deploy them from the Stacks tab.</p>
+
+    {#if discovery.config.roots.length}
+      <div class="mt-4 flex flex-col gap-2">
+        {#each discovery.config.roots as root (root.id)}
+          {@const rr = rootResult(root.id)}
+          <div class="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5">
+            <input type="checkbox" checked={root.enabled} onchange={() => updateRoot(root.id, { enabled: !root.enabled })} class="h-4 w-4 shrink-0" style="accent-color:var(--accent)" title="Enabled" />
+            <div class="min-w-0 flex-1">
+              <div class="mono truncate text-[13px] {root.enabled ? 'text-[var(--text)]' : 'text-[var(--text-3)] line-through'}">{root.path}</div>
+              <div class="mt-0.5 text-[11px]">
+                {#if rr?.error}<span class="text-[var(--red)]">{rr.error}</span>
+                {:else if root.enabled}<span class="text-[var(--text-3)]">{rr?.found ?? 0} project{(rr?.found ?? 0) === 1 ? '' : 's'}</span>
+                {:else}<span class="text-[var(--text-3)]">disabled</span>{/if}
+              </div>
+            </div>
+            <label class="flex shrink-0 cursor-pointer items-center gap-1.5 text-[12px] text-[var(--text-2)]" title="Walk subdirectories recursively">
+              <input type="checkbox" checked={root.traverse} onchange={() => updateRoot(root.id, { traverse: !root.traverse })} class="h-3.5 w-3.5" style="accent-color:var(--accent)" /> Traverse
+            </label>
+            <button class="btn btn-ghost btn-icon btn-sm" title="Remove" aria-label="Remove directory" onclick={() => removeRoot(root.id)}><Icon name="trash" size={14} /></button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+
+    <div class="mt-3 flex gap-2">
+      <PathInput field={pf} onEnter={addDir} placeholder="Add a directory…  /Users/you/projects" />
+      <button class="btn btn-default btn-sm" onclick={addDir} disabled={!pf.value.trim()}>Add</button>
+    </div>
+    <p class="mt-1.5 text-[11px] text-[var(--text-3)]">Turn on <span class="font-medium text-[var(--text-2)]">Traverse</span> to scan subdirectories; off treats the directory itself as one project.</p>
+
+    <div class="mt-5 border-t border-[var(--border)] pt-4">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="text-[13px] font-medium">Filter <span class="font-normal text-[var(--text-3)]">· discovered stacks only</span></span>
+        <div class="seg">
+          {#each FILTER_MODES as [m, label]}
+            <button class="seg-btn {discovery.config.filter.mode === m ? 'on' : ''}" onclick={() => setFilter({ mode: m })}>{label}</button>
+          {/each}
+        </div>
+      </div>
+      {#if discovery.config.filter.mode !== 'off'}
+        <div class="mt-3 flex flex-wrap gap-1.5">
+          {#each discovery.config.filter.patterns as p (p)}
+            <span class="mono inline-flex items-center gap-1 rounded-md border border-[var(--border-strong)] bg-[var(--panel-2)] px-2 py-1 text-[11.5px] text-[var(--text-2)]">{p}<button class="text-[var(--text-3)] hover:text-[var(--red)]" aria-label="Remove pattern" onclick={() => removePattern(p)}>×</button></span>
+          {/each}
+        </div>
+        <div class="mt-2 flex gap-2">
+          <input bind:value={newPattern} placeholder="web-*  ·  My App  ·  ~/lab/**" class="input mono min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && addPat()} />
+          <button class="btn btn-default btn-sm" onclick={addPat} disabled={!newPattern.trim()}>Add</button>
+        </div>
+        <p class="mt-1.5 text-[11px] text-[var(--text-3)]">Matches a project name, its Oriel name, or a directory path (globs &amp; <span class="mono">**</span> allowed). Running stacks are never hidden.</p>
+      {/if}
+    </div>
+  </section>
+
+  <!-- AI / Natural language -->
+  <section class="rise card p-5" style="animation-delay:80ms">
+    <div class="flex items-center gap-2.5">
+      <h2 class="text-[14px] font-semibold tracking-tight">AI · natural language</h2>
+      <span class="pill {provider.enabled ? 'on' : 'off'}"><span class="dot"></span>{provider.enabled ? 'Connected' : 'Not configured'}</span>
+    </div>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">
+      The base ships no model. Point at an external resolver and the command palette (⌘K) gains a free-text mode — every suggestion still runs through the same validated tool path.
+    </p>
+
+    <div class="mt-4">
+      <span class="text-[13px] font-medium">Provider URL</span>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <input bind:value={urlDraft} placeholder="http://127.0.0.1:8899" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
+        <button class="btn btn-primary btn-sm" onclick={saveProvider}>Save</button>
+        {#if provider.enabled}<button class="btn btn-default btn-sm" onclick={() => { urlDraft = ''; saveProvider() }}>Disable</button>{/if}
+      </div>
+      <p class="mt-2 text-[12px] text-[var(--text-3)]">
+        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="mono">/resolve</span> contract. Or set <span class="mono">COLIMA_GUI_PROVIDER_URL</span> at launch.
+      </p>
+    </div>
+
+    {#if provider.enabled}
+      <div class="mt-5 border-t border-[var(--border)] pt-4">
+        <span class="text-[13px] font-medium">Test resolver</span>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <input bind:value={testText} placeholder="e.g. restart postgres" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && runTest()} />
+          <button class="btn btn-default btn-sm" onclick={runTest} disabled={testBusy}>{testBusy ? 'Resolving…' : 'Run'}</button>
+        </div>
+        {#if testErr}<p class="mt-2 text-[12px] text-[var(--red)]">{testErr}</p>{/if}
+        {#if testResult?.call}
+          <div class="mono mt-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3 text-[12px]">
+            <div><span class="text-[var(--text-3)]">tool</span> <span class="text-[var(--accent)]">{testResult.call.tool}</span></div>
+            <div class="mt-1 break-all"><span class="text-[var(--text-3)]">args</span> {JSON.stringify(testResult.call.args)}</div>
+          </div>
+        {/if}
+      </div>
+    {/if}
+  </section>
+</div>
