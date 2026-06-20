@@ -9,7 +9,8 @@ import (
 // A Job is a long-running operation (prune, …) that runs on a background context
 // decoupled from any request, so it survives client refresh/disconnect. Progress
 // is buffered for replay and broadcast live to attached SSE subscribers, and the
-// job can be cancelled.
+// job can be cancelled. Progress comes in two forms: log lines (a few step
+// messages) and a numeric counter (cur/total) that drives a progress bar.
 type Job struct {
 	ID    string
 	Kind  string
@@ -17,12 +18,39 @@ type Job struct {
 
 	mu     sync.Mutex
 	lines  []string
+	cur    int
+	total  int
 	done   bool
 	ok     bool
 	errMsg string
-	subs   map[chan string]struct{}
+	subs   map[chan jobEvent]struct{}
 	cancel context.CancelFunc
 }
+
+// jobEvent is one live update: a log line or a progress counter.
+type jobEvent struct {
+	kind string // "line" | "progress"
+	line string
+	cur  int
+	tot  int
+}
+
+// jobSnapshot is the state replayed to a (re)connecting subscriber.
+type jobSnapshot struct {
+	lines  []string
+	cur    int
+	total  int
+	done   bool
+	ok     bool
+	errMsg string
+}
+
+// Reporter is what a job's work function uses to report progress. Line adds a log
+// message; Progress sets the cur/total counter (drives the bar).
+type Reporter struct{ job *Job }
+
+func (r Reporter) Line(s string)           { r.job.emit(s) }
+func (r Reporter) Progress(cur, total int) { r.job.setProgress(cur, total) }
 
 // jobView is the JSON shape for listing jobs (the Job fields are unexported).
 type jobView struct {
@@ -32,15 +60,27 @@ type jobView struct {
 	Done  bool   `json:"done"`
 }
 
-func (j *Job) emit(line string) {
-	j.mu.Lock()
-	j.lines = append(j.lines, line)
+// broadcast sends ev to every subscriber without blocking; the caller holds mu.
+func (j *Job) broadcast(ev jobEvent) {
 	for ch := range j.subs {
 		select {
-		case ch <- line:
+		case ch <- ev:
 		default: // slow subscriber; replay/snapshot covers it on reconnect
 		}
 	}
+}
+
+func (j *Job) emit(line string) {
+	j.mu.Lock()
+	j.lines = append(j.lines, line)
+	j.broadcast(jobEvent{kind: "line", line: line})
+	j.mu.Unlock()
+}
+
+func (j *Job) setProgress(cur, total int) {
+	j.mu.Lock()
+	j.cur, j.total = cur, total
+	j.broadcast(jobEvent{kind: "progress", cur: cur, tot: total})
 	j.mu.Unlock()
 }
 
@@ -54,21 +94,28 @@ func (j *Job) finish(ok bool, errMsg string) {
 	j.mu.Unlock()
 }
 
-// subscribe atomically snapshots progress so far and registers for future lines.
-// If already finished, ch is nil and the final state is returned for replay.
-func (j *Job) subscribe() (snapshot []string, ch chan string, done, ok bool, errMsg string, unsub func()) {
+// subscribe atomically snapshots progress so far and registers for future events.
+// If already finished, ch is nil and the snapshot carries the final state.
+func (j *Job) subscribe() (jobSnapshot, chan jobEvent, func()) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	snapshot = append([]string(nil), j.lines...)
-	if j.done {
-		return snapshot, nil, true, j.ok, j.errMsg, func() {}
+	snap := jobSnapshot{
+		lines:  append([]string(nil), j.lines...),
+		cur:    j.cur,
+		total:  j.total,
+		done:   j.done,
+		ok:     j.ok,
+		errMsg: j.errMsg,
 	}
-	ch = make(chan string, 256)
+	if j.done {
+		return snap, nil, func() {}
+	}
+	ch := make(chan jobEvent, 256)
 	if j.subs == nil {
-		j.subs = map[chan string]struct{}{}
+		j.subs = map[chan jobEvent]struct{}{}
 	}
 	j.subs[ch] = struct{}{}
-	unsub = func() {
+	unsub := func() {
 		j.mu.Lock()
 		if _, ok := j.subs[ch]; ok {
 			delete(j.subs, ch)
@@ -76,7 +123,7 @@ func (j *Job) subscribe() (snapshot []string, ch chan string, done, ok bool, err
 		}
 		j.mu.Unlock()
 	}
-	return snapshot, ch, false, false, "", unsub
+	return snap, ch, unsub
 }
 
 func (j *Job) finalState() (ok bool, errMsg string) {
@@ -95,7 +142,7 @@ type jobManager struct {
 func newJobManager() *jobManager { return &jobManager{jobs: map[string]*Job{}} }
 
 // start spawns fn on a cancellable background context and returns the live Job.
-func (m *jobManager) start(kind, title string, fn func(ctx context.Context, emit func(string)) error) *Job {
+func (m *jobManager) start(kind, title string, fn func(ctx context.Context, rep Reporter) error) *Job {
 	m.mu.Lock()
 	// Reap finished jobs; a still-running one is what a refreshed client re-attaches to.
 	for id, j := range m.jobs {
@@ -114,7 +161,7 @@ func (m *jobManager) start(kind, title string, fn func(ctx context.Context, emit
 	m.mu.Unlock()
 
 	go func() {
-		err := fn(ctx, j.emit)
+		err := fn(ctx, Reporter{job: j})
 		switch {
 		case err == nil:
 			j.finish(true, "")

@@ -29,27 +29,27 @@ func TestJobSnapshotThenLiveThenDone(t *testing.T) {
 	m := newJobManager()
 	started := make(chan struct{})
 	release := make(chan struct{})
-	job := m.start("test", "Test", func(ctx context.Context, emit func(string)) error {
-		emit("one")
+	job := m.start("test", "Test", func(ctx context.Context, rep Reporter) error {
+		rep.Line("one")
 		close(started)
 		<-release
-		emit("two")
+		rep.Line("two")
 		return nil
 	})
 
 	<-started // "one" is emitted; job is blocked before "two"
-	snapshot, ch, done, _, _, unsub := job.subscribe()
+	snap, ch, unsub := job.subscribe()
 	defer unsub()
-	if done {
+	if snap.done {
 		t.Fatal("job should not be done yet")
 	}
-	if len(snapshot) != 1 || snapshot[0] != "one" {
-		t.Fatalf("snapshot = %v, want [one]", snapshot)
+	if len(snap.lines) != 1 || snap.lines[0] != "one" {
+		t.Fatalf("snapshot = %v, want [one]", snap.lines)
 	}
 
 	close(release)
-	if got := <-ch; got != "two" {
-		t.Fatalf("live line = %q, want two", got)
+	if ev := <-ch; ev.line != "two" {
+		t.Fatalf("live event = %q, want line two", ev.line)
 	}
 	if _, more := <-ch; more {
 		t.Fatal("channel should close when the job finishes")
@@ -63,30 +63,56 @@ func TestJobSnapshotThenLiveThenDone(t *testing.T) {
 // reports the final state with no live channel.
 func TestJobLateSubscribeReplays(t *testing.T) {
 	m := newJobManager()
-	job := m.start("test", "Test", func(ctx context.Context, emit func(string)) error {
-		emit("a")
-		emit("b")
+	job := m.start("test", "Test", func(ctx context.Context, rep Reporter) error {
+		rep.Line("a")
+		rep.Line("b")
 		return nil
 	})
 	waitDone(t, job)
 
-	snapshot, ch, done, ok, errMsg, unsub := job.subscribe()
+	snap, ch, unsub := job.subscribe()
 	defer unsub()
-	if !done || ch != nil {
-		t.Fatalf("late subscribe: done=%v ch=%v, want true/nil", done, ch != nil)
+	if !snap.done || ch != nil {
+		t.Fatalf("late subscribe: done=%v ch=%v, want true/nil", snap.done, ch != nil)
 	}
-	if !ok || errMsg != "" {
-		t.Fatalf("late subscribe state ok=%v err=%q", ok, errMsg)
+	if !snap.ok || snap.errMsg != "" {
+		t.Fatalf("late subscribe state ok=%v err=%q", snap.ok, snap.errMsg)
 	}
-	if len(snapshot) != 2 || snapshot[0] != "a" || snapshot[1] != "b" {
-		t.Fatalf("snapshot = %v, want [a b]", snapshot)
+	if len(snap.lines) != 2 || snap.lines[0] != "a" || snap.lines[1] != "b" {
+		t.Fatalf("snapshot = %v, want [a b]", snap.lines)
+	}
+}
+
+// Progress updates arrive as progress events (not log lines) and the latest
+// counter is captured in a late subscriber's snapshot.
+func TestJobProgress(t *testing.T) {
+	m := newJobManager()
+	started := make(chan struct{})
+	release := make(chan struct{})
+	job := m.start("test", "Test", func(ctx context.Context, rep Reporter) error {
+		rep.Progress(3, 10)
+		close(started)
+		<-release
+		rep.Progress(7, 10)
+		return nil
+	})
+
+	<-started
+	snap, ch, unsub := job.subscribe()
+	defer unsub()
+	if snap.cur != 3 || snap.total != 10 {
+		t.Fatalf("snapshot progress = %d/%d, want 3/10", snap.cur, snap.total)
+	}
+	close(release)
+	if ev := <-ch; ev.kind != "progress" || ev.cur != 7 || ev.tot != 10 {
+		t.Fatalf("live event = %+v, want progress 7/10", ev)
 	}
 }
 
 // Cancelling a running job stops it and records a non-ok "cancelled" state.
 func TestJobCancel(t *testing.T) {
 	m := newJobManager()
-	job := m.start("test", "Test", func(ctx context.Context, emit func(string)) error {
+	job := m.start("test", "Test", func(ctx context.Context, rep Reporter) error {
 		<-ctx.Done()
 		return ctx.Err()
 	})
@@ -101,7 +127,7 @@ func TestJobCancel(t *testing.T) {
 // active() lists only running jobs, and starting a new job reaps finished ones.
 func TestJobActiveAndReap(t *testing.T) {
 	m := newJobManager()
-	finished := m.start("k", "t", func(ctx context.Context, emit func(string)) error { return nil })
+	finished := m.start("k", "t", func(ctx context.Context, rep Reporter) error { return nil })
 	waitDone(t, finished)
 
 	if got := len(m.active()); got != 0 {
@@ -109,7 +135,7 @@ func TestJobActiveAndReap(t *testing.T) {
 	}
 
 	release := make(chan struct{})
-	running := m.start("k", "t", func(ctx context.Context, emit func(string)) error {
+	running := m.start("k", "t", func(ctx context.Context, rep Reporter) error {
 		<-release
 		return nil
 	})

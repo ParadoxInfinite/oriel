@@ -24,7 +24,16 @@
           {/if}
           <span class="min-w-0 flex-1">
             <span class="block truncate text-[12.5px] font-medium text-fg">{o.title}</span>
-            <span class="block truncate font-mono text-[10px] text-faint">{o.error || lastLine(o) || (o.done ? 'Done' : 'Working…')}</span>
+            {#if o.total > 0 && !o.done}
+              <span class="mt-1 flex items-center gap-1.5">
+                <span class="h-1 flex-1 overflow-hidden rounded-full bg-surface-2">
+                  <span class="block h-full rounded-full bg-accent transition-[width] duration-200" style="width:{Math.round((o.cur / o.total) * 100)}%"></span>
+                </span>
+                <span class="shrink-0 font-mono text-[9px] text-faint">{Math.round((o.cur / o.total) * 100)}%</span>
+              </span>
+            {:else}
+              <span class="block truncate font-mono text-[10px] text-faint">{o.error || lastLine(o) || (o.done ? 'Done' : 'Working…')}</span>
+            {/if}
           </span>
         </button>
         {#if o.done}
