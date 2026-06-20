@@ -1,5 +1,9 @@
 BINARY := oriel
 WEB := web
+# Version stamped into the binary (shown in the UI footer + used by the update
+# check). Local builds use the package.json version; releases inject the git tag.
+VERSION := $(shell node -p "require('./$(WEB)/package.json').version" 2>/dev/null || echo dev)
+LDFLAGS := -X main.version=$(VERSION)
 
 .PHONY: all build web dev dev-web run test clean tidy
 
@@ -7,8 +11,8 @@ all: build
 
 ## build: build frontend, embed it, produce the single binary
 build: web
-	go build -o $(BINARY) .
-	@echo "built ./$(BINARY)"
+	go build -ldflags "$(LDFLAGS)" -o $(BINARY) .
+	@echo "built ./$(BINARY) ($(VERSION))"
 
 ## web: build the Svelte frontend into web/dist (embedded by the binary)
 web:

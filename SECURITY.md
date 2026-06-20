@@ -35,12 +35,16 @@ Two more powers worth calling out:
   against the tool registry before running, so a provider can't invoke an
   unknown tool or a non-existent entity — but it does receive that context.
 
-## Remote access (Tailscale, etc.)
+## Remote access (private networks only)
 
 Because there's no app-level password, **exposing Oriel safely means putting a
-trusted network boundary in front of it.**
+trusted network boundary in front of it.** Reach it over a **private overlay
+network / VPN ONLY** — **Tailscale**, **ZeroTier**, **WireGuard**, or a
+Nebula/Headscale-style mesh. The example below uses Tailscale, but the rule is
+the same for any of them: Oriel stays on `127.0.0.1` and is reachable only over
+the private interface, **never the public internet.**
 
-**Recommended: Tailscale `serve` (tailnet-only).** Keep Oriel on `127.0.0.1` and
+**Example: Tailscale `serve` (tailnet-only).** Keep Oriel on `127.0.0.1` and
 let Tailscale proxy to it, so it's reachable only by devices in *your* tailnet:
 
 ```sh

@@ -1,6 +1,8 @@
 # Build artifacts
 /oriel
-/web/dist/
+# web/dist is intentionally committed so `go install` works (go:embed needs it
+# present in the module). CI refreshes it whenever the frontend source changes —
+# see .github/workflows/build-frontend.yml. Don't hand-edit web/dist.
 
 # Dependencies
 /web/node_modules/

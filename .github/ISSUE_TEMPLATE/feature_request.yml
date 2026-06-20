@@ -1,0 +1,29 @@
+name: Feature request
+description: Suggest a feature or improvement for Oriel.
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        New **editions and themes** are especially welcome — start with
+        [docs/THEMES.md](../blob/main/docs/THEMES.md) and open a PR.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: The use case or pain point, not just the proposed solution.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What you'd like Oriel to do. Mockups or examples welcome.
+    validations:
+      required: false
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false

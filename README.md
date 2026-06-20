@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/img/logo.svg" alt="Oriel" width="88" height="88" />
+
 # Oriel
 
 **A bay window onto your local containers.**
@@ -7,6 +9,10 @@
 A fast, local, single-binary web GUI for [Colima](https://github.com/abiosoft/colima)
 and Docker — manage containers, images, volumes, networks and Compose stacks from
 a clean browser UI, with a swappable, themeable front end.
+
+[![CI](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml/badge.svg)](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/ParadoxInfinite/oriel?sort=semver)](https://github.com/ParadoxInfinite/oriel/releases)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 </div>
 
@@ -25,6 +31,9 @@ See [docs/THEMES.md](docs/THEMES.md).
 <p align="center">
   <img src="docs/img/studio-light.png" alt="Oriel — Studio edition (light)" width="48%" />
   <img src="docs/img/studio-dark.png" alt="Oriel — Studio edition (dark)" width="48%" />
+</p>
+<p align="center">
+  <img src="docs/img/classic.png" alt="Oriel — Classic edition" width="72%" />
 </p>
 
 > **Studio** is the default edition (System light/dark, follows your OS); **Classic**
@@ -68,9 +77,34 @@ for optional natural-language control (see below).
 
 ## Requirements
 
-- macOS or Linux with [Colima](https://github.com/abiosoft/colima) (or any Docker
-  daemon) and the `docker` CLI available.
-- For building: Go 1.26+ and Node 24+ (current LTS).
+- macOS or Linux with a Docker Engine API–compatible runtime and the `docker`
+  CLI available. [Colima](https://github.com/abiosoft/colima) is first-class
+  (and unlocks VM start/stop), but Docker Engine, OrbStack, Rancher Desktop,
+  Docker Desktop, Lima, Podman, and remote daemons all work — see
+  **[docs/DAEMONS.md](docs/DAEMONS.md)**.
+- For building from source: Go 1.26+ and Node 24+ (current LTS).
+
+## Install
+
+**Download a release binary** (no toolchain required). Grab the latest build for
+your platform from [Releases](https://github.com/ParadoxInfinite/oriel/releases) —
+prebuilt for `linux/amd64`, `linux/arm64`, `darwin/amd64`, and `darwin/arm64`:
+
+```sh
+# Linux arm64 (e.g. a Raspberry Pi); swap the suffix for your platform.
+curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-linux-arm64 -o oriel
+chmod +x oriel
+./oriel
+```
+
+**With Go** (Oriel is a single module with the frontend embedded):
+
+```sh
+go install github.com/ParadoxInfinite/oriel@latest
+oriel
+```
+
+**From source** — see [Build & run](#build--run) below.
 
 ## Build & run
 
@@ -171,10 +205,19 @@ entities exist before running. Safety lives in the base, not in any plugin.
 
 Oriel has **no authentication** — it binds to `127.0.0.1` and trusts whoever can
 reach it as the local user. Because it drives the Docker daemon, **reaching Oriel
-is effectively root on the host.** Keep it local, or front it with a trusted
-network boundary. If you want it remotely, use **Tailscale `serve`** (tailnet-only,
-**never Funnel**) and keep Oriel on `127.0.0.1`. Full trust model and remote-access
-guidance: **[SECURITY.md](SECURITY.md)**.
+is effectively root on the host.** So:
+
+- **Run it locally.** The default — bound to `127.0.0.1`, next to your Colima VM
+  or Docker daemon.
+- **For remote access, use a private network ONLY** — a peer-to-peer mesh / VPN
+  such as **Tailscale**, **ZeroTier**, **WireGuard**, or a Nebula/Headscale-style
+  overlay. Keep Oriel on `127.0.0.1` and reach it over the private interface
+  (e.g. `tailscale serve`, tailnet-only). **Never expose it to the public
+  internet** — no port-forwarding, no `tailscale funnel`, no public reverse proxy.
+
+Putting an unauthenticated, root-equivalent endpoint on the open internet is a
+host takeover waiting to happen. The full trust model and remote-access guidance
+is in **[SECURITY.md](SECURITY.md)**.
 
 ## Contributing
 
