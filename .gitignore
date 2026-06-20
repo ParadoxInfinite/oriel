@@ -1,0 +1,10 @@
+# Build artifacts
+/oriel
+/web/dist/
+
+# Dependencies
+/web/node_modules/
+
+# Editor / OS
+.DS_Store
+*.log

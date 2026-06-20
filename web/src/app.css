@@ -1,0 +1,178 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+/* Single palette — near-black with a teal signal. Geist for UI, Geist Mono for
+   data. Tailwind generates utilities (bg-bg, text-fg, border-border …) from these. */
+@theme {
+  --color-bg: #0a0c0f;
+  --color-surface: #13161b;
+  --color-surface-2: #1b1f26;
+  --color-elevated: #1e232b;
+  --color-border: #252a32;
+  --color-border-light: #2f353f;
+  --color-muted: #aeb6c2; /* secondary text — readable, ~8:1 on bg */
+  --color-faint: #8b93a1; /* tertiary text — labels/timestamps, ~5.5:1 on bg */
+  --color-fg: #eef1f6;
+  --color-accent: #2dd4bf;
+  --color-accent-dim: #1c8577;
+  --color-accent-fg: #04201c;
+  --color-danger: #f4767a;
+  --color-ok: #34d399;
+  --color-warn: #fbbf24;
+  /* Secondary accents — used sparingly for state pills and stack grouping. */
+  --color-sky: #56b6f7;
+  --color-violet: #a78bfa;
+  --color-lime: #a3e635;
+  --color-rose: #fb7185;
+
+  --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', monospace;
+
+  --radius: 0.625rem;
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-feature-settings: 'cv01', 'cv03', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background-color: var(--color-bg);
+  background-image: radial-gradient(120% 80% at 78% -10%, color-mix(in srgb, var(--color-accent) 6%, transparent), transparent 60%);
+}
+
+.display {
+  font-family: var(--font-sans);
+}
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-light) transparent;
+}
+
+/* ============================================================================
+   SURFACES + INTERACTION — hovers should feel reactive: a quick spring lift,
+   an accent edge that ignites, never a dull background swap.
+   ========================================================================== */
+.card {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--color-border-light) 22%, transparent), transparent 6%),
+    var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 1px 0 0 color-mix(in srgb, #fff 4%, transparent) inset,
+    0 1px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Cards that respond to the pointer. */
+.lift {
+  transition:
+    transform 0.28s var(--ease-spring),
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
+}
+.lift:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  box-shadow:
+    0 10px 30px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px color-mix(in srgb, var(--color-accent) 22%, transparent),
+    0 0 24px -6px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* Table-row hover: an accent bar ignites on the left + a faint wash. */
+.rowx {
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.25s var(--ease-spring);
+}
+.rowx:hover {
+  background: color-mix(in srgb, var(--color-accent) 6%, transparent);
+  box-shadow: inset 2px 0 0 0 var(--color-accent);
+}
+
+/* Grouped rows wear their stack's colour permanently on the left edge (set via
+   --bar), so a glance ties every row to its compose group. */
+.rowg {
+  box-shadow: inset 3px 0 0 0 var(--bar);
+  transition:
+    background-color 0.2s ease,
+    box-shadow 0.25s var(--ease-spring);
+}
+.rowg:hover {
+  background: color-mix(in srgb, var(--bar) 9%, transparent);
+  box-shadow: inset 4px 0 0 0 var(--bar);
+}
+
+/* Nav items: icon springs forward, an accent rail grows in. */
+.navx {
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+.navx :global(svg) {
+  transition: transform 0.28s var(--ease-spring);
+}
+.navx:hover :global(svg) {
+  transform: translateX(2px) scale(1.08);
+}
+
+/* Buttons that pop slightly under the pointer. */
+.pop {
+  transition:
+    transform 0.16s var(--ease-spring),
+    background-color 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.2s ease;
+}
+.pop:hover {
+  transform: translateY(-1px);
+}
+.pop:active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* ============================================================================
+   MOTION
+   ========================================================================== */
+@keyframes pulse-ok {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-ok) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.pulse-ok {
+  animation: pulse-ok 2.4s ease-out infinite;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.45s var(--ease-spring) both;
+}
