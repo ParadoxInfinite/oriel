@@ -18,6 +18,10 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/service"
 )
 
+// version is the build version. It stays "dev" for local builds and is set to
+// the release tag via -ldflags "-X main.version=v1.2.3" in the release workflow.
+var version = "dev"
+
 func main() {
 	// `oriel service <install|uninstall|status>` manages the background
 	// service and exits; everything else runs the server.
@@ -33,7 +37,7 @@ func main() {
 	flag.Parse()
 
 	addr := fmt.Sprintf("127.0.0.1:%d", *port)
-	srv := server.New(webFS())
+	srv := server.New(webFS(), version)
 
 	httpServer := &http.Server{
 		Addr:              addr,

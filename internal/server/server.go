@@ -1,4 +1,4 @@
-// Package server wires the HTTP router for the Colima GUI: a small JSON REST
+// Package server wires the HTTP router for Oriel: a small JSON REST
 // surface for actions, SSE channels for live data, and the embedded frontend.
 package server
 
@@ -21,6 +21,7 @@ type Server struct {
 	mux      *http.ServeMux
 	web      fs.FS
 	base     string
+	version  string
 	docker   *docker.Client
 	tools    *tools.Registry
 	provider *provider.Provider
@@ -29,13 +30,15 @@ type Server struct {
 	cancel   context.CancelFunc
 }
 
-// New constructs the router. web is the embedded frontend filesystem.
-func New(web fs.FS) *Server {
+// New constructs the router. web is the embedded frontend filesystem; version is
+// the build version ("dev" for local builds, the release tag otherwise).
+func New(web fs.FS, version string) *Server {
 	dc := docker.New()
 	s := &Server{
 		mux:      http.NewServeMux(),
 		web:      web,
 		base:     normalizeBase(os.Getenv("ORIEL_BASE_PATH")),
+		version:  version,
 		docker:   dc,
 		tools:    actions.New(dc),
 		provider: provider.New(),
@@ -90,6 +93,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/self", s.handleSelf)
+	s.mux.HandleFunc("GET /api/update", s.handleUpdateCheck)
+	s.mux.HandleFunc("POST /api/update/apply", s.handleUpdateApply)
+	s.mux.HandleFunc("POST /api/update/restart", s.handleUpdateRestart)
 
 	// Colima lifecycle.
 	s.mux.HandleFunc("GET /api/colima/status", s.handleColimaStatus)

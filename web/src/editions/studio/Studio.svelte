@@ -12,7 +12,12 @@
     refreshNetworks,
     refreshStacks,
     setOverlayTheme,
+    self,
+    update,
   } from '../../platform/index.js'
+
+  // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
+  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '')
 
   import { appearance, systemPref, initAppearance } from './theme.svelte.js'
   import Icon from './lib/Icon.svelte'
@@ -107,6 +112,17 @@
           <span>{fmt.bytes(usedMem)}</span>
         </div>
       {/if}
+    </div>
+
+    <!-- Brand + version footer -->
+    <div class="flex items-center justify-between gap-2 border-t border-[var(--border)] px-5 py-3">
+      <span class="text-[11px] font-medium tracking-wide text-[var(--text-3)]">Oriel</span>
+      <div class="flex items-center gap-1.5">
+        {#if update.available}
+          <a href={update.url} target="_blank" rel="noopener" class="rounded-full bg-[var(--accent-tint-2)] px-2 py-0.5 font-mono text-[10px] font-medium text-[var(--accent)] hover:underline" title="Update available — v{update.latest}">update ↗</a>
+        {/if}
+        {#if verLabel}<span class="mono rounded-full border border-[var(--border)] bg-[var(--panel-2)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-2)]">{verLabel}</span>{/if}
+      </div>
     </div>
   </aside>
 

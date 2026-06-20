@@ -1,5 +1,7 @@
 <script>
   import { status } from '../lib/status.svelte.js'
+  import { self } from '../lib/self.svelte.js'
+  import { update } from '../lib/update.svelte.js'
   import Dashboard from '../views/Dashboard.svelte'
   import Containers from '../views/Containers.svelte'
   import Images from '../views/Images.svelte'
@@ -44,7 +46,7 @@
   })
 
   // Two distinct truths, kept separate so the chrome never conflates them:
-  //   colima-gui (this app's backend) — reachable? status.error means it is not.
+  //   Oriel (this app's backend) — reachable? status.error means it is not.
   //   colima (the VM) — running? only knowable when the backend is reachable.
   const gui = $derived(status.loading ? 'connecting' : status.error ? 'offline' : 'connected')
   const vm = $derived(
@@ -63,12 +65,15 @@
   }
   // The engine being driven: a colima VM, or a generic Docker daemon.
   const engineName = $derived(status.data?.engine === 'docker' ? 'docker' : 'colima')
+
+  // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
+  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '')
 </script>
 
 <div class="flex h-screen w-screen overflow-hidden">
   <aside class="flex w-56 shrink-0 flex-col border-r border-border bg-surface">
     <div class="flex flex-col gap-2.5 px-5 pb-4 pt-5">
-      <!-- colima-gui: this app and its link to the backend -->
+      <!-- Oriel: this app and its link to the backend -->
       <div class="flex items-center gap-2">
         <span class="h-2 w-2 shrink-0 rounded-full transition-colors {guiMeta[gui].dot}"></span>
         <span class="display text-sm font-semibold leading-none tracking-tight">Oriel</span>
@@ -121,9 +126,14 @@
     <OpTray />
     <RecentOutages />
 
-    <div class="flex items-center justify-between border-t border-border px-4 py-3">
+    <div class="flex items-center justify-between gap-2 border-t border-border px-4 py-3">
       <span class="text-[11px] font-medium tracking-wide text-muted">Oriel</span>
-      <span class="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] font-medium text-fg/85">v0.1.0</span>
+      <div class="flex items-center gap-1.5">
+        {#if update.available}
+          <a href={update.url} target="_blank" rel="noopener" class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available — v{update.latest}">update ↗</a>
+        {/if}
+        {#if verLabel}<span class="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] font-medium text-fg/85">{verLabel}</span>{/if}
+      </div>
     </div>
   </aside>
 

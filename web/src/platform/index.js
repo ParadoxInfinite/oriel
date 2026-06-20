@@ -1,7 +1,7 @@
 // ============================================================================
 // PLATFORM SDK — the stable contract every edition is built against.
 //
-// An "edition" is a complete, swappable front-end for colima-gui (think
+// An "edition" is a complete, swappable front-end for Oriel (think
 //  ↔ ). The host loads exactly one edition and hands it
 // this module: a single, documented surface of reactive state + actions. As
 // long as an edition only imports from `@platform`, the backend, the polling,
@@ -48,8 +48,12 @@ export { stacks, refreshStacks } from '../lib/stacks.svelte.js'
  *  history.points → [{ t, cpu, mem, down }] (rolling ~30 min) */
 export { stats, history } from '../lib/live.svelte.js'
 
-/** The GUI backend's own footprint: `{ rss, goroutines, heapAlloc }`. */
+/** The Oriel backend's own footprint + build version: `{ version, rss, goroutines, heapAlloc }`. */
 export { self } from '../lib/self.svelte.js'
+
+/** Update check + self-update (service installs): `update` state, `checkUpdate()`,
+ *  `applyUpdate()` (download+verify+replace), `restartService()`. */
+export { update, checkUpdate, applyUpdate, restartService } from '../lib/update.svelte.js'
 
 /** Persisted downtime log (~30-day window). outages.list → [{ start, end, kind }]
  *  where kind is 'down' (colima unreachable) or 'offline' (gui itself wasn't running). */
