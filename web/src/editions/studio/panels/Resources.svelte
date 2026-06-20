@@ -16,6 +16,8 @@
     startImagePrune,
     startVolumePrune,
     containersForImage,
+    isPinnedImage,
+    suggestTag,
   } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import SortHeader from '../lib/SortHeader.svelte'
@@ -150,6 +152,24 @@
   let usedByImage = $state(null) // image whose "used by" list is open
   let drawerContainer = $state(null) // container shown in the drawer
   const usingContainers = $derived(usedByImage ? containersForImage(usedByImage.id) : [])
+
+  let tagImage = $state(null) // pinned image being tagged
+  let tagRef = $state('')
+  let tagging = $state(false)
+  function openTag(img) {
+    tagImage = img
+    tagRef = suggestTag(img)
+  }
+  async function applyTag() {
+    if (!tagRef.trim() || tagging) return
+    tagging = true
+    const ok = await invoke('image.tag', { id: tagImage.id, ref: tagRef.trim() }, { success: `Tagged ${tagRef.trim()}` })
+    tagging = false
+    if (ok) {
+      tagImage = null
+      refreshImages()
+    }
+  }
   async function openPrune() {
     try {
       const items = await c.prune.collect()
@@ -225,7 +245,9 @@
               {/each}
               <td class="px-4 py-2.5">
                 <div class="flex items-center justify-end gap-1.5">
-                  {#if kind === 'images' && item.tags?.[0] && item.tags[0] !== '<none>'}
+                  {#if kind === 'images' && isPinnedImage(item)}
+                    <button class="btn btn-default btn-icon btn-sm" title="Tag this digest-pinned image" aria-label="Tag" onclick={() => openTag(item)}><Icon name="tag" size={14} /></button>
+                  {:else if kind === 'images' && item.tags?.[0] && item.tags[0] !== '<none>'}
                     <button class="btn btn-default btn-icon btn-sm" title="Re-pull from registry" aria-label="Re-pull" onclick={() => (pullRef = item.tags[0])}><Icon name="download" size={14} /></button>
                   {/if}
                   {#if c.removable(item)}
@@ -249,7 +271,13 @@
   <PullDialog initial={pullRef} onClose={() => (pullRef = null)} />
 {/if}
 
-<svelte:window onkeydown={(e) => e.key === 'Escape' && usedByImage && (usedByImage = null)} />
+<svelte:window
+  onkeydown={(e) => {
+    if (e.key !== 'Escape') return
+    if (tagImage) tagImage = null
+    else if (usedByImage) usedByImage = null
+  }}
+/>
 
 {#if usedByImage}
   <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (usedByImage = null)}>
@@ -278,4 +306,31 @@
 
 {#if drawerContainer}
   <ContainerDrawer container={drawerContainer} onClose={() => (drawerContainer = null)} />
+{/if}
+
+{#if tagImage}
+  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (tagImage = null)}>
+    <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+      <div class="border-b border-[var(--border)] px-5 py-3.5">
+        <h2 class="text-[14px] font-semibold tracking-tight">Tag image</h2>
+        <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]" title={tagImage.tags?.[0]}>{shortId(tagImage.id)}</p>
+      </div>
+      <div class="p-5">
+        <p class="mb-2 text-[12px] text-[var(--text-2)]">This image is pinned by digest, so it shows no name. Give it a <span class="mono">repository:tag</span> to label it locally.</p>
+        <!-- svelte-ignore a11y_autofocus -->
+        <input
+          class="mono w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[var(--accent)]"
+          bind:value={tagRef}
+          autofocus
+          spellcheck="false"
+          placeholder="repo/name:tag"
+          onkeydown={(e) => e.key === 'Enter' && applyTag()}
+        />
+      </div>
+      <div class="flex justify-end gap-2 border-t border-[var(--border)] px-5 py-3">
+        <button class="btn btn-default btn-sm" onclick={() => (tagImage = null)}>Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick={applyTag} disabled={!tagRef.trim() || tagging}>{tagging ? 'Tagging…' : 'Tag'}</button>
+      </div>
+    </div>
+  </div>
 {/if}

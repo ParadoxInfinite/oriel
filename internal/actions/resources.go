@@ -27,6 +27,20 @@ func registerImages(r *tools.Registry, dc *docker.Client) {
 		},
 	})
 	r.Register(&tools.Tool{
+		Name: "image.tag", Title: "Tag image", Description: "Add a repository:tag to an image",
+		Schema: tools.Schema{
+			Required: []string{"id", "ref"},
+			Props: map[string]tools.Prop{
+				"id":  {Type: "string", Description: "image id"},
+				"ref": {Type: "string", Description: "new repository:tag reference"},
+			},
+		},
+		Entity: &tools.EntityRef{Param: "id", Kind: "image"},
+		Handler: func(ctx context.Context, a map[string]any) (any, error) {
+			return okResult, dc.TagImage(ctx, a["id"].(string), a["ref"].(string))
+		},
+	})
+	r.Register(&tools.Tool{
 		Name: "image.prune", Title: "Prune images", Description: "Remove dangling images",
 		Destructive: true,
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {

@@ -54,6 +54,16 @@ func (c *Client) ListImages(ctx context.Context) ([]Image, error) {
 	return out, nil
 }
 
+// TagImage adds a repository:tag reference to an existing image, so a digest-pinned
+// (untagged) image gains a readable name.
+func (c *Client) TagImage(ctx context.Context, id, ref string) error {
+	cli, err := c.api(ctx)
+	if err != nil {
+		return err
+	}
+	return cli.ImageTag(ctx, id, ref)
+}
+
 func (c *Client) RemoveImage(ctx context.Context, id string, force bool) error {
 	cli, err := c.api(ctx)
 	if err != nil {
