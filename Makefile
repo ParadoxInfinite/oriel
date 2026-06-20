@@ -5,9 +5,16 @@ WEB := web
 VERSION := $(shell node -p "require('./$(WEB)/package.json').version" 2>/dev/null || echo dev)
 LDFLAGS := -X main.version=$(VERSION)
 
-.PHONY: all build web dev dev-web run test clean tidy
+REPO := ParadoxInfinite/oriel
+
+.PHONY: all build web dev dev-web run test clean tidy stats
 
 all: build
+
+## stats: total GitHub release-binary downloads (rough usage signal, no telemetry)
+stats:
+	@gh api repos/$(REPO)/releases --jq '[.[].assets[] | select(.name|startswith("oriel-")) | .download_count] | add // 0' \
+		| xargs printf "Oriel — total release downloads: %s\n"
 
 ## build: build frontend, embed it, produce the single binary
 build: web

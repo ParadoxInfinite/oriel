@@ -2,8 +2,7 @@
 
 An **edition** is a complete, swappable front-end for Oriel. The host mounts
 exactly one at a time; **Settings** changes it live and remembers the choice in
-`localStorage`. This is the same idea as  ↔ : the
-data/control layer is fixed, the presentation is a plugin.
+`localStorage`. The data/control layer is fixed; the presentation is a plugin.
 
 Two ship in the box:
 
