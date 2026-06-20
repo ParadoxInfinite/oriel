@@ -72,6 +72,17 @@ make build   # builds the frontend, embeds it, produces ./oriel
 Flags: `--port <n>` (default 4321), `--no-open` (don't launch a browser). If
 Colima is stopped, the UI shows a zero-state with a **Start** button.
 
+**Behind a reverse-proxy subpath.** Set `ORIEL_BASE_PATH` to serve under a path
+instead of the host root — the same binary works at either, no rebuild:
+
+```sh
+ORIEL_BASE_PATH=/oriel ./oriel --no-open      # served at https://host/oriel/
+```
+
+Then mount `/oriel` in your proxy (e.g. `tailscale serve --set-path /oriel 4321`,
+or nginx `location /oriel/`). It works whether the proxy strips the prefix or
+passes it through. (Hard-refresh after changing the base — assets are cached.)
+
 ### Run as a background service
 
 ```sh
