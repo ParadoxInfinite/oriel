@@ -3,13 +3,14 @@
 # Oriel installer — downloads the right release binary for your platform,
 # VERIFIES it against the published SHA256SUMS, and installs it onto your PATH.
 #
-# Running a piped script as root-equivalent software? Read it first. Or skip
-# this entirely and use the explicit per-platform commands in the README —
-# they do exactly what this does, one step at a time.
+# Running root-equivalent software from a piped script? Read it first. Or skip
+# this and use the explicit per-platform commands in the README — they do
+# exactly what this does, one step at a time.
 #
-#   Options (env vars):
+# Run interactively and it asks where to install and whether to set up the
+# background service. For unattended installs, set these and it won't prompt:
 #     ORIEL_INSTALL_DIR=/path   install location (default: /usr/local/bin or ~/.local/bin)
-#     ORIEL_SERVICE=1           also install + start the background service
+#     ORIEL_SERVICE=1           also install + start the background service (0 to skip)
 # ---------------------------------------------------------------------------
 set -eu
 
@@ -18,17 +19,37 @@ BASE="https://github.com/$REPO/releases/latest/download"
 
 die() { echo "oriel-install: $*" >&2; exit 1; }
 
+# Prompts read the terminal directly, so they work even under `curl … | sh`.
+# With no terminal (CI, automation), we fall back to env vars / defaults.
+if [ -e /dev/tty ]; then INTERACTIVE=1; else INTERACTIVE=0; fi
+
+ask() { # ask PROMPT DEFAULT  → chosen value (default if blank / non-interactive)
+  _ans=""
+  if [ "$INTERACTIVE" = 1 ]; then
+    printf "%s" "$1" > /dev/tty
+    read _ans < /dev/tty || _ans=""
+  fi
+  [ -n "$_ans" ] && printf "%s" "$_ans" || printf "%s" "$2"
+}
+
+confirm() { # confirm PROMPT  → 0 if yes
+  [ "$INTERACTIVE" = 1 ] || return 1
+  printf "%s" "$1" > /dev/tty
+  read _c < /dev/tty || _c=""
+  case "$_c" in y | Y | yes | YES) return 0 ;; *) return 1 ;; esac
+}
+
 # --- detect platform -------------------------------------------------------
 os=$(uname -s)
 case "$os" in
   Darwin) os=darwin ;;
-  Linux)  os=linux ;;
+  Linux) os=linux ;;
   *) die "unsupported OS: $os (macOS and Linux only)" ;;
 esac
 arch=$(uname -m)
 case "$arch" in
-  x86_64|amd64)  arch=amd64 ;;
-  arm64|aarch64) arch=arm64 ;;
+  x86_64 | amd64) arch=amd64 ;;
+  arm64 | aarch64) arch=arm64 ;;
   *) die "unsupported architecture: $arch" ;;
 esac
 asset="oriel-${os}-${arch}"
@@ -61,11 +82,12 @@ fi
 [ "$expected" = "$actual" ] || die "checksum mismatch — refusing to install (expected $expected, got $actual)"
 echo "Checksum verified."
 
-# --- install ---------------------------------------------------------------
+# --- install location (env var > prompt > default) -------------------------
+default_dir="$HOME/.local/bin"
+if [ -w /usr/local/bin ]; then default_dir=/usr/local/bin; fi
 dir="${ORIEL_INSTALL_DIR:-}"
-if [ -z "$dir" ]; then
-  if [ -w /usr/local/bin ] 2>/dev/null; then dir=/usr/local/bin; else dir="$HOME/.local/bin"; fi
-fi
+[ -n "$dir" ] || dir=$(ask "Install location [$default_dir]: " "$default_dir")
+
 mkdir -p "$dir"
 chmod +x "$tmp/oriel"
 mv "$tmp/oriel" "$dir/oriel"
@@ -76,11 +98,19 @@ case ":$PATH:" in
   *) echo "Note: $dir is not on your PATH — add it, or run $dir/oriel directly." ;;
 esac
 
-# --- optional: background service ------------------------------------------
-if [ "${ORIEL_SERVICE:-}" = "1" ]; then
+# --- background service (env var > prompt) ---------------------------------
+if [ -n "${ORIEL_SERVICE:-}" ]; then
+  [ "$ORIEL_SERVICE" = 1 ] && want_service=1 || want_service=0
+elif confirm "Start Oriel on login as a background service? [y/N]: "; then
+  want_service=1
+else
+  want_service=0
+fi
+
+if [ "$want_service" = 1 ]; then
   "$dir/oriel" service install
 else
   echo
-  echo "Run it:            $dir/oriel"
-  echo "Or on login:       $dir/oriel service install"
+  echo "Run it:       $dir/oriel"
+  echo "Or on login:  $dir/oriel service install"
 fi

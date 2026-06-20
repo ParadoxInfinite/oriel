@@ -30,19 +30,29 @@ curl -fsSL https://raw.githubusercontent.com/ParadoxInfinite/oriel/main/install.
 
 > ⚠️ This pipes a script into your shell, which runs as you. **[Read `install.sh`](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh) before running it** — or use the explicit per-platform commands below, which do the same thing, one intentional step at a time.
 
-**Manual** — copy the line for your platform:
+**Manual** — copy the one-liner for your platform:
+
+macOS · Apple Silicon (M1+)
 
 ```sh
-# macOS · Apple Silicon (M1+)
 curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-darwin-arm64 -o oriel && chmod +x oriel
+```
 
-# macOS · Intel
+macOS · Intel
+
+```sh
 curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-darwin-amd64 -o oriel && chmod +x oriel
+```
 
-# Linux · arm64
+Linux · arm64
+
+```sh
 curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-linux-arm64 -o oriel && chmod +x oriel
+```
 
-# Linux · amd64
+Linux · amd64
+
+```sh
 curl -fL https://github.com/ParadoxInfinite/oriel/releases/latest/download/oriel-linux-amd64 -o oriel && chmod +x oriel
 ```
 
