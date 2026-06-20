@@ -52,14 +52,16 @@
       size: v.size,
     }))
   }
-  async function doPrune(chosen) {
+  async function doPrune(chosen, progress) {
     let removed = 0
     let reclaimed = 0
+    let done = 0
     for (const it of chosen) {
       if (await invoke('volume.remove', { name: it.id, force: false })) {
         removed++
         reclaimed += it.size
       }
+      progress?.(++done)
     }
     if (removed) toast(`Pruned ${removed} volume(s), reclaimed ${bytes(reclaimed)}`, 'ok')
     refreshVolumes()

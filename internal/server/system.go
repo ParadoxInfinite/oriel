@@ -1,7 +1,7 @@
 package server
 
 import (
-	"encoding/json"
+	"context"
 	"net/http"
 )
 
@@ -15,16 +15,23 @@ func (s *Server) handleSystemUsage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, u)
 }
 
-// handleSystemPrune runs a system prune; `volumes:true` also reclaims unused volumes.
+// handleSystemPrune streams a system prune as SSE (one line per step). `?volumes=true`
+// also reclaims unused volumes. The prune runs on a background context, so a client
+// refresh/disconnect never aborts it mid-way — it finishes server-side regardless.
 func (s *Server) handleSystemPrune(w http.ResponseWriter, r *http.Request) {
-	var body struct {
-		Volumes bool `json:"volumes"`
-	}
-	_ = json.NewDecoder(r.Body).Decode(&body)
-	res, err := s.docker.SystemPrune(r.Context(), body.Volumes)
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, errorBody(err))
+	includeVolumes := r.URL.Query().Get("volumes") == "true"
+	sse, ok := newSSE(w)
+	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, res)
+	res, err := s.docker.SystemPrune(context.Background(), includeVolumes, func(line string) {
+		sse.send("line", map[string]string{"line": line})
+	})
+	result := map[string]any{"ok": err == nil}
+	if err != nil {
+		result["error"] = err.Error()
+	} else {
+		result["reclaimed"] = res.Reclaimed
+	}
+	sse.send("done", result)
 }
