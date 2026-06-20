@@ -71,6 +71,8 @@
   }
 </script>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
+
 <div
   class="fixed inset-0 z-40 flex justify-end bg-black/40"
   role="presentation"
