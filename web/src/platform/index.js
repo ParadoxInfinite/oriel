@@ -24,7 +24,7 @@ export { status, refreshStatus } from '../lib/status.svelte.js'
 
 /** Containers. `{ list, loading, error }`.
  *  item → { id, name, image, state, status, created, project, ports:[{public,private,type}] } */
-export { containers, refreshContainers } from '../lib/containers.svelte.js'
+export { containers, refreshContainers, containersForImage } from '../lib/containers.svelte.js'
 
 /** Image/volume/network inventories, each `{ list, loading, error }`.
  *  image  → { id, tags:[string], size, containers, created }

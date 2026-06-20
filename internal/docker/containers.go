@@ -18,6 +18,7 @@ type Container struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
 	Image   string `json:"image"`
+	ImageID string `json:"imageId"` // digest, for matching a container to its image
 	State   string `json:"state"`
 	Status  string `json:"status"`
 	Created int64  `json:"created"`
@@ -78,6 +79,7 @@ func toContainer(r container.Summary) Container {
 		ID:      r.ID,
 		Name:    name,
 		Image:   r.Image,
+		ImageID: r.ImageID,
 		State:   string(r.State),
 		Status:  r.Status,
 		Created: r.Created,
