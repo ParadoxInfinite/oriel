@@ -49,7 +49,7 @@
 {cur.error}{/if}</pre>
       {/if}
 
-      <div class="flex items-center justify-between gap-3 border-t border-border px-5 py-3">
+      <div class="flex items-center justify-between gap-3 border-t border-border bg-surface-2/40 px-5 py-3">
         {#if cur.jobId && !cur.done}
           <span class="text-[11px] text-faint">Runs in the background — safe to close.</span>
         {:else}
@@ -58,7 +58,7 @@
         <div class="flex gap-2">
           {#if cur.jobId && !cur.done}
             <button
-              class="rounded-[--radius] bg-danger/15 px-3 py-1.5 text-sm text-danger transition-colors hover:bg-danger/25 disabled:opacity-40"
+              class="rounded-lg bg-danger/15 px-3.5 py-1.5 text-[13px] font-medium text-danger transition-colors hover:bg-danger/25 disabled:opacity-40"
               disabled={cur.cancelling}
               onclick={() => cancelOp(cur.id)}
             >
@@ -67,14 +67,16 @@
           {/if}
           {#if cur.done}
             <button
-              class="rounded-[--radius] px-3 py-1.5 text-sm transition-colors
-                {cur.error ? 'bg-danger/15 text-danger hover:bg-danger/25' : 'bg-surface-2 text-fg hover:bg-border'}"
+              class="rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors
+                {cur.error
+                  ? 'bg-danger/15 text-danger hover:bg-danger/25'
+                  : 'border border-border bg-surface text-muted hover:bg-surface-2 hover:text-fg'}"
               onclick={() => dismissOp(cur.id)}
             >
               Close
             </button>
           {:else}
-            <button class="rounded-[--radius] bg-surface-2 px-3 py-1.5 text-sm text-fg transition-colors hover:bg-border" onclick={minimizeOp}>
+            <button class="rounded-lg border border-border bg-surface px-3.5 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg" onclick={minimizeOp}>
               Hide
             </button>
           {/if}

@@ -17,7 +17,7 @@ const (
 	historyCap     = 1800            // ~30 minutes at 1s resolution
 	flushInterval  = 5 * time.Minute // periodically persist the buffer to disk
 
-	// A startup time-jump beyond this is treated as colima-gui having been
+	// A startup time-jump beyond this is treated as Oriel having been
 	// offline (logged as an outage), not a normal restart.
 	offlineThreshold     = 30 * time.Second
 	defaultRetentionDays = 30
@@ -29,7 +29,7 @@ const (
 
 // Outage is one recorded downtime, retained far longer than the 30-min pulse
 // buffer. Kind is "down" (colima unreachable while we watched) or "offline"
-// (colima-gui itself was not running, inferred from a gap on restart).
+// (Oriel itself was not running, inferred from a gap on restart).
 type Outage struct {
 	Kind  string `json:"kind"`
 	Start int64  `json:"start"` // unix ms
@@ -38,7 +38,7 @@ type Outage struct {
 
 // HistoryPoint is one aggregate sample of total CPU% and memory at a moment.
 // Down marks a tick where colima/docker was unreachable while the recorder was
-// running — distinct from colima-gui itself being offline, which records nothing
+// running — distinct from Oriel itself being offline, which records nothing
 // at all and so leaves a time gap between points. (omitempty keeps the common
 // "up" case compact and lets older persisted files load as up.)
 type HistoryPoint struct {
@@ -101,7 +101,7 @@ func retentionWindow() time.Duration {
 	return time.Duration(days) * 24 * time.Hour
 }
 
-// detectStartupOffline logs a colima-gui outage when the buffer resumes after a
+// detectStartupOffline logs an Oriel outage when the buffer resumes after a
 // gap longer than offlineThreshold — i.e. we weren't running for a while.
 func (r *recorder) detectStartupOffline() {
 	if len(r.history) == 0 {
@@ -185,7 +185,7 @@ func (r *recorder) tick(ctx context.Context) {
 	now := time.Now().UnixMilli()
 	if err != nil {
 		// colima/docker unreachable: record a down marker so the outage is
-		// visible and distinguishable from colima-gui being offline (no record).
+		// visible and distinguishable from Oriel being offline (no record).
 		r.mu.Lock()
 		r.latest = nil
 		if r.downSince == 0 {

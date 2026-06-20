@@ -9,6 +9,20 @@
   const sorted = $derived([...stacks.list].sort((a, b) => a.name.localeCompare(b.name)))
   const hasRoots = $derived(discovery.config.roots.some((r) => r.enabled))
 
+  // Per-stack collapse state, keyed by name (deep $state proxy → reactive).
+  let collapsed = $state({})
+  const toggle = (name) => (collapsed[name] = !collapsed[name])
+
+  // Search box over the discovered (not-yet-deployed) list.
+  let query = $state('')
+  const discovered = $derived(
+    discovery.stacks.filter((d) => {
+      const q = query.trim().toLowerCase()
+      if (!q) return true
+      return [d.alias, d.name, d.dir].some((v) => (v || '').toLowerCase().includes(q))
+    })
+  )
+
   async function act(stack, action) {
     if (action === 'down') {
       const ok = await confirm({
@@ -50,15 +64,19 @@
     {#each sorted as s, i (s.name)}
       {@const allUp = s.running === s.total}
       {@const someUp = s.running > 0}
+      {@const isOpen = !collapsed[s.name]}
       <div class="rise card overflow-hidden" style={`animation-delay:${i * 40}ms`}>
-        <div class="flex flex-wrap items-center gap-3 border-b border-[var(--border)] px-5 py-3.5">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="text-[14px] font-semibold tracking-tight">{s.name}</span>
-              <span class="pill {allUp ? 'on' : someUp ? 'warn' : 'off'}"><span class="dot"></span>{s.running}/{s.total} up</span>
+        <div class="flex flex-wrap items-center gap-3 px-5 py-3.5 {isOpen ? 'border-b border-[var(--border)]' : ''}">
+          <button class="flex min-w-0 items-center gap-2.5 text-left" onclick={() => toggle(s.name)} aria-expanded={isOpen} title={isOpen ? 'Collapse' : 'Expand'}>
+            <Icon name="chevron" size={16} class="shrink-0 text-[var(--text-3)] transition-transform {isOpen ? '' : '-rotate-90'}" />
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-[14px] font-semibold tracking-tight">{s.name}</span>
+                <span class="pill {allUp ? 'on' : someUp ? 'warn' : 'off'}"><span class="dot"></span>{s.running}/{s.total} up</span>
+              </div>
+              <div class="mono mt-0.5 truncate text-xs text-[var(--text-3)]">{s.workingDir}</div>
             </div>
-            <div class="mono mt-0.5 truncate text-xs text-[var(--text-3)]">{s.workingDir}</div>
-          </div>
+          </button>
           <div class="ml-auto flex gap-1.5">
             {#if s.running < s.total}<button class="btn btn-default btn-sm" onclick={() => act(s, 'start')}><Icon name="play" size={13} /> Start</button>{/if}
             {#if someUp}<button class="btn btn-default btn-sm" onclick={() => act(s, 'stop')}><Icon name="stop" size={13} /> Stop</button>{/if}
@@ -66,23 +84,31 @@
             <button class="btn btn-danger btn-sm" onclick={() => act(s, 'down')}><Icon name="trash" size={13} /> Down</button>
           </div>
         </div>
-        <div class="grid gap-x-8 gap-y-2 px-5 py-3.5 sm:grid-cols-2">
-          {#each s.containers as c (c.id)}
-            <div class="flex items-center justify-between gap-2">
-              <span class="mono truncate text-[12.5px] text-[var(--text-2)]">{c.name}</span>
-              <StatusPill state={c.state} />
-            </div>
-          {/each}
-        </div>
+        {#if isOpen}
+          <div class="grid gap-x-8 gap-y-2 px-5 py-3.5 sm:grid-cols-2">
+            {#each s.containers as c (c.id)}
+              <div class="flex items-center justify-between gap-2">
+                <span class="mono truncate text-[12.5px] text-[var(--text-2)]">{c.name}</span>
+                <StatusPill state={c.state} />
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
     {/each}
   {/if}
 
   <!-- Available (discovered, not deployed) -->
-  <div class="rise mt-2 flex items-center gap-2.5" style="animation-delay:60ms">
+  <div class="rise mt-2 flex flex-wrap items-center gap-2.5" style="animation-delay:60ms">
     <span class="eyebrow">Available</span>
     {#if discovery.stacks.length}<span class="count">{discovery.stacks.length}</span>{/if}
-    <button class="btn btn-ghost btn-sm ml-auto" onclick={rescan} disabled={discovery.loading}><Icon name="restart" size={13} /> {discovery.loading ? 'Scanning…' : 'Rescan'}</button>
+    {#if discovery.stacks.length > 1}
+      <div class="relative ml-auto">
+        <Icon name="search" size={14} class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
+        <input bind:value={query} placeholder="Search available…" class="input has-icon btn-sm w-56" />
+      </div>
+    {/if}
+    <button class="btn btn-ghost btn-sm {discovery.stacks.length > 1 ? '' : 'ml-auto'}" onclick={rescan} disabled={discovery.loading}><Icon name="restart" size={13} /> {discovery.loading ? 'Scanning…' : 'Rescan'}</button>
   </div>
 
   {#if !hasRoots}
@@ -94,8 +120,10 @@
     <div class="card px-5 py-4 text-[13px] text-[var(--text-3)]">
       Nothing new to deploy — everything discovered is already running.{#if discovery.hidden}<span> {discovery.hidden} hidden by filter.</span>{/if}
     </div>
+  {:else if discovered.length === 0}
+    <div class="card px-5 py-4 text-[13px] text-[var(--text-3)]">No available stacks match “{query}”.</div>
   {:else}
-    {#each discovery.stacks as d (d.file)}
+    {#each discovered as d (d.file)}
       <div class="card flex flex-wrap items-center gap-3 px-5 py-3.5">
         <div class="min-w-0 flex-1">
           {#if editing === d.name}

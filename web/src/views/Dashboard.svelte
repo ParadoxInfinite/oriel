@@ -64,7 +64,7 @@
     </div>
     {#if status.error}
       <h2 class="display text-lg font-medium tracking-tight">Backend unreachable</h2>
-      <p class="mt-1.5 max-w-sm text-sm text-muted">Cannot reach the colima-gui backend service.</p>
+      <p class="mt-1.5 max-w-sm text-sm text-muted">Cannot reach the Oriel backend service.</p>
       <p class="mt-4 font-mono text-xs text-danger">{status.error}</p>
     {:else if isDocker}
       <h2 class="display text-lg font-medium tracking-tight">Docker engine unreachable</h2>
@@ -163,7 +163,7 @@
 
     {#if self.rss}
       <div class="mt-5 text-center text-[11px] text-faint/70">
-        colima-gui backend · <span class="tnum font-mono">{bytes(self.rss)}</span> RAM · {self.goroutines} goroutines
+        Oriel backend · <span class="tnum font-mono">{bytes(self.rss)}</span> RAM · {self.goroutines} goroutines
       </div>
     {/if}
   </div>
