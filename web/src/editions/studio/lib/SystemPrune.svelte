@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { apiGet, apiPost, toast, fmt, refreshContainers, refreshImages, refreshVolumes } from '../../../platform/index.js'
+  import { apiGet, runOp, fmt, refreshContainers, refreshImages, refreshVolumes } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   let { onClose } = $props()
@@ -8,7 +8,6 @@
   let df = $state(null)
   let loadErr = $state('')
   let includeVolumes = $state(false)
-  let busy = $state(false)
 
   onMount(async () => {
     try {
@@ -31,20 +30,14 @@
       : []
   )
 
-  async function run() {
-    busy = true
-    try {
-      const res = await apiPost('/api/system/prune', { volumes: includeVolumes })
-      toast(`Reclaimed ${fmt.bytes(res.reclaimed)} · ${res.containers} container(s), ${res.images} image(s)${includeVolumes ? `, ${res.volumes} volume(s)` : ''}`, 'ok')
+  function run() {
+    const vol = includeVolumes
+    onClose() // hand off to the op overlay, which streams per-step progress
+    runOp('Reclaiming disk space', `/api/system/prune?volumes=${vol}`, () => {
       refreshContainers()
       refreshImages()
       refreshVolumes()
-      onClose()
-    } catch (e) {
-      toast(e.message, 'error')
-    } finally {
-      busy = false
-    }
+    })
   }
 </script>
 
@@ -90,8 +83,8 @@
     <div class="flex items-center justify-between gap-3 border-t border-[var(--border)] px-5 py-3">
       <span class="text-[12px] text-[var(--text-2)]">Reclaims ≈ <span class="mono font-medium text-[var(--green)]">{fmt.bytes(total)}</span></span>
       <div class="flex gap-2">
-        <button class="btn btn-default btn-sm" onclick={onClose} disabled={busy}>Cancel</button>
-        <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick={run} disabled={busy || !df}>{busy ? 'Pruning…' : 'Prune'}</button>
+        <button class="btn btn-default btn-sm" onclick={onClose}>Cancel</button>
+        <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick={run} disabled={!df}>Prune</button>
       </div>
     </div>
   </div>

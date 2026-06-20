@@ -72,14 +72,16 @@
       size: i.size,
     }))
   }
-  async function doPrune(chosen) {
+  async function doPrune(chosen, progress) {
     let removed = 0
     let reclaimed = 0
+    let done = 0
     for (const it of chosen) {
       if (await invoke('image.remove', { id: it.id, force: true })) {
         removed++
         reclaimed += it.size
       }
+      progress?.(++done)
     }
     if (removed) toast(`Pruned ${removed} image(s), reclaimed ${bytes(reclaimed)}`, 'ok')
     refreshImages()

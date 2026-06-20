@@ -2,11 +2,26 @@ package docker
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/filters"
 )
+
+// humanBytes formats a byte count for progress lines (e.g. "1.2 GiB").
+func humanBytes(n int64) string {
+	if n < 1024 {
+		return fmt.Sprintf("%d B", n)
+	}
+	const units = "KMGT"
+	v, i := float64(n), -1
+	for v >= 1024 && i < 3 {
+		v /= 1024
+		i++
+	}
+	return fmt.Sprintf("%.1f %ciB", v, units[i])
+}
 
 // SystemUsage summarises what a `docker system prune` would reclaim. Counts and
 // sizes mirror what the prune actually removes (stopped containers, dangling
@@ -74,33 +89,48 @@ type PruneResult struct {
 }
 
 // SystemPrune mirrors `docker system prune`: stopped containers, unused networks,
-// dangling images, and inactive build cache; unused volumes only when asked.
-func (c *Client) SystemPrune(ctx context.Context, includeVolumes bool) (PruneResult, error) {
+// dangling images, and inactive build cache; unused volumes only when asked. emit
+// (nil-safe) receives a human-readable line per step for live progress.
+func (c *Client) SystemPrune(ctx context.Context, includeVolumes bool, emit func(string)) (PruneResult, error) {
+	if emit == nil {
+		emit = func(string) {}
+	}
 	cli, err := c.api(ctx)
 	if err != nil {
 		return PruneResult{}, err
 	}
 	var res PruneResult
 
+	emit("Removing stopped containers…")
 	if rep, err := cli.ContainersPrune(ctx, filters.NewArgs()); err == nil {
 		res.Containers = len(rep.ContainersDeleted)
 		res.Reclaimed += int64(rep.SpaceReclaimed)
+		emit(fmt.Sprintf("  %d removed (%s)", res.Containers, humanBytes(int64(rep.SpaceReclaimed))))
 	}
+	emit("Removing unused networks…")
 	if rep, err := cli.NetworksPrune(ctx, filters.NewArgs()); err == nil {
 		res.Networks = len(rep.NetworksDeleted)
+		emit(fmt.Sprintf("  %d removed", res.Networks))
 	}
+	emit("Removing dangling images…")
 	if rep, err := cli.ImagesPrune(ctx, filters.NewArgs(filters.Arg("dangling", "true"))); err == nil {
 		res.Images = len(rep.ImagesDeleted)
 		res.Reclaimed += int64(rep.SpaceReclaimed)
+		emit(fmt.Sprintf("  %d removed (%s)", res.Images, humanBytes(int64(rep.SpaceReclaimed))))
 	}
+	emit("Pruning build cache…")
 	if rep, err := cli.BuildCachePrune(ctx, build.CachePruneOptions{}); err == nil {
 		res.Reclaimed += int64(rep.SpaceReclaimed)
+		emit(fmt.Sprintf("  reclaimed %s", humanBytes(int64(rep.SpaceReclaimed))))
 	}
 	if includeVolumes {
+		emit("Removing unused volumes…")
 		if rep, err := cli.VolumesPrune(ctx, filters.NewArgs()); err == nil {
 			res.Volumes = len(rep.VolumesDeleted)
 			res.Reclaimed += int64(rep.SpaceReclaimed)
+			emit(fmt.Sprintf("  %d removed (%s)", res.Volumes, humanBytes(int64(rep.SpaceReclaimed))))
 		}
 	}
+	emit(fmt.Sprintf("Done — reclaimed %s total", humanBytes(res.Reclaimed)))
 	return res, nil
 }

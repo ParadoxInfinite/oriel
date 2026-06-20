@@ -70,14 +70,16 @@
           images.list
             .filter((i) => i.tags.length === 1 && i.tags[0] === '<none>')
             .map((i) => ({ id: i.id, primary: shortId(i.id), secondary: `untagged · ${fmt.relativeTime(i.created)}`, size: i.size })),
-        run: async (chosen) => {
+        run: async (chosen, progress) => {
           let removed = 0
           let reclaimed = 0
+          let done = 0
           for (const it of chosen) {
             if (await invoke('image.remove', { id: it.id, force: true })) {
               removed++
               reclaimed += it.size
             }
+            progress?.(++done)
           }
           if (removed) toast(`Pruned ${removed} image(s), reclaimed ${fmt.bytes(reclaimed)}`, 'ok')
           refreshImages()
@@ -113,14 +115,16 @@
           const list = await apiGet('/api/volumes/prune/preview')
           return list.map((v) => ({ id: v.name, primary: v.name, secondary: 'unused · data will be deleted', size: v.size }))
         },
-        run: async (chosen) => {
+        run: async (chosen, progress) => {
           let removed = 0
           let reclaimed = 0
+          let done = 0
           for (const it of chosen) {
             if (await invoke('volume.remove', { name: it.id, force: false })) {
               removed++
               reclaimed += it.size
             }
+            progress?.(++done)
           }
           if (removed) toast(`Pruned ${removed} volume(s), reclaimed ${fmt.bytes(reclaimed)}`, 'ok')
           refreshVolumes()
