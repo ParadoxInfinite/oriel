@@ -17,6 +17,7 @@
   import { appearance, systemPref, initAppearance } from './theme.svelte.js'
   import Icon from './lib/Icon.svelte'
   import Outages from './lib/Outages.svelte'
+  import OpTray from '../../components/OpTray.svelte'
   import Dashboard from './panels/Dashboard.svelte'
   import Containers from './panels/Containers.svelte'
   import Resources from './panels/Resources.svelte'
@@ -90,6 +91,7 @@
       </button>
     </nav>
 
+    <OpTray />
     <Outages />
 
     <!-- VM status footer -->

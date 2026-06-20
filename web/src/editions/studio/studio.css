@@ -49,6 +49,24 @@
   --red-tint: color-mix(in srgb, var(--red) 11%, #fff);
   --slate-dot: #9aa1ad;
 
+  /* Bridge to the Tailwind --color-* token names so shared components (OpTray and
+     any future global UI) styled with semantic classes render in Studio's palette.
+     These are live var() references, so they follow .dark and the accent for free. */
+  --color-bg: var(--bg);
+  --color-surface: var(--panel);
+  --color-surface-2: var(--panel-2);
+  --color-elevated: var(--panel);
+  --color-border: var(--border);
+  --color-border-light: var(--border-strong);
+  --color-fg: var(--text);
+  --color-muted: var(--text-2);
+  --color-faint: var(--text-3);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-text);
+  --color-danger: var(--red);
+  --color-ok: var(--green);
+  --color-warn: var(--amber);
+
   --font: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', monospace;
 
