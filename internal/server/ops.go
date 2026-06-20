@@ -33,8 +33,8 @@ func (s *Server) handleStartSystemPrune(w http.ResponseWriter, r *http.Request) 
 		BuildCacheAll: q.Get("cacheall") == "true",
 		Volumes:       q.Get("volumes") == "true",
 	}
-	job := s.jobs.start("system-prune", "Reclaiming disk space", func(ctx context.Context, emit func(string)) error {
-		_, err := s.docker.SystemPrune(ctx, opts, emit)
+	job := s.jobs.start("system-prune", "Reclaiming disk space", func(ctx context.Context, rep Reporter) error {
+		_, err := s.docker.SystemPrune(ctx, opts, rep.Line)
 		return err
 	})
 	writeJSON(w, http.StatusOK, map[string]string{"id": job.ID})
@@ -69,23 +69,23 @@ func (s *Server) startItemPrune(w http.ResponseWriter, r *http.Request, kind, ti
 		return
 	}
 	items := body.Items
-	job := s.jobs.start(kind, title, func(ctx context.Context, emit func(string)) error {
+	job := s.jobs.start(kind, title, func(ctx context.Context, rep Reporter) error {
 		var removed int
 		var reclaimed int64
 		for i, it := range items {
 			if ctx.Err() != nil {
-				emit(fmt.Sprintf("Cancelled — %d of %d removed (%s)", removed, len(items), humanBytes(reclaimed)))
+				rep.Line(fmt.Sprintf("Cancelled — removed %d of %d (%s)", removed, len(items), humanBytes(reclaimed)))
 				return ctx.Err()
 			}
-			emit(fmt.Sprintf("Removing %d of %d…", i+1, len(items)))
+			rep.Progress(i+1, len(items)) // drives the bar; no per-item log spam
 			if err := remove(ctx, it.ID, true); err != nil {
-				emit(fmt.Sprintf("  skipped %s: %s", shortID(it.ID), err.Error()))
+				rep.Line(fmt.Sprintf("skipped %s: %s", shortID(it.ID), err.Error()))
 				continue
 			}
 			removed++
 			reclaimed += it.Size
 		}
-		emit(fmt.Sprintf("Done — removed %d, reclaimed %s", removed, humanBytes(reclaimed)))
+		rep.Line(fmt.Sprintf("Removed %d, reclaimed %s", removed, humanBytes(reclaimed)))
 		return nil
 	})
 	writeJSON(w, http.StatusOK, map[string]string{"id": job.ID})
@@ -110,23 +110,27 @@ func (s *Server) handleOpStream(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	snapshot, ch, done, jok, jerr, unsub := job.subscribe()
+	snap, ch, unsub := job.subscribe()
 	defer unsub()
 
-	sse.send("snapshot", map[string]any{"lines": snapshot})
-	if done {
-		sse.send("done", doneBody(jok, jerr))
+	sse.send("snapshot", map[string]any{"lines": snap.lines, "cur": snap.cur, "total": snap.total})
+	if snap.done {
+		sse.send("done", doneBody(snap.ok, snap.errMsg))
 		return
 	}
 	for {
 		select {
-		case line, more := <-ch:
+		case ev, more := <-ch:
 			if !more {
 				ok, errMsg := job.finalState()
 				sse.send("done", doneBody(ok, errMsg))
 				return
 			}
-			sse.send("line", map[string]string{"line": line})
+			if ev.kind == "progress" {
+				sse.send("progress", map[string]int{"cur": ev.cur, "total": ev.tot})
+			} else {
+				sse.send("line", map[string]string{"line": ev.line})
+			}
 		case <-r.Context().Done():
 			return // client gone; job keeps running, unsub via defer
 		}

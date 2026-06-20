@@ -1,4 +1,5 @@
 import { streamPost, apiGet, apiPost, sse } from './api.js'
+import { toast } from './toast.svelte.js'
 import { refreshContainers } from './containers.svelte.js'
 import { refreshImages, refreshVolumes, refreshNetworks } from './resources.svelte.js'
 
@@ -30,7 +31,7 @@ function drop(id) {
 // can't outlive the page). Kept for colima lifecycle + compose.
 export async function runOp(title, path, onDone) {
   const id = `r${++seq}`
-  add({ id, jobId: null, kind: 'task', title, lines: [], done: false, error: null, cancelling: false })
+  add({ id, jobId: null, kind: 'task', title, lines: [], cur: 0, total: 0, done: false, error: null, cancelling: false })
   ops.focused = id
   try {
     await streamPost(path, {
@@ -38,22 +39,32 @@ export async function runOp(title, path, onDone) {
         const o = find(id)
         if (!o) return
         if (name === 'line') o.lines.push(data.line)
-        else if (name === 'done') {
-          o.done = true
-          if (!data.ok) o.error = data.error
-        }
+        else if (name === 'done') finishEntry(o, data.ok, data.error)
       },
     })
   } catch (e) {
     const o = find(id)
-    if (o) {
-      o.error = e.message
-      o.done = true
-    }
+    if (o) finishEntry(o, false, e.message)
   } finally {
     onDone?.()
   }
 }
+
+// finishEntry marks an op done and, on success, auto-dismisses it shortly after so
+// finished ops don't pile up in the modal/tray. Failures stay until dismissed.
+function finishEntry(o, ok, error) {
+  o.done = true
+  o.cancelling = false
+  if (!ok) {
+    o.error = error || 'cancelled'
+    return
+  }
+  const last = o.lines[o.lines.length - 1]
+  if (last && o.kind?.includes('prune')) toast(last, 'ok')
+  setTimeout(() => dismissOp(o.id), AUTO_DISMISS_MS)
+}
+
+const AUTO_DISMISS_MS = 4000
 
 // attachJob streams a server-side background job. The stream sends a "snapshot" of
 // progress so far (so reconnect/refresh catches up without duplicates), then live
@@ -65,20 +76,24 @@ export function attachJob(jobId, title, kind, focus = true) {
     return
   }
   if (!find(jobId)) {
-    add({ id: jobId, jobId, kind, title, lines: [], done: false, error: null, cancelling: false })
+    add({ id: jobId, jobId, kind, title, lines: [], cur: 0, total: 0, done: false, error: null, cancelling: false })
   }
   if (focus) ops.focused = jobId
-  const es = sse(`/api/ops/${jobId}/stream`, ['snapshot', 'line', 'done'], (name, data) => {
+  const es = sse(`/api/ops/${jobId}/stream`, ['snapshot', 'line', 'progress', 'done'], (name, data) => {
     const o = find(jobId)
     if (!o) return
-    if (name === 'snapshot') o.lines = data.lines || []
-    else if (name === 'line') o.lines.push(data.line)
-    else if (name === 'done') {
-      o.done = true
-      o.cancelling = false
-      if (!data.ok) o.error = data.error || 'cancelled'
+    if (name === 'snapshot') {
+      o.lines = data.lines || []
+      o.cur = data.cur || 0
+      o.total = data.total || 0
+    } else if (name === 'line') o.lines.push(data.line)
+    else if (name === 'progress') {
+      o.cur = data.cur
+      o.total = data.total
+    } else if (name === 'done') {
       closeStream(jobId)
       refreshForKind(kind)
+      finishEntry(o, data.ok, data.error)
     }
   })
   streams.set(jobId, es)
@@ -91,7 +106,7 @@ async function startJob(path, body, title, kind) {
     res = await apiPost(path, body)
   } catch (e) {
     const id = `r${++seq}`
-    add({ id, jobId: null, kind, title, lines: [e.message], done: true, error: e.message, cancelling: false })
+    add({ id, jobId: null, kind, title, lines: [e.message], cur: 0, total: 0, done: true, error: e.message, cancelling: false })
     ops.focused = id
     return
   }
