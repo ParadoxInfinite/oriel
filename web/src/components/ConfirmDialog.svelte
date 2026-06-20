@@ -28,7 +28,7 @@
     role="presentation"
   >
     <div
-      class="w-full max-w-sm overflow-hidden rounded-[--radius] border border-border bg-surface shadow-2xl"
+      class="w-full max-w-sm overflow-hidden rounded-[var(--overlay-radius)] border border-border bg-surface shadow-[var(--overlay-shadow)]"
       onclick={(e) => e.stopPropagation()}
       role="alertdialog"
       aria-modal="true"
