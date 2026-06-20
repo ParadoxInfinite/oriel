@@ -3,7 +3,7 @@
   // for Studio. Time-axed so outages read correctly:
   //   • accent line  — colima up; peak CPU per 15s window
   //   • red baseline — colima was DOWN while recording
-  //   • dashed grey  — colima-gui itself was offline (a recording gap)
+  //   • dashed grey  — Oriel itself was offline (a recording gap)
   // Points are { t, cpu(percent), down(bool) }; only the last 30 min is shown.
   let { points = [], height = 132 } = $props()
 
@@ -209,7 +209,7 @@
       {#if hoverGap}
         <span class="pointer-events-none absolute bottom-0 top-0 w-px bg-[var(--border-strong)]" style="left:{pctX(hoverGap.mx)}%"></span>
         <div class="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-[var(--border)] bg-[var(--panel)] px-2 py-1 text-center shadow-[var(--shadow-md)]" style="left:{Math.min(88, Math.max(12, pctX(hoverGap.mx)))}%; top:40%">
-          <div class="mono text-[11px] text-[var(--text-2)]">colima-gui offline</div>
+          <div class="mono text-[11px] text-[var(--text-2)]">Oriel offline</div>
           <div class="mono text-[10px] text-[var(--text-3)]">{fmtDur(hoverGap.t2 - hoverGap.t1)} · no data</div>
         </div>
       {/if}

@@ -92,7 +92,7 @@
       {#if status.error}
         <div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[var(--red-tint)] text-[var(--red)]"><Icon name="network" size={22} /></div>
         <h2 class="text-lg font-semibold tracking-tight">Backend unreachable</h2>
-        <p class="mx-auto mt-1.5 max-w-xs text-sm text-[var(--text-2)]">We can't reach the colima-gui backend service right now.</p>
+        <p class="mx-auto mt-1.5 max-w-xs text-sm text-[var(--text-2)]">We can't reach the Oriel backend service right now.</p>
         <p class="mono mt-4 rounded-lg bg-[var(--panel-2)] px-3 py-2 text-xs text-[var(--red)]">{status.error}</p>
       {:else if isDocker}
         <div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-xl bg-[var(--amber-tint)] text-[var(--amber)]"><Icon name="box" size={22} /></div>
@@ -202,7 +202,7 @@
 
     {#if self.rss}
       <p class="rise pb-1 text-center text-xs text-[var(--text-3)]" style="animation-delay:160ms">
-        colima-gui backend · <span class="mono tnum">{fmt.bytes(self.rss)}</span> memory · {self.goroutines} goroutines
+        Oriel backend · <span class="mono tnum">{fmt.bytes(self.rss)}</span> memory · {self.goroutines} goroutines
       </p>
     {/if}
   </div>

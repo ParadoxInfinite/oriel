@@ -5,7 +5,7 @@
 
   const meta = {
     down: { label: 'Colima down', cls: 'bad' },
-    offline: { label: 'GUI offline', cls: 'off' },
+    offline: { label: 'Oriel offline', cls: 'off' },
   }
   const sorted = $derived([...outages.list].sort((a, b) => b.end - a.end))
   const recent = $derived(sorted.slice(0, 3))

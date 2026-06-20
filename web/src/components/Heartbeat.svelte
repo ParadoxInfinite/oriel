@@ -2,7 +2,7 @@
   // Smooth, scrubbable system pulse — time-axed so outages read correctly:
   //   • teal line     — colima up; peak CPU per 15s window
   //   • red baseline  — colima was DOWN while we watched (recorded down-ticks)
-  //   • dashed grey   — colima-gui itself was OFFLINE (nothing recorded → a gap)
+  //   • dashed grey   — Oriel itself was OFFLINE (nothing recorded → a gap)
   // Points are {t, cpu(percent), down(bool)}. Only the last 30 min is shown, so
   // data from before a long downtime simply scrolls out of view.
   let { points = [], color = 'var(--color-accent)' } = $props()
@@ -27,7 +27,7 @@
 
   // Clock-aligned 15s windows within the last 30 min. Each window keeps the peak
   // of its up-samples; a window with only down-ticks is itself "down". A jump of
-  // more than one window key means colima-gui recorded nothing — an offline gap.
+  // more than one window key means Oriel recorded nothing — an offline gap.
   const series = $derived.by(() => {
     if (!points.length) return []
     const cutoff = Date.now() - VIEW_MS
@@ -202,7 +202,7 @@
         </linearGradient>
       </defs>
       {#if geo}
-        <!-- offline gaps: colima-gui wasn't running, nothing was recorded -->
+        <!-- offline gaps: Oriel wasn't running, nothing was recorded -->
         {#each geo.gaps as g}
           <line x1={g.x1} y1={geo.baseY} x2={g.x2} y2={geo.baseY} stroke="var(--color-faint)" stroke-width="1.5" stroke-dasharray="2 5" vector-effect="non-scaling-stroke" />
         {/each}
@@ -241,7 +241,7 @@
           class="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 rounded-md border border-border bg-elevated px-2 py-1 text-center shadow-xl"
           style="left:{Math.min(90, Math.max(10, pctX(hoverGap.mx)))}%; top:38%"
         >
-          <div class="font-mono text-xs text-muted">colima-gui offline</div>
+          <div class="font-mono text-xs text-muted">Oriel offline</div>
           <div class="font-mono text-[10px] text-faint">{fmtDur(hoverGap.t2 - hoverGap.t1)} · no data</div>
         </div>
       {/if}
