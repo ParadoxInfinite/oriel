@@ -9,6 +9,7 @@
   import Settings from '../views/Settings.svelte'
   import Icon from '../components/Icon.svelte'
   import RecentOutages from '../components/RecentOutages.svelte'
+  import OpTray from '../components/OpTray.svelte'
   import { openPalette } from '../lib/palette.svelte.js'
   import { refreshImages, refreshVolumes, refreshNetworks } from '../lib/resources.svelte.js'
   import { refreshStacks } from '../lib/stacks.svelte.js'
@@ -117,6 +118,7 @@
         Settings
       </button>
     </nav>
+    <OpTray />
     <RecentOutages />
 
     <div class="flex items-center justify-between border-t border-border px-4 py-3">
