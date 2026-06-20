@@ -88,10 +88,23 @@ type PruneResult struct {
 	Reclaimed  int64 `json:"reclaimed"`
 }
 
-// SystemPrune mirrors `docker system prune`: stopped containers, unused networks,
-// dangling images, and inactive build cache; unused volumes only when asked. emit
-// (nil-safe) receives a human-readable line per step for live progress.
-func (c *Client) SystemPrune(ctx context.Context, includeVolumes bool, emit func(string)) (PruneResult, error) {
+// PruneOptions selects which categories a system prune removes. Each maps to one
+// `docker … prune` step; nothing runs unless explicitly selected. BuildCacheAll
+// extends the build-cache step from dangling-only to every unused entry.
+type PruneOptions struct {
+	Containers    bool
+	Images        bool
+	Networks      bool
+	BuildCache    bool
+	BuildCacheAll bool
+	Volumes       bool
+}
+
+// SystemPrune runs the selected prune steps (stopped containers, unused networks,
+// dangling images, build cache, unused volumes). Build cache prunes dangling layers
+// by default; BuildCacheAll (All:true) also removes cache for existing images — the
+// larger amount SystemUsage previews. emit (nil-safe) gets a line per step.
+func (c *Client) SystemPrune(ctx context.Context, opts PruneOptions, emit func(string)) (PruneResult, error) {
 	if emit == nil {
 		emit = func(string) {}
 	}
@@ -101,29 +114,41 @@ func (c *Client) SystemPrune(ctx context.Context, includeVolumes bool, emit func
 	}
 	var res PruneResult
 
-	emit("Removing stopped containers…")
-	if rep, err := cli.ContainersPrune(ctx, filters.NewArgs()); err == nil {
-		res.Containers = len(rep.ContainersDeleted)
-		res.Reclaimed += int64(rep.SpaceReclaimed)
-		emit(fmt.Sprintf("  %d removed (%s)", res.Containers, humanBytes(int64(rep.SpaceReclaimed))))
+	if opts.Containers {
+		emit("Removing stopped containers…")
+		if rep, err := cli.ContainersPrune(ctx, filters.NewArgs()); err == nil {
+			res.Containers = len(rep.ContainersDeleted)
+			res.Reclaimed += int64(rep.SpaceReclaimed)
+			emit(fmt.Sprintf("  %d removed (%s)", res.Containers, humanBytes(int64(rep.SpaceReclaimed))))
+		}
 	}
-	emit("Removing unused networks…")
-	if rep, err := cli.NetworksPrune(ctx, filters.NewArgs()); err == nil {
-		res.Networks = len(rep.NetworksDeleted)
-		emit(fmt.Sprintf("  %d removed", res.Networks))
+	if opts.Networks {
+		emit("Removing unused networks…")
+		if rep, err := cli.NetworksPrune(ctx, filters.NewArgs()); err == nil {
+			res.Networks = len(rep.NetworksDeleted)
+			emit(fmt.Sprintf("  %d removed", res.Networks))
+		}
 	}
-	emit("Removing dangling images…")
-	if rep, err := cli.ImagesPrune(ctx, filters.NewArgs(filters.Arg("dangling", "true"))); err == nil {
-		res.Images = len(rep.ImagesDeleted)
-		res.Reclaimed += int64(rep.SpaceReclaimed)
-		emit(fmt.Sprintf("  %d removed (%s)", res.Images, humanBytes(int64(rep.SpaceReclaimed))))
+	if opts.Images {
+		emit("Removing dangling images…")
+		if rep, err := cli.ImagesPrune(ctx, filters.NewArgs(filters.Arg("dangling", "true"))); err == nil {
+			res.Images = len(rep.ImagesDeleted)
+			res.Reclaimed += int64(rep.SpaceReclaimed)
+			emit(fmt.Sprintf("  %d removed (%s)", res.Images, humanBytes(int64(rep.SpaceReclaimed))))
+		}
 	}
-	emit("Pruning build cache…")
-	if rep, err := cli.BuildCachePrune(ctx, build.CachePruneOptions{}); err == nil {
-		res.Reclaimed += int64(rep.SpaceReclaimed)
-		emit(fmt.Sprintf("  reclaimed %s", humanBytes(int64(rep.SpaceReclaimed))))
+	if opts.BuildCache {
+		if opts.BuildCacheAll {
+			emit("Pruning all build cache…")
+		} else {
+			emit("Pruning dangling build cache…")
+		}
+		if rep, err := cli.BuildCachePrune(ctx, build.CachePruneOptions{All: opts.BuildCacheAll}); err == nil {
+			res.Reclaimed += int64(rep.SpaceReclaimed)
+			emit(fmt.Sprintf("  reclaimed %s", humanBytes(int64(rep.SpaceReclaimed))))
+		}
 	}
-	if includeVolumes {
+	if opts.Volumes {
 		emit("Removing unused volumes…")
 		if rep, err := cli.VolumesPrune(ctx, filters.NewArgs()); err == nil {
 			res.Volumes = len(rep.VolumesDeleted)

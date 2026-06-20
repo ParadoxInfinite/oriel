@@ -3,7 +3,17 @@
 
   // The modal shows the focused operation; the rest live in the sidebar tray.
   const cur = $derived(ops.list.find((o) => o.id === ops.focused) ?? null)
+
+  // Escape closes the modal naturally: dismiss a finished op, hide a running one
+  // (it keeps going in the tray).
+  function onKey(e) {
+    if (e.key !== 'Escape' || !cur) return
+    if (cur.done) dismissOp(cur.id)
+    else minimizeOp()
+  }
 </script>
+
+<svelte:window onkeydown={onKey} />
 
 {#if cur}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">

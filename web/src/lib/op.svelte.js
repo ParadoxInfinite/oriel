@@ -98,8 +98,10 @@ async function startJob(path, body, title, kind) {
   if (res?.id) attachJob(res.id, title, kind)
 }
 
-export function startSystemPrune(includeVolumes) {
-  return startJob(`/api/ops/system-prune?volumes=${includeVolumes ? 'true' : 'false'}`, null, 'Reclaiming disk space', 'system-prune')
+// sel: { containers, images, networks, cache, volumes } booleans.
+export function startSystemPrune(sel) {
+  const q = new URLSearchParams(Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, v ? 'true' : 'false'])))
+  return startJob(`/api/ops/system-prune?${q}`, null, 'Reclaiming disk space', 'system-prune')
 }
 
 // items: [{ id, size }]. The server reports how much was reclaimed.

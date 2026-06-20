@@ -64,6 +64,8 @@
   )
 </script>
 
+<svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
+
 <div class="fixed inset-0 z-[60] flex justify-end bg-black/40 backdrop-blur-[1px]" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
   <div class="flex h-full w-[760px] max-w-[95vw] flex-col border-l border-[var(--border)] bg-[var(--bg)] shadow-[var(--shadow-lg)]" role="presentation" onclick={(e) => e.stopPropagation()}>
     <div class="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-5 py-3">

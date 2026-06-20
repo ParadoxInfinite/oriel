@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/ParadoxInfinite/oriel/internal/docker"
 )
 
 // Background operations ("ops"): long-running, cancellable jobs whose progress
@@ -19,11 +21,20 @@ type pruneItem struct {
 }
 
 // handleStartSystemPrune launches a system prune as a background job and returns
-// its id. `?volumes=true` also reclaims unused volumes.
+// its id. Each category is opted in via a query flag: containers, images, networks,
+// cache, volumes (e.g. ?containers=true&cache=true&volumes=false).
 func (s *Server) handleStartSystemPrune(w http.ResponseWriter, r *http.Request) {
-	includeVolumes := r.URL.Query().Get("volumes") == "true"
+	q := r.URL.Query()
+	opts := docker.PruneOptions{
+		Containers:    q.Get("containers") == "true",
+		Images:        q.Get("images") == "true",
+		Networks:      q.Get("networks") == "true",
+		BuildCache:    q.Get("cache") == "true",
+		BuildCacheAll: q.Get("cacheall") == "true",
+		Volumes:       q.Get("volumes") == "true",
+	}
 	job := s.jobs.start("system-prune", "Reclaiming disk space", func(ctx context.Context, emit func(string)) error {
-		_, err := s.docker.SystemPrune(ctx, includeVolumes, emit)
+		_, err := s.docker.SystemPrune(ctx, opts, emit)
 		return err
 	})
 	writeJSON(w, http.StatusOK, map[string]string{"id": job.ID})
