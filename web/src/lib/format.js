@@ -2,6 +2,14 @@
 
 const UNITS = ['B', 'KiB', 'MiB', 'GiB', 'TiB']
 
+// Shorten an image reference for display: a digest-pinned ref keeps its repo and
+// shows only the first 12 hex of the digest (full ref belongs in a title tooltip).
+export function shortRef(ref) {
+  const i = (ref || '').indexOf('@sha256:')
+  if (i === -1) return ref
+  return `${ref.slice(0, i)}@sha256:${ref.slice(i + 8, i + 8 + 12)}`
+}
+
 export function bytes(n) {
   if (!n || n < 0) return '0 B'
   let i = 0
