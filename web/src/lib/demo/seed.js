@@ -49,7 +49,7 @@ export function makeImages() {
     { id: sha('node'), tags: ['node:20-slim'], size: 0.22 * GiB, created: ago(800000), containers: 0 },
     { id: sha('python'), tags: ['python:3.12-slim'], size: 0.13 * GiB, created: ago(800000), containers: 0 },
     { id: sha('pgadmin'), tags: ['dpage/pgadmin4:8.12'], size: 0.46 * GiB, created: ago(400000), containers: 0 },
-    { id: sha('dangling'), tags: [], size: 0.19 * GiB, created: ago(300000), containers: 0 },
+    { id: sha('dangling'), tags: ['<none>'], size: 0.19 * GiB, created: ago(300000), containers: 0 },
   ]
 }
 
@@ -102,7 +102,7 @@ export const discovery = { roots: [{ id: 'r-demo', path: '/Users/dev/projects', 
 export function makeDf(containers, images, volumes) {
   return {
     stoppedContainers: containers.filter((c) => c.state !== 'running').length, containersSize: 0.4 * GiB,
-    danglingImages: images.filter((i) => i.tags.length === 0).length, imagesSize: 0.19 * GiB,
+    danglingImages: images.filter((i) => i.tags.length === 0 || i.tags[0] === '<none>').length, imagesSize: 0.19 * GiB,
     buildCacheSize: 1.1 * GiB, unusedVolumes: 1, volumesSize: 0.3 * GiB,
     reclaimable: 0.4 * GiB + 0.19 * GiB + 1.1 * GiB + 0.3 * GiB,
   }
