@@ -78,10 +78,10 @@ Flags: `--port <n>` (default 4321), `--no-open`. To run on login as a background
 ```
 
 To reach Oriel from another machine through a reverse proxy or private network,
-serve it under a sub-path and allow the proxy's hostname — `service install`
-(and `install.sh`) take `--base-path` / `--allowed-hosts`. See
-[docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md). Oriel has no auth, so read the
-security note there first.
+allow the proxy's hostname (`oriel remote allow <host>`) and, for a sub-path,
+`oriel config base-path /oriel` — config is stored in `settings.json`. Run
+`oriel doctor` to check it. See [docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md).
+Oriel has no auth, so read the security note there first.
 
 Needs a Docker Engine–compatible runtime + the `docker` CLI. [Colima](https://github.com/abiosoft/colima)
 is first-class (adds VM start/stop); Docker Engine, OrbStack, Rancher/Docker Desktop,
@@ -118,8 +118,8 @@ ZeroTier, WireGuard, …). **Never put it on the public internet.** Full trust m
 
 ## More
 
-- **Reverse-proxy subpath:** `ORIEL_BASE_PATH=/oriel ./oriel` — one build serves root or a subpath.
-- **Natural-language control:** point `ORIEL_PROVIDER_URL` at a resolver; suggestions run
+- **Reverse-proxy subpath:** `oriel config base-path /oriel` — one build serves root or a subpath.
+- **Natural-language control:** set an AI resolver URL (Settings → AI); suggestions run
   through the same validated tool path, and the base binary links no ML code.
 - **Develop:** `make dev` + `make dev-web` (Vite hot reload), `make test`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 

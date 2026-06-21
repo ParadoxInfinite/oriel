@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Config is now visible in the UI, editable from the CLI, and durable across
   reinstalls and self-updates. (`ORIEL_OUTAGE_RETENTION_DAYS` remains an advanced
   env-only tuning knob.)
+- `service install` no longer bakes config into the unit; the `--base-path` /
+  `--allowed-hosts` flags are removed. Configure the running instance instead with
+  `oriel config base-path` / `oriel remote allow` (stored in settings.json).
 
 ### Added
 

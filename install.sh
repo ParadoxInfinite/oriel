@@ -11,7 +11,6 @@
 # background service. For unattended installs, set these and it won't prompt:
 #     ORIEL_INSTALL_DIR=/path   install location (default: /usr/local/bin or ~/.local/bin)
 #     ORIEL_SERVICE=1           also install + start the background service (0 to skip)
-#     ORIEL_BASE_PATH=/oriel    serve behind a reverse proxy under this sub-path
 # ---------------------------------------------------------------------------
 set -eu
 
@@ -113,41 +112,17 @@ else
 fi
 
 if [ "$want_service" = 1 ]; then
-  # --- reverse proxy / network exposure (optional) ---------------------------
-  # Both settings are baked into the service unit (env vars ORIEL_BASE_PATH /
-  # ORIEL_ALLOWED_HOSTS) so they survive restarts, reinstalls, and self-updates.
-
-  # Sub-path — where a reverse proxy mounts Oriel. Cosmetic routing; low risk.
-  # Leave blank to serve at the host root.
-  base="${ORIEL_BASE_PATH:-}"
-  [ -n "$base" ] || base=$(ask "Reverse-proxy sub-path? e.g. /oriel (blank = served at root): " "")
-
-  # Allowed hosts — SECURITY-SENSITIVE. By default Oriel answers /api only on
-  # localhost. Allowing a hostname lets a browser on that host drive Oriel, which
-  # has NO authentication and controls Docker as root on this machine.
-  allow="${ORIEL_ALLOWED_HOSTS:-}"
-  if [ -z "$allow" ] && [ "$INTERACTIVE" = 1 ]; then
-    {
-      echo
-      echo "  Network access"
-      echo "  --------------"
-      echo "  By default Oriel is reachable only from this machine (127.0.0.1)."
-      echo "  To reach it through a reverse proxy or a private network (e.g."
-      echo "  Tailscale), you must allow that hostname here."
-      echo
-      echo "  ⚠  WARNING: Oriel has NO authentication and can control Docker as"
-      echo "     root. Only allow hosts on a network you trust, and keep TLS + a"
-      echo "     login in front of it on the proxy. NEVER expose Oriel directly"
-      echo "     to the public internet."
-      echo
-    } > /dev/tty
-    allow=$(ask "Allowed host(s), comma-separated? e.g. oriel.example.com (blank = local only): " "")
-  fi
-
-  set -- service install
-  [ -n "$base" ]  && set -- "$@" --base-path "$base"
-  [ -n "$allow" ] && set -- "$@" --allowed-hosts "$allow"
-  "$dir/oriel" "$@" || echo "Service setup failed — oriel is installed; run '$dir/oriel service install' yourself."
+  "$dir/oriel" service install || echo "Service setup failed — oriel is installed; run '$dir/oriel service install' yourself."
+  # Reverse proxy / remote access is configured on the running instance (stored
+  # in settings.json), not at install time. Point users at the commands.
+  {
+    echo
+    echo "Behind a reverse proxy or reaching Oriel over a private network?"
+    echo "  $dir/oriel config base-path /oriel       # serve under a sub-path"
+    echo "  $dir/oriel remote allow <hostname>       # allow a host to reach /api"
+    echo "  $dir/oriel doctor                        # check it's all wired up"
+    echo "  ⚠ Oriel has no auth — only allow hosts on a trusted private network."
+  } > /dev/tty 2>/dev/null || true
 else
   echo
   echo "Run it:       $dir/oriel"

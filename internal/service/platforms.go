@@ -27,9 +27,7 @@ const darwinPlist = `<?xml version="1.0" encoding="UTF-8"?>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>{{.Path}}</string>
-{{if .BasePath}}    <key>ORIEL_BASE_PATH</key><string>{{.BasePath}}</string>
-{{end}}{{if .AllowedHosts}}    <key>ORIEL_ALLOWED_HOSTS</key><string>{{.AllowedHosts}}</string>
-{{end}}  </dict>
+  </dict>
   <key>StandardOutPath</key><string>{{.Log}}</string>
   <key>StandardErrorPath</key><string>{{.Log}}</string>
 </dict>
@@ -44,7 +42,7 @@ func darwinPlistPath() (string, error) {
 	return filepath.Join(home, "Library", "LaunchAgents", label+".plist"), nil
 }
 
-func installDarwin(bin string, opts installOpts) error {
+func installDarwin(bin string, port int) error {
 	plistPath, err := darwinPlistPath()
 	if err != nil {
 		return err
@@ -57,8 +55,7 @@ func installDarwin(bin string, opts installOpts) error {
 	pathEnv := filepath.Dir(bin) + ":/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
 	if err := render(plistPath, darwinPlist, map[string]any{
-		"Label": label, "Bin": bin, "Port": opts.port, "Path": pathEnv, "Log": logPath,
-		"BasePath": opts.basePath, "AllowedHosts": opts.allowedHosts,
+		"Label": label, "Bin": bin, "Port": port, "Path": pathEnv, "Log": logPath,
 	}); err != nil {
 		return err
 	}
@@ -73,8 +70,7 @@ func installDarwin(bin string, opts installOpts) error {
 	}
 
 	fmt.Printf("✓ installed LaunchAgent: %s\n", plistPath)
-	fmt.Printf("✓ Oriel is running at http://127.0.0.1:%d and will start on login\n", opts.port)
-	printProxyNotes(opts)
+	fmt.Printf("✓ Oriel is running at http://127.0.0.1:%d and will start on login\n", port)
 	fmt.Printf("  logs: %s\n", logPath)
 	return nil
 }
@@ -115,9 +111,7 @@ After=network.target{{if .System}} docker.service
 Wants=docker.service{{end}}
 
 [Service]
-{{if .BasePath}}Environment=ORIEL_BASE_PATH={{.BasePath}}
-{{end}}{{if .AllowedHosts}}Environment=ORIEL_ALLOWED_HOSTS={{.AllowedHosts}}
-{{end}}ExecStart={{.Bin}} --no-open --port {{.Port}}
+ExecStart={{.Bin}} --no-open --port {{.Port}}
 Restart=on-failure
 RestartSec=3
 
@@ -166,23 +160,8 @@ func isUserBusError(err error) bool {
 		strings.Contains(s, "DBUS_SESSION_BUS_ADDRESS")
 }
 
-// printProxyNotes echoes any reverse-proxy settings baked into the unit, with a
-// security reminder when the API has been opened to non-loopback hosts.
-func printProxyNotes(opts installOpts) {
-	if opts.basePath != "" {
-		fmt.Printf("  serving under sub-path: %s\n", opts.basePath)
-	}
-	if opts.allowedHosts != "" {
-		fmt.Printf("  /api reachable from host(s): %s\n", opts.allowedHosts)
-		fmt.Println("  ⚠ Oriel has no authentication and is root-equivalent on this host.")
-		fmt.Println("    Only allow hosts you reach over a trusted private network (e.g.")
-		fmt.Println("    Tailscale/VPN), and terminate TLS + auth at the reverse proxy.")
-		fmt.Println("    Never expose Oriel directly to the public internet.")
-	}
-}
-
-func installLinux(bin string, opts installOpts) error {
-	sys := useSystem(opts.system)
+func installLinux(bin string, port int, system bool) error {
+	sys := useSystem(system)
 	unitPath := systemUnitPath
 	if !sys {
 		p, err := linuxUserUnitPath()
@@ -191,10 +170,7 @@ func installLinux(bin string, opts installOpts) error {
 		}
 		unitPath = p
 	}
-	if err := render(unitPath, linuxUnit, map[string]any{
-		"Bin": bin, "Port": opts.port, "System": sys,
-		"BasePath": opts.basePath, "AllowedHosts": opts.allowedHosts,
-	}); err != nil {
+	if err := render(unitPath, linuxUnit, map[string]any{"Bin": bin, "Port": port, "System": sys}); err != nil {
 		return err
 	}
 
@@ -217,8 +193,7 @@ func installLinux(bin string, opts installOpts) error {
 		kind, sub, start = "system", "", "boot"
 	}
 	fmt.Printf("✓ installed systemd %s service: %s\n", kind, unitPath)
-	fmt.Printf("✓ Oriel is running at http://127.0.0.1:%d and will start on %s\n", opts.port, start)
-	printProxyNotes(opts)
+	fmt.Printf("✓ Oriel is running at http://127.0.0.1:%d and will start on %s\n", port, start)
 	fmt.Printf("  logs: journalctl %s-u oriel -f\n", sub)
 	return nil
 }

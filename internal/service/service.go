@@ -87,20 +87,13 @@ func Run(args []string) error {
 	fs := flag.NewFlagSet("service", flag.ContinueOnError)
 	port := fs.Int("port", 4321, "port the service listens on (127.0.0.1)")
 	system := fs.Bool("system", false, "install a system-wide service (Linux; implied when run as root)")
-	basePath := fs.String("base-path", os.Getenv("ORIEL_BASE_PATH"), "serve under a reverse-proxy sub-path, e.g. /oriel (baked into the unit as ORIEL_BASE_PATH)")
-	allowedHosts := fs.String("allowed-hosts", os.Getenv("ORIEL_ALLOWED_HOSTS"), "comma-separated Host headers allowed for /api over the network, e.g. oriel.example.com (baked into the unit as ORIEL_ALLOWED_HOSTS)")
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
 	}
 
 	switch sub {
 	case "install":
-		return install(installOpts{
-			port:         *port,
-			system:       *system,
-			basePath:     strings.TrimSpace(*basePath),
-			allowedHosts: strings.TrimSpace(*allowedHosts),
-		})
+		return install(*port, *system)
 	case "uninstall", "remove":
 		return uninstall(*system)
 	case "status":
@@ -114,34 +107,22 @@ func usage() error {
 	fmt.Println(`Usage: oriel service <command>
 
 Commands:
-  install [flags]      install and start the background service
-  uninstall [--system] stop and remove the service
-  status [--system]    show install/run status
+  install [--port N] [--system]   install and start the background service
+  uninstall [--system]            stop and remove the service
+  status [--system]               show install/run status
 
-Install flags:
-  --port N         port the service listens on, bound to 127.0.0.1 (default 4321)
-  --system         Linux only: install a system unit (starts on boot, runs as the
-                   service user). Implied when run as root. Otherwise a per-user
-                   systemd unit is installed (needs an active user session).
-  --base-path /p   serve behind a reverse proxy under a sub-path, e.g. /oriel.
-                   Baked into the unit as ORIEL_BASE_PATH. Default $ORIEL_BASE_PATH.
-  --allowed-hosts  comma-separated Host headers allowed to reach /api over the
-                   network, e.g. oriel.example.com. Baked in as ORIEL_ALLOWED_HOSTS.
-                   Default $ORIEL_ALLOWED_HOSTS. Oriel has no auth — only allow
-                   hosts on a trusted private network and keep TLS+auth on the proxy.`)
+  --system   Linux only: install a system unit (starts on boot, runs as the
+             service user). Implied when run as root. Otherwise a per-user
+             systemd unit is installed (needs an active user session).
+
+To serve behind a reverse proxy after install, configure the running instance:
+  oriel config base-path /oriel       set the sub-path (restarts to apply)
+  oriel remote allow <hostname>       allow a host to reach /api over the network
+  oriel doctor                        check everything is wired up`)
 	return nil
 }
 
-// installOpts are the user-configurable knobs baked into the generated unit so
-// they survive restarts, reinstalls, and self-updates.
-type installOpts struct {
-	port         int
-	system       bool   // Linux: install a system unit instead of a per-user one
-	basePath     string // ORIEL_BASE_PATH — reverse-proxy sub-path, e.g. /oriel
-	allowedHosts string // ORIEL_ALLOWED_HOSTS — comma-separated Host allow-list
-}
-
-func install(opts installOpts) error {
+func install(port int, system bool) error {
 	bin, err := os.Executable()
 	if err != nil {
 		return err
@@ -150,9 +131,9 @@ func install(opts installOpts) error {
 
 	switch runtime.GOOS {
 	case "darwin":
-		return installDarwin(bin, opts)
+		return installDarwin(bin, port)
 	case "linux":
-		return installLinux(bin, opts)
+		return installLinux(bin, port, system)
 	default:
 		return fmt.Errorf("service install is not supported on %s", runtime.GOOS)
 	}
