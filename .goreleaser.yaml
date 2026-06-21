@@ -1,0 +1,93 @@
+# GoReleaser — cross-compiles Oriel, publishes the GitHub Release, and updates
+# the Homebrew tap (ParadoxInfinite/homebrew-oriel).
+#
+# Asset names are kept identical to the previous hand-rolled pipeline
+# (raw `oriel-<os>-<arch>` binaries + `SHA256SUMS.txt`) so install.sh and the
+# README curl one-liners keep working unchanged — no tarballs.
+#
+#   Release:  git tag v0.3.0 && git push origin v0.3.0   (Actions does the rest)
+#   Validate: goreleaser release --snapshot --clean      (no publish; inspect dist/)
+#
+# After a snapshot, open dist/homebrew/Formula/oriel.rb and confirm the install
+# stanza before trusting the first real tap push.
+version: 2
+
+project_name: oriel
+
+# web/dist is committed to the repo (go:embed needs it present; CI fails if it's
+# stale), so there is deliberately NO frontend build step here — rebuilding it
+# would dirty the tree and trip GoReleaser's clean-state check. The Go build
+# embeds whatever web/dist is committed at the tag.
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: oriel
+    main: .
+    binary: oriel
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      # Match the old pipeline: stamp the v-prefixed tag (e.g. v0.3.0) so the
+      # in-app version footer and the self-update check behave exactly as before.
+      - -s -w -X main.version={{ .Tag }}
+
+archives:
+  - id: oriel
+    # Upload raw binaries, not tarballs — preserves the lean curl one-liner and
+    # the existing asset names that install.sh + the README depend on.
+    formats: [binary]
+    name_template: "oriel-{{ .Os }}-{{ .Arch }}"
+
+checksum:
+  name_template: "SHA256SUMS.txt"
+  algorithm: sha256
+
+release:
+  github:
+    owner: ParadoxInfinite
+    name: oriel
+  # A hyphenated tag (v0.3.0-rc1) publishes as a pre-release, so GitHub's
+  # "latest" — which install.sh and the curl URLs resolve to — only ever points
+  # at a stable release. Matches the old workflow's behaviour.
+  prerelease: auto
+
+# Homebrew CASK (not formula). GoReleaser removed `brews` in v2.16; casks are
+# the path for pre-compiled binaries. Casks are macOS-only — Linux users install
+# via the curl one-liner or `go install` (those binaries are still released).
+homebrew_casks:
+  - name: oriel
+    ids: [oriel]
+    binaries: [oriel] # the oriel-darwin-<arch> artifact is linked onto PATH as `oriel`
+    repository:
+      owner: ParadoxInfinite
+      name: homebrew-oriel
+      branch: main
+      # PAT with contents:write on the tap repo, added as an Actions secret named
+      # HOMEBREW_TAP_GITHUB_TOKEN. The default GITHUB_TOKEN cannot push to a
+      # different repository, so a separate token is required.
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: "https://github.com/ParadoxInfinite/oriel"
+    description: "Fast, local, single-binary web GUI for Colima & Docker"
+    # Don't bump the tap on pre-releases.
+    skip_upload: auto
+    # Oriel's binaries aren't Apple-notarized, so macOS quarantines the download
+    # and Gatekeeper would block first run. Strip the quarantine attr recursively
+    # on the staged dir — the staged file keeps its arch-specific name
+    # (oriel-darwin-arm64); only the PATH symlink is `oriel`, so target the dir.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}"]
+          end
+    commit_author:
+      name: oriel-release
+      email: release@users.noreply.github.com
+    commit_msg_template: "oriel {{ .Tag }}"
