@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-22
+
+### Fixed
+
+- **Logs: restored the per-line gutter (regression).** Container logs again show a
+  per-line marker — a wall-clock **timestamp** in a bordered gutter, plus a
+  stream-coloured left edge for stderr/error — so lines are easy to tell apart.
+  This was lost when lazy-loading replaced the old line-number gutter (line
+  numbers shift as older lines load, so the gutter now uses stable timestamps).
+- **Demo: an untagged image showed a blank label.** The mock's dangling image now
+  carries the `<none>` tag the real Docker API reports, so it renders correctly
+  and counts as dangling in the disk view and prune.
+
 ## [0.3.1] - 2026-06-22
 
 ### Added
