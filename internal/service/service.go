@@ -46,7 +46,15 @@ func IsManaged() bool {
 	}
 	exe, _ = filepath.EvalSymlinks(exe)
 	for _, p := range unitFiles() {
-		if data, err := os.ReadFile(p); err == nil && strings.Contains(string(data), exe) {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		s := string(data)
+		// Match the exe as the actual launched program, not just any substring:
+		// a ProgramArguments <string> element (launchd plist) or the ExecStart
+		// program (systemd unit, always followed by " --no-open …").
+		if strings.Contains(s, "<string>"+exe+"</string>") || strings.Contains(s, "ExecStart="+exe+" ") {
 			return true
 		}
 	}

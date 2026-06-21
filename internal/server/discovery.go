@@ -3,8 +3,10 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/ParadoxInfinite/oriel/internal/discovery"
 )
@@ -93,6 +95,16 @@ func (s *Server) handleFsOpen(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing path"})
 		return
 	}
+	// Only reveal a real directory. Otherwise open/xdg-open would launch an
+	// arbitrary file through its handler, and a leading '-' would inject a flag.
+	if strings.HasPrefix(path, "-") {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid path"})
+		return
+	}
+	if fi, err := os.Stat(path); err != nil || !fi.IsDir() {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "not a directory"})
+		return
+	}
 	opener := "xdg-open"
 	switch runtime.GOOS {
 	case "darwin":
@@ -104,6 +116,17 @@ func (s *Server) handleFsOpen(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
+// discoveredFile reports whether (dir, file) is a compose project the current
+// discovery config actually finds — the allowlist for what handleStackUp may run.
+func discoveredFile(cfg discovery.Config, dir, file string) bool {
+	for _, d := range discovery.Scan(cfg).Stacks {
+		if d.Dir == dir && d.File == file {
+			return true
+		}
+	}
+	return false
+}
+
 // handleStackUp deploys a discovered compose project by file path, streaming the
 // compose output as SSE (same shape as handleStackAction).
 func (s *Server) handleStackUp(w http.ResponseWriter, r *http.Request) {
@@ -111,6 +134,13 @@ func (s *Server) handleStackUp(w http.ResponseWriter, r *http.Request) {
 	file := r.URL.Query().Get("file")
 	if dir == "" || file == "" {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing dir or file"})
+		return
+	}
+	// Only deploy a compose file discovery actually found under the configured
+	// roots — never an arbitrary path from the request. This blocks running any
+	// YAML on disk and flag-injection via a leading '-'.
+	if !discoveredFile(loadSettings().Discovery, dir, file) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "not a discovered compose file"})
 		return
 	}
 	name, ownName, _ := discovery.Resolve(file, dir)
