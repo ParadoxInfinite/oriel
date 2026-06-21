@@ -12,8 +12,9 @@ import (
 // settings is the slice of user config the GUI persists itself (as opposed to
 // colima/docker state): the runtime provider URL and compose-discovery config.
 type settings struct {
-	ProviderURL string           `json:"providerUrl"`
-	Discovery   discovery.Config `json:"discovery"`
+	ProviderURL  string           `json:"providerUrl"`
+	Discovery    discovery.Config `json:"discovery"`
+	AllowedHosts []string         `json:"allowedHosts"` // non-loopback Hosts allowed to reach /api
 }
 
 var settingsMu sync.Mutex
