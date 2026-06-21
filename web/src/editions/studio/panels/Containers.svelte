@@ -95,6 +95,17 @@
     selectedIds = new Set()
     refreshContainers()
   }
+
+  // Per-group (stack) selection: tick a whole stack's containers at once.
+  const groupAllSelected = (items) => items.length > 0 && items.every((c) => selectedIds.has(c.id))
+  const groupAnySelected = (items) => items.some((c) => selectedIds.has(c.id))
+  function toggleGroup(items, e) {
+    e?.stopPropagation()
+    const s = new Set(selectedIds)
+    if (groupAllSelected(items)) for (const c of items) s.delete(c.id)
+    else for (const c of items) s.add(c.id)
+    selectedIds = s
+  }
 </script>
 
 <div class="mx-auto flex max-w-5xl flex-col gap-4">
@@ -150,7 +161,10 @@
               {@const key = g.name || '__solo__'}
               {@const open = !collapsed[key]}
               <tr class="border-b border-[var(--border)] bg-[var(--panel-2)]">
-                <td colspan="7" class="p-0">
+                <td class="px-4 py-2" onclick={(e) => e.stopPropagation()}>
+                  <input type="checkbox" checked={groupAllSelected(g.items)} indeterminate={groupAnySelected(g.items) && !groupAllSelected(g.items)} onchange={(e) => toggleGroup(g.items, e)} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label="Select {g.name || 'standalone'} stack" />
+                </td>
+                <td colspan="6" class="p-0">
                   <button class="flex w-full items-center gap-2 px-4 py-2 text-left" onclick={() => (collapsed[key] = open)}>
                     <svg class="text-[var(--text-3)] transition-transform {open ? 'rotate-90' : ''}" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
                     <Icon name="layers" size={13} class="text-[var(--text-3)]" />
