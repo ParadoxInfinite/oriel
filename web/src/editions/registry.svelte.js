@@ -1,5 +1,9 @@
 import Classic from './Classic.svelte'
 import Studio from './studio/Studio.svelte'
+import { apiGet } from '../lib/api.js'
+
+// Same base the API client uses, so theme imports resolve under ORIEL_BASE_PATH.
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 // Built-in editions, in switcher order. Each `component` is a full-app Svelte
 // component built on the platform SDK. Third parties add their own either by
@@ -10,72 +14,39 @@ const BUILTIN = [
   { id: 'classic', name: 'Classic', tagline: 'Calm teal control panel', accent: '#2dd4bf', component: Classic },
 ]
 
-// External theme bundles, loaded by URL at runtime (Settings → Themes). Each
-// must be an ES module default-exporting a manifest { id, name, component, … }.
-// URLs are persisted; the modules are re-imported on the next load.
-const EXT_KEY = 'oriel.externalThemes'
-function loadExtUrls() {
+// Disk-installed themes: drop a built bundle (an ES module default-exporting
+// { id, name, component, … }) into the server's themes directory and Oriel
+// serves it same-origin. No remote URLs — install is explicit and offline.
+export const diskThemes = $state({ dir: '', list: [], errors: {} })
+
+// Discover + import every installed theme bundle. Call once at startup.
+export async function loadDiskThemes() {
+  let data
   try {
-    return JSON.parse(localStorage.getItem(EXT_KEY)) || []
+    data = await apiGet('/api/themes')
   } catch {
-    return []
+    return // backend unreachable — built-ins still work
   }
-}
-export const externalThemes = $state({ urls: loadExtUrls(), list: [], errors: {} })
-
-function persistExtUrls() {
-  try {
-    localStorage.setItem(EXT_KEY, JSON.stringify(externalThemes.urls))
-  } catch {
-    /* ignore */
-  }
-}
-
-async function importTheme(url) {
-  const mod = await import(/* @vite-ignore */ url)
-  const m = mod.default
-  if (!m || !m.id || !m.component) {
-    throw new Error('Theme must default-export { id, name, component }')
-  }
-  return { tagline: 'External theme', accent: '#5b5bd6', ...m, _url: url, external: true }
-}
-
-// Import every persisted external theme. Call once at startup.
-export async function loadExternalThemes() {
-  for (const url of externalThemes.urls) {
+  diskThemes.dir = data.dir || ''
+  for (const t of data.themes || []) {
     try {
-      const m = await importTheme(url)
-      externalThemes.list = [...externalThemes.list.filter((x) => x.id !== m.id), m]
-      delete externalThemes.errors[url]
+      const mod = await import(/* @vite-ignore */ `${BASE}/api/themes/${t.file}`)
+      const m = mod.default
+      if (!m || !m.id || !m.component) {
+        throw new Error('must default-export { id, name, component }')
+      }
+      const theme = { tagline: 'Installed theme', accent: '#5b5bd6', ...m, external: true }
+      diskThemes.list = [...diskThemes.list.filter((x) => x.id !== m.id), theme]
+      delete diskThemes.errors[t.file]
     } catch (e) {
-      externalThemes.errors[url] = e.message
+      diskThemes.errors[t.file] = e.message
     }
   }
 }
 
-// Add (and immediately load) a theme by URL.
-export async function addExternalTheme(url) {
-  url = url.trim()
-  if (!url) throw new Error('Enter a URL')
-  const m = await importTheme(url) // validate before persisting
-  if (!externalThemes.urls.includes(url)) {
-    externalThemes.urls = [...externalThemes.urls, url]
-    persistExtUrls()
-  }
-  externalThemes.list = [...externalThemes.list.filter((x) => x.id !== m.id), m]
-  return m
-}
-
-export function removeExternalTheme(url) {
-  externalThemes.urls = externalThemes.urls.filter((u) => u !== url)
-  externalThemes.list = externalThemes.list.filter((x) => x._url !== url)
-  delete externalThemes.errors[url]
-  persistExtUrls()
-}
-
 export function editions() {
   const runtime = (typeof window !== 'undefined' && window.__orielThemes) || []
-  return [...BUILTIN, ...runtime, ...externalThemes.list]
+  return [...BUILTIN, ...runtime, ...diskThemes.list]
 }
 
 const KEY = 'oriel.edition'

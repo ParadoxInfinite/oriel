@@ -8,7 +8,7 @@
   import { togglePalette } from './lib/palette.svelte.js'
   import { resumeOps } from './lib/op.svelte.js'
 
-  import { activeEdition, loadExternalThemes } from './editions/registry.svelte.js'
+  import { activeEdition, loadDiskThemes } from './editions/registry.svelte.js'
   import { overlayTheme, overlayVars } from './lib/overlayTheme.svelte.js'
   import OpOverlay from './components/OpOverlay.svelte'
   import CommandPalette from './components/CommandPalette.svelte'
@@ -38,7 +38,7 @@
     refreshStacks()
     checkProvider()
     startUpdateChecks() // checks now, then re-checks every few hours while open
-    loadExternalThemes()
+    loadDiskThemes()
     resumeOps() // re-attach to any prune still running from before a refresh
   })
   onDestroy(() => {
