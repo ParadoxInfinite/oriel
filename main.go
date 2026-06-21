@@ -39,6 +39,12 @@ func main() {
 				log.Fatalf("remote: %v", err)
 			}
 			return
+		case "doctor":
+			// `oriel doctor` reports config/connectivity health and exits.
+			if err := runDoctor(os.Args[2:]); err != nil {
+				log.Fatalf("doctor: %v", err)
+			}
+			return
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return
