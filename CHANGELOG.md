@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Reverse-proxy setup as a first-class option.** `oriel service install` and
+  `install.sh` now take `--base-path` (`ORIEL_BASE_PATH`) and `--allowed-hosts`
+  (`ORIEL_ALLOWED_HOSTS`), baking them into the service unit so they survive
+  restarts, reinstalls, and self-updates. The installer prompts for both and
+  warns about the risk of allowing non-loopback hosts (no auth, root-equivalent).
+  New guide: [docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md).
+
 ## [0.1.0] - 2026-06-21
 
 First public release: a fast, local, single-binary web GUI for Colima and Docker,
