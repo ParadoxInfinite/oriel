@@ -1,0 +1,54 @@
+name: Demo (GitHub Pages)
+
+# Builds the "try it live" demo — the frontend with VITE_DEMO=1, which swaps every
+# backend call for an in-memory mock — and deploys it to GitHub Pages at
+# https://paradoxinfinite.github.io/oriel/. No backend, no real Docker host.
+
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let a newer deploy supersede an in-progress one; don't cancel a run mid-deploy.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Build demo
+        working-directory: web
+        env:
+          VITE_DEMO: '1'
+        run: |
+          npm ci
+          npm run build
+      # TODO: pin the pages actions below to SHAs to match the repo's hygiene.
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
