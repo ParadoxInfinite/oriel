@@ -27,6 +27,7 @@ type Server struct {
 	provider *provider.Provider
 	recorder *recorder
 	jobs     *jobManager
+	guard    *hostGuard
 	cancel   context.CancelFunc
 }
 
@@ -44,6 +45,7 @@ func New(web fs.FS, version string) *Server {
 		provider: provider.New(),
 		recorder: newRecorder(dc),
 		jobs:     newJobManager(),
+		guard:    newHostGuard(),
 	}
 	// The env var wins as an explicit override; otherwise restore a URL the user
 	// configured at runtime (Settings → AI) so it survives restarts.
@@ -87,12 +89,20 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			r.URL.Path = "/" + rest
 		}
 	}
+	// Anti-rebinding / CSRF: API requests must be same-origin and arrive on a
+	// loopback or explicitly-allowed Host. Static assets (the SPA) are harmless.
+	if strings.HasPrefix(r.URL.Path, "/api/") && !s.allowAPI(r) {
+		http.Error(w, "forbidden: cross-site request or untrusted Host — add it in Settings → Remote access, or set ORIEL_ALLOWED_HOSTS", http.StatusForbidden)
+		return
+	}
 	s.mux.ServeHTTP(w, r)
 }
 
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/self", s.handleSelf)
+	s.mux.HandleFunc("GET /api/remote", s.handleGetRemote)
+	s.mux.HandleFunc("PUT /api/remote", s.handlePutRemote)
 	s.mux.HandleFunc("GET /api/update", s.handleUpdateCheck)
 	s.mux.HandleFunc("POST /api/update/apply", s.handleUpdateApply)
 	s.mux.HandleFunc("POST /api/update/restart", s.handleUpdateRestart)
