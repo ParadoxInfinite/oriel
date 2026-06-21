@@ -32,6 +32,13 @@ func main() {
 				log.Fatalf("service: %v", err)
 			}
 			return
+		case "remote":
+			// `oriel remote <list|allow|deny>` manages the running instance's host
+			// allow-list over loopback.
+			if err := runRemote(os.Args[2:]); err != nil {
+				log.Fatalf("remote: %v", err)
+			}
+			return
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return

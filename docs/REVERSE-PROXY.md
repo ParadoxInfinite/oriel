@@ -21,8 +21,17 @@ Two settings do this, both read from the environment:
 Settings → Remote access can add allowed hosts at runtime — but only once the UI
 can talk to `/api`. Behind a proxy on a non-loopback hostname, the UI's *own* first
 API call already carries that hostname and is rejected with 403, so the page can
-never load enough to fix itself. Bootstrap the **first** host via the env var /
-installer below; after that the in-app toggle works for further changes.
+never load enough to fix itself.
+
+The simplest fix is to run this **on the box** (loopback is always trusted) — it
+persists the host and hot-reloads the guard with no restart:
+
+```sh
+oriel remote allow oriel.example.com     # then: oriel remote list / deny
+```
+
+Or bootstrap the first host via the env var / installer below. After either, the
+in-app toggle works for further changes.
 
 ## Setting it up
 

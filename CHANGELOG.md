@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `oriel remote <list|allow|deny> <host>` manages the running instance's host
+  allow-list from the CLI over loopback. Changes apply immediately (no restart)
+  and persist — and run on the box itself, it's the way out of the bootstrap
+  deadlock where the reverse-proxy host is 403'd before you can reach Settings →
+  Remote access.
+
 ### Fixed
 
 - UI showed the Oriel version with a doubled `v` (`vv0.1.3`) — the build version
