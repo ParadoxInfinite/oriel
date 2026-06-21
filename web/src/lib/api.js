@@ -47,6 +47,7 @@ export async function apiPut(path, body) {
 export async function streamPost(path, { onEvent, signal } = {}) {
   const res = await fetch(url(path), { method: 'POST', signal })
   if (!res.ok) throw new Error(await parseError(res))
+  if (!res.body) throw new Error('empty response stream')
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
   let buf = ''

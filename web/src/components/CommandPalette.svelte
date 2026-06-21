@@ -70,7 +70,11 @@
     if (it.ai) {
       try {
         const res = await resolveText(it.target)
-        toast(`${res.call.tool} · ${res.call.args.id ?? ''}`.trim(), 'ok')
+        if (!res?.call) {
+          toast(res?.message || 'No matching command', 'info')
+          return
+        }
+        toast(`${res.call.tool} · ${res.call.args?.id ?? ''}`.trim(), 'ok')
       } catch (e) {
         toast(e.message, 'error')
       }
