@@ -1,15 +1,14 @@
 <script>
-  import { containers, refreshContainers } from '../lib/containers.svelte.js'
-  import { stats } from '../lib/live.svelte.js'
-  import { invoke } from '../lib/invoke.js'
-  import { confirm } from '../lib/confirm.svelte.js'
-  import { bytes, relativeTime } from '../lib/format.js'
-  import { createSort, sortRows } from '../lib/sort.svelte.js'
+  import {
+    containers, refreshContainers, stats, invoke, confirm, createSort, sortRows, fmt,
+  } from '../platform/index.js'
   import { stackColor } from '../lib/stackColor.js'
   import { action } from '../lib/ui.js'
   import StateBadge from '../components/StateBadge.svelte'
   import SortHeader from '../components/SortHeader.svelte'
   import LogsDrawer from '../components/LogsDrawer.svelte'
+
+  const { bytes, relativeTime } = fmt
 
   let filter = $state('')
   let selected = $state(null)

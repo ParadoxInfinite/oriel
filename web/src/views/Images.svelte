@@ -1,18 +1,16 @@
 <script>
-  import { images, refreshImages } from '../lib/resources.svelte.js'
-  import { startImagePrune } from '../lib/op.svelte.js'
-  import { containersForImage, isPinnedImage, suggestTag } from '../lib/containers.svelte.js'
-  import { invoke } from '../lib/invoke.js'
-  import { confirm } from '../lib/confirm.svelte.js'
-  import { toast } from '../lib/toast.svelte.js'
-  import { bytes, relativeTime, shortRef } from '../lib/format.js'
+  import {
+    images, refreshImages, startImagePrune, containersForImage, isPinnedImage, suggestTag,
+    invoke, confirm, toast, createSort, sortRows, fmt,
+  } from '../platform/index.js'
   import { btn, btnDanger, btnPrimary, action } from '../lib/ui.js'
-  import { createSort, sortRows } from '../lib/sort.svelte.js'
   import ResourceTable from '../components/ResourceTable.svelte'
   import PullDialog from '../components/PullDialog.svelte'
   import PrunePreview from '../components/PrunePreview.svelte'
   import LogsDrawer from '../components/LogsDrawer.svelte'
   import StateBadge from '../components/StateBadge.svelte'
+
+  const { bytes, relativeTime, shortRef } = fmt
 
   let showPull = $state(false)
   let pullRef = $state('')

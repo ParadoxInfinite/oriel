@@ -1,16 +1,15 @@
 <script>
   import { onMount } from 'svelte'
-  import { status, refreshStatus } from '../lib/status.svelte.js'
-  import { runOp } from '../lib/op.svelte.js'
-  import { bytes } from '../lib/format.js'
-  import { containers } from '../lib/containers.svelte.js'
-  import { stats, history } from '../lib/live.svelte.js'
-  import { stacks } from '../lib/stacks.svelte.js'
-  import { images, volumes, networks, refreshImages, refreshVolumes, refreshNetworks } from '../lib/resources.svelte.js'
-  import { self } from '../lib/self.svelte.js'
+  import {
+    status, refreshStatus, runOp, containers, stats, history, stacks,
+    images, volumes, networks, refreshImages, refreshVolumes, refreshNetworks,
+    self, fmt,
+  } from '../platform/index.js'
   import { action } from '../lib/ui.js'
   import Icon from '../components/Icon.svelte'
   import Heartbeat from '../components/Heartbeat.svelte'
+
+  const { bytes } = fmt
 
   let { navigate } = $props()
 
