@@ -1,9 +1,6 @@
 <script>
-  import { networks, refreshNetworks } from '../lib/resources.svelte.js'
-  import { invoke } from '../lib/invoke.js'
-  import { confirm } from '../lib/confirm.svelte.js'
+  import { networks, refreshNetworks, invoke, confirm, createSort, sortRows } from '../platform/index.js'
   import { btnDanger } from '../lib/ui.js'
-  import { createSort, sortRows } from '../lib/sort.svelte.js'
   import ResourceTable from '../components/ResourceTable.svelte'
 
   // Built-in networks can't be removed; don't offer the action for them.

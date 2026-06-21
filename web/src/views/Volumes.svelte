@@ -1,12 +1,8 @@
 <script>
-  import { volumes, refreshVolumes } from '../lib/resources.svelte.js'
-  import { startVolumePrune } from '../lib/op.svelte.js'
-  import { invoke } from '../lib/invoke.js'
-  import { apiGet } from '../lib/api.js'
-  import { toast } from '../lib/toast.svelte.js'
-  import { confirm } from '../lib/confirm.svelte.js'
+  import {
+    volumes, refreshVolumes, startVolumePrune, invoke, apiGet, toast, confirm, createSort, sortRows,
+  } from '../platform/index.js'
   import { btn, btnDanger } from '../lib/ui.js'
-  import { createSort, sortRows } from '../lib/sort.svelte.js'
   import ResourceTable from '../components/ResourceTable.svelte'
   import PrunePreview from '../components/PrunePreview.svelte'
 

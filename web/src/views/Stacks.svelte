@@ -1,9 +1,9 @@
 <script>
-  import { stacks, refreshStacks } from '../lib/stacks.svelte.js'
-  import { runOp } from '../lib/op.svelte.js'
-  import { confirm } from '../lib/confirm.svelte.js'
+  import {
+    stacks, refreshStacks, runOp, confirm,
+    discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, openDir,
+  } from '../platform/index.js'
   import { action } from '../lib/ui.js'
-  import { discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, openDir } from '../lib/discovery.svelte.js'
   import StateBadge from '../components/StateBadge.svelte'
   import Icon from '../components/Icon.svelte'
 
