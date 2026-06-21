@@ -45,7 +45,10 @@ export async function checkNow() {
   if (update.checking) return
   update.checking = true
   try {
-    applyInfo(await apiGet('/api/update?force=1'))
+    // The backend usually answers instantly from cache; hold "Checking…" for a
+    // beat so the action reads as deliberate instead of a one-frame flicker.
+    const [info] = await Promise.all([apiGet('/api/update?force=1'), new Promise((r) => setTimeout(r, 600))])
+    applyInfo(info)
   } catch {
     /* offline — leave the last known state */
   } finally {

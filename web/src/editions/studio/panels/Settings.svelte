@@ -106,9 +106,10 @@
   }
 </script>
 
-<div class="mx-auto max-w-5xl pb-4 md:columns-2 md:gap-4">
+<div class="mx-auto grid max-w-5xl grid-cols-1 gap-4 pb-4 md:grid-cols-2 md:items-start">
+  <div class="flex flex-col gap-4">
   <!-- Appearance -->
-  <section class="rise card mb-4 break-inside-avoid p-5">
+  <section class="rise card p-5">
     <h2 class="text-[14px] font-semibold tracking-tight">Appearance</h2>
     <p class="mt-0.5 text-[13px] text-[var(--text-2)]">How Studio looks. Saved to this browser.</p>
 
@@ -156,7 +157,7 @@
   </section>
 
   <!-- Editions & themes -->
-  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:40ms">
+  <section class="rise card p-5" style="animation-delay:40ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Editions &amp; themes</h2>
     <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Switch the whole interface, or drop a theme bundle on disk.</p>
 
@@ -200,7 +201,7 @@
   </section>
 
   <!-- Compose discovery -->
-  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:60ms">
+  <section class="rise card p-5" style="animation-delay:60ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Compose discovery</h2>
     <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Find Docker Compose projects on disk so you can deploy them from the Stacks tab.</p>
 
@@ -256,9 +257,11 @@
       {/if}
     </div>
   </section>
+  </div>
 
+  <div class="flex flex-col gap-4">
   <!-- AI / Natural language -->
-  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:80ms">
+  <section class="rise card p-5" style="animation-delay:80ms">
     <div class="flex items-center gap-2.5">
       <h2 class="text-[14px] font-semibold tracking-tight">AI · natural language</h2>
       <span class="pill {provider.enabled ? 'on' : 'off'}"><span class="dot"></span>{provider.enabled ? 'Connected' : 'Not configured'}</span>
@@ -298,7 +301,7 @@
   </section>
 
   <!-- Updates -->
-  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:100ms">
+  <section class="rise card p-5" style="animation-delay:100ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Updates</h2>
     <p class="mt-0.5 text-[12px] text-[var(--text-3)]">Current version <span class="mono text-[var(--text-2)]">{verLabel}</span>.</p>
 
@@ -333,7 +336,7 @@
   </section>
 
   <!-- Remote access -->
-  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:120ms">
+  <section class="rise card p-5" style="animation-delay:120ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Remote access</h2>
     <p class="mt-0.5 text-[12px] text-[var(--text-3)]">By default Oriel only answers on <span class="mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
     <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network — never expose it to the public internet.</p>
@@ -354,4 +357,5 @@
     </div>
     {#if remote.error}<p class="mt-2 text-[12px] text-[var(--red)]">{remote.error}</p>{/if}
   </section>
+  </div>
 </div>
