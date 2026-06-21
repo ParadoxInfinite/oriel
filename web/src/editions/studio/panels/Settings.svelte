@@ -3,6 +3,7 @@
   import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, applyUpdate, restartService, confirm } from '../../../platform/index.js'
+  import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
   import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -26,6 +27,16 @@
     ['allow', 'Allow-list'],
     ['deny', 'Deny-list'],
   ]
+
+  let hostDraft = $state('')
+  onMount(loadRemote)
+  function addHost() {
+    const h = hostDraft.trim()
+    if (h) {
+      addRemoteHost(h)
+      hostDraft = ''
+    }
+  }
 
   // Accent is per-theme; reflect the base that's actually showing.
   const base = $derived(appearance.mode === 'system' ? (systemPref.dark ? 'dark' : 'light') : appearance.mode)
@@ -339,5 +350,28 @@
       {/if}
       {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}
     </div>
+  </section>
+
+  <!-- Remote access -->
+  <section class="rise card p-5" style="animation-delay:120ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Remote access</h2>
+    <p class="mt-0.5 text-[12px] text-[var(--text-3)]">By default Oriel only answers on <span class="mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
+    <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network — never expose it to the public internet.</p>
+
+    {#if remote.hosts.length}
+      <div class="mt-3 flex flex-col gap-1.5">
+        {#each remote.hosts as h (h)}
+          <div class="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
+            <span class="mono min-w-0 flex-1 truncate text-[13px] text-[var(--text-2)]">{h}</span>
+            <button class="text-[var(--text-3)] hover:text-[var(--red)]" aria-label="Remove host" onclick={() => removeRemoteHost(h)}><Icon name="trash" size={13} /></button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+    <div class="mt-3 flex gap-2">
+      <input bind:value={hostDraft} placeholder="oriel.example.com" class="input flex-1 text-[13px]" onkeydown={(e) => e.key === 'Enter' && addHost()} />
+      <button class="btn btn-default btn-sm" onclick={addHost} disabled={!hostDraft.trim() || remote.saving}>Add</button>
+    </div>
+    {#if remote.error}<p class="mt-2 text-[12px] text-[var(--red)]">{remote.error}</p>{/if}
   </section>
 </div>

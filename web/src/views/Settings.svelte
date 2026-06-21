@@ -4,6 +4,7 @@
   import { toast } from '../lib/toast.svelte.js'
   import { self } from '../lib/self.svelte.js'
   import { update, checkNow, applyUpdate, restartService } from '../lib/update.svelte.js'
+  import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../lib/remote.svelte.js'
   import { confirm } from '../lib/confirm.svelte.js'
   import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../editions/registry.svelte.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern } from '../lib/discovery.svelte.js'
@@ -76,9 +77,18 @@
   let testErr = $state('')
   let testResult = $state(null)
   onMount(async () => {
+    loadRemote()
     await checkProvider()
     urlDraft = provider.url
   })
+  let hostDraft = $state('')
+  function addHost() {
+    const h = hostDraft.trim()
+    if (h) {
+      addRemoteHost(h)
+      hostDraft = ''
+    }
+  }
   async function saveProvider() {
     try {
       await setProvider(urlDraft.trim())
@@ -283,5 +293,28 @@
       {/if}
       {#if update.error}<p class="mt-2 text-xs text-danger">{update.error}</p>{/if}
     </div>
+  </section>
+
+  <!-- Remote access -->
+  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+    <h2 class="display text-sm font-semibold tracking-tight">Remote access</h2>
+    <p class="mt-0.5 text-xs text-muted">By default Oriel only answers on <span class="font-mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
+    <p class="mt-2 rounded-[--radius] bg-danger/10 px-3 py-2 text-xs text-danger">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network — never the public internet.</p>
+
+    {#if remote.hosts.length}
+      <div class="mt-3 flex flex-col gap-1.5">
+        {#each remote.hosts as h (h)}
+          <div class="flex items-center gap-2 rounded-[--radius] border border-border bg-surface px-3 py-2">
+            <span class="min-w-0 flex-1 truncate font-mono text-[13px] text-muted">{h}</span>
+            <button class="pop rounded p-1 text-faint hover:text-danger" aria-label="Remove host" onclick={() => removeRemoteHost(h)}><Icon name="trash" size={13} /></button>
+          </div>
+        {/each}
+      </div>
+    {/if}
+    <div class="mt-3 flex gap-2">
+      <input bind:value={hostDraft} placeholder="oriel.example.com" class={field} onkeydown={(e) => e.key === 'Enter' && addHost()} />
+      <button class={btn} onclick={addHost} disabled={!hostDraft.trim() || remote.saving}>Add</button>
+    </div>
+    {#if remote.error}<p class="mt-2 text-xs text-danger">{remote.error}</p>{/if}
   </section>
 </div>
