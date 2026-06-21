@@ -14,6 +14,7 @@
   import CommandPalette from './components/CommandPalette.svelte'
   import ConfirmDialog from './components/ConfirmDialog.svelte'
   import Toasts from './components/Toasts.svelte'
+  import DemoBanner from './lib/demo/DemoBanner.svelte'
 
   // The host mounts one edition; the switcher swaps it live. Keying the render
   // on the id remounts cleanly so each edition starts from a fresh tree.
@@ -58,4 +59,7 @@
   <CommandPalette />
   <ConfirmDialog />
   <Toasts />
+  {#if import.meta.env.VITE_DEMO}
+    <DemoBanner />
+  {/if}
 </div>

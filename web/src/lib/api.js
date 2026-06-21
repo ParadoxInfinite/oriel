@@ -1,5 +1,11 @@
 // Thin fetch wrappers + an SSE-over-POST reader. One place for all backend I/O.
 
+// In the GitHub Pages demo build, every call is served by an in-memory mock
+// instead of the network. VITE_DEMO is a static literal, so when it's unset the
+// branches below fold away and the demo module tree-shakes out of the real build.
+import * as demo from './demo/index.js'
+const DEMO = import.meta.env.VITE_DEMO
+
 // Prefix backend paths with the SPA base so one build works at the host root or
 // behind a reverse-proxy subpath. Vite bakes a sentinel base into the bundle;
 // the Go server rewrites it to ORIEL_BASE_PATH (or "/") when serving, so BASE_URL
@@ -17,12 +23,14 @@ async function parseError(res) {
 }
 
 export async function apiGet(path) {
+  if (DEMO) return demo.demoGet(path)
   const res = await fetch(url(path))
   if (!res.ok) throw new Error(await parseError(res))
   return res.json()
 }
 
 export async function apiPost(path, body) {
+  if (DEMO) return demo.demoPost(path, body)
   const res = await fetch(url(path), {
     method: 'POST',
     headers: body ? { 'Content-Type': 'application/json' } : {},
@@ -33,6 +41,7 @@ export async function apiPost(path, body) {
 }
 
 export async function apiPut(path, body) {
+  if (DEMO) return demo.demoPut(path, body)
   const res = await fetch(url(path), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -45,6 +54,7 @@ export async function apiPut(path, body) {
 // streamPost parses a text/event-stream POST response, one onEvent(name, data)
 // per frame. POST (not EventSource) because the action mutates state.
 export async function streamPost(path, { onEvent, signal } = {}) {
+  if (DEMO) return demo.demoStreamPost(path, { onEvent, signal })
   const res = await fetch(url(path), { method: 'POST', signal })
   if (!res.ok) throw new Error(await parseError(res))
   if (!res.body) throw new Error('empty response stream')
@@ -79,6 +89,7 @@ export async function streamPost(path, { onEvent, signal } = {}) {
 // sse opens an EventSource, listening for the named events. onEvent receives
 // (name, parsedData). Returns the EventSource so callers can close() it.
 export function sse(path, events, onEvent) {
+  if (DEMO) return demo.demoSse(path, events, onEvent)
   const es = new EventSource(url(path))
   for (const name of events) {
     es.addEventListener(name, (e) => {
