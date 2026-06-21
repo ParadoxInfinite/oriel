@@ -84,11 +84,12 @@ echo "Checksum verified."
 
 # --- install location (env var > prompt > default) -------------------------
 default_dir="$HOME/.local/bin"
-if [ -w /usr/local/bin ]; then default_dir=/usr/local/bin; fi
+if [ -d /usr/local/bin ] && [ -w /usr/local/bin ]; then default_dir=/usr/local/bin; fi
 dir="${ORIEL_INSTALL_DIR:-}"
 [ -n "$dir" ] || dir=$(ask "Install location [$default_dir]: " "$default_dir")
 
-mkdir -p "$dir"
+mkdir -p "$dir" 2>/dev/null || die "cannot create $dir — re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
+[ -w "$dir" ] || die "$dir is not writable — re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
 chmod +x "$tmp/oriel"
 mv "$tmp/oriel" "$dir/oriel"
 echo "Installed oriel to $dir/oriel"
@@ -108,7 +109,7 @@ else
 fi
 
 if [ "$want_service" = 1 ]; then
-  "$dir/oriel" service install
+  "$dir/oriel" service install || echo "Service setup failed — oriel is installed; run '$dir/oriel service install' yourself."
 else
   echo
   echo "Run it:       $dir/oriel"
