@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Homebrew install (macOS):** `brew install ParadoxInfinite/oriel/oriel`, via a
+  new tap. The cask is generated and updated automatically on each release.
+- **Live demo** — a "try it live" build of the full UI backed by in-memory mock
+  data, deployed to GitHub Pages. No backend, no real Docker; a refresh resets it.
+- Published a [ROADMAP](ROADMAP.md).
+
+### Changed
+
+- Releases are now built and published by [GoReleaser](https://goreleaser.com).
+  The release assets are unchanged — the same static `oriel-<os>-<arch>` binaries
+  and `SHA256SUMS.txt`, so `install.sh`, the curl one-liners, and `go install`
+  work exactly as before; the only addition is the Homebrew cask.
+
 ## [0.2.4] - 2026-06-21
 
 ### Fixed
