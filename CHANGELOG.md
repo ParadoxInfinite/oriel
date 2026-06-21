@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `oriel version` (also `--version` / `-v`) prints the build version. `install.sh`
   now reports the installed version after downloading.
 
+### Fixed
+
+- Re-running the installer on Linux now upgrades a running service in place:
+  `service install` restarts the unit instead of `enable --now` (which left the
+  old process running until a manual restart).
+
 ## [0.1.2] - 2026-06-21
 
 ### Added

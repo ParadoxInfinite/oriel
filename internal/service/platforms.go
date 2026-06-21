@@ -199,10 +199,16 @@ func installLinux(bin string, opts installOpts) error {
 	}
 
 	_ = run("systemctl", sctl(sys, "daemon-reload")...)
-	if err := run("systemctl", sctl(sys, "enable", "--now", "oriel.service")...); err != nil {
+	// enable for start-on-boot/login; restart (rather than `enable --now`, which
+	// won't touch an already-running unit) so re-running the installer to upgrade
+	// actually swaps the live service onto the freshly-downloaded binary.
+	if err := run("systemctl", sctl(sys, "enable", "oriel.service")...); err != nil {
 		if !sys && isUserBusError(err) {
 			fmt.Fprintln(os.Stderr, userBusHint)
 		}
+		return err
+	}
+	if err := run("systemctl", sctl(sys, "restart", "oriel.service")...); err != nil {
 		return err
 	}
 
