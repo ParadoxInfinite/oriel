@@ -38,6 +38,13 @@
     if (scroller.scrollTop < 60) loadOlder()
   }
   const lineColor = (s) => (s === 'stderr' ? 'text-[var(--amber)]' : s === 'error' ? 'text-[var(--red)]' : 'text-[var(--text)]')
+  // Per-line markers: a wall-clock timestamp gutter + a stream-coloured left edge.
+  const streamEdge = (s) => (s === 'stderr' ? 'border-[var(--amber)]' : s === 'error' ? 'border-[var(--red)]' : 'border-transparent')
+  function fmtTs(ts) {
+    if (!ts) return ''
+    const d = new Date(ts)
+    return isNaN(d) ? '' : d.toLocaleTimeString([], { hour12: false })
+  }
 
   // ── Inspect (fetched on first open) ────────────────────────────────────────
   let detail = $state(null)
@@ -100,8 +107,9 @@
           <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">Beginning of available logs</div>
         {/if}
         {#each logs.lines as l, i (i)}
-          <div class="flex gap-3 px-3 hover:bg-[var(--hover)]">
-            <span class="flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>
+          <div class="flex gap-2.5 border-l-2 px-3 hover:bg-[var(--hover)] {streamEdge(l.stream)}">
+            <span class="tnum shrink-0 select-none border-r border-[var(--border)] py-px pr-2.5 text-[11px] text-[var(--text-3)]" title={l.ts}>{fmtTs(l.ts)}</span>
+            <span class="min-w-0 flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>
           </div>
         {/each}
         {#if !logs.lines.length}<div class="px-3 py-3 text-[var(--text-3)]">{logs.error || 'Waiting for logs…'}</div>{/if}
