@@ -21,6 +21,8 @@ var settingsMu sync.Mutex
 func settingsPath() string { return dataPath("settings.json") }
 
 func loadSettings() settings {
+	settingsMu.Lock()
+	defer settingsMu.Unlock()
 	var c settings
 	b, err := os.ReadFile(settingsPath())
 	if err != nil {
@@ -41,5 +43,10 @@ func saveSettings(c settings) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, b, 0o600)
+	// Write+rename so a crash or concurrent read never sees a torn file.
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, b, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
 }

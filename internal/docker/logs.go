@@ -46,14 +46,16 @@ func (c *Client) StreamLogs(ctx context.Context, id string, tail int, follow boo
 	}
 
 	if insp.Config != nil && insp.Config.Tty {
-		_, err = io.Copy(&lineWriter{stream: "stdout", emit: onLine}, rc)
+		lw := &lineWriter{stream: "stdout", emit: onLine}
+		_, err = io.Copy(lw, rc)
+		lw.flush()
 		return err
 	}
-	_, err = stdcopy.StdCopy(
-		&lineWriter{stream: "stdout", emit: onLine},
-		&lineWriter{stream: "stderr", emit: onLine},
-		rc,
-	)
+	out := &lineWriter{stream: "stdout", emit: onLine}
+	errw := &lineWriter{stream: "stderr", emit: onLine}
+	_, err = stdcopy.StdCopy(out, errw, rc)
+	out.flush()
+	errw.flush()
 	return err
 }
 
@@ -85,4 +87,15 @@ func (w *lineWriter) Write(p []byte) (int, error) {
 		w.emit(w.stream, line)
 	}
 	return len(p), nil
+}
+
+// flush emits any trailing line the stream ended without a newline — otherwise
+// the last line of a one-shot/crashed container is lost.
+func (w *lineWriter) flush() {
+	if len(w.buf) == 0 {
+		return
+	}
+	line := strings.TrimRight(string(w.buf), "\r")
+	w.buf = nil
+	w.emit(w.stream, line)
 }

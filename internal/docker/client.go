@@ -28,16 +28,23 @@ func New() *Client { return &Client{} }
 // discovery) on every call — critical now that the recorder samples each second.
 func (c *Client) api(ctx context.Context) (*client.Client, error) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
 	if c.cli != nil {
-		return c.cli, nil
+		cli := c.cli
+		c.mu.Unlock()
+		return cli, nil
 	}
+	c.mu.Unlock()
+
+	// Discover the socket and dial WITHOUT holding the lock: colima's CLI probe
+	// can be slow or hang, and holding the mutex would freeze every docker call
+	// (the recorder samples each second) behind it.
 	opts := []client.Opt{client.WithAPIVersionNegotiation()}
-	switch sock, err := colima.DockerSocketPath(ctx); {
+	var sock string
+	switch s, err := colima.DockerSocketPath(ctx); {
 	case err == nil:
 		// colima is running — talk to its socket.
+		sock = s
 		opts = append(opts, client.WithHost("unix://"+sock))
-		c.socket = sock
 	case colima.Installed():
 		// colima is present but not ready; don't cache a fallback — retry next
 		// call once the VM is up, rather than latch onto the wrong socket.
@@ -51,7 +58,16 @@ func (c *Client) api(ctx context.Context) (*client.Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.cli != nil {
+		// Another caller dialed while we were probing — keep theirs, drop ours.
+		_ = cli.Close()
+		return c.cli, nil
+	}
 	c.cli = cli
+	c.socket = sock
 	return cli, nil
 }
 
