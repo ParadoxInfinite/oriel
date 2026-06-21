@@ -1,6 +1,7 @@
 // Lazy, run-once update check — the backend pings GitHub (cached) only when asked.
 // Self-update (apply + restart) is offered only for service-managed installs.
 import { apiGet, apiPost } from './api.js'
+import { self } from './self.svelte.js'
 
 export const update = $state({
   checked: false,
@@ -88,14 +89,31 @@ export async function applyUpdate() {
   }
 }
 
-// restartService restarts the managed service so the new binary takes effect. The
-// connection drops as it goes down and the live stream reconnects when it's back.
+// restartService restarts the managed service, waits for the new binary to come
+// back, then reloads so the whole UI reflects the new version. A non-OK reply
+// (vs the expected dropped connection) is a real failure and is surfaced.
 export async function restartService() {
   update.phase = 'restarting'
   update.error = ''
+  const prevVersion = self.version
   try {
+    // The endpoint replies 200 *then* restarts ~500ms later, so a 200 here means
+    // "restart scheduled". A throw is a genuine error (e.g. not managed).
     await apiPost('/api/update/restart')
-  } catch {
-    // Expected — the server is going down mid-request.
+  } catch (e) {
+    update.error = e.message || 'Restart failed'
+    update.phase = ''
+    return
   }
+  // Poll until the server is back on a different version, then hard-reload.
+  for (let i = 0; i < 40; i++) {
+    await new Promise((r) => setTimeout(r, 1500))
+    try {
+      const d = await apiGet('/api/self')
+      if (d?.version && d.version !== prevVersion) break
+    } catch {
+      /* still restarting */
+    }
+  }
+  location.reload()
 }
