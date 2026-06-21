@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- On startup the server logs a config summary (version, base path, allowed hosts,
+  Docker reachability) and warns when a base path is set with no allowed hosts —
+  the proxy-403 footgun — so it's visible in `journalctl` without guessing.
 - `oriel update [--check]` — checksum-verified CLI self-update for service-managed
   installs (check → download + verify → restart), so a headless box can upgrade
   from the terminal without the UI.

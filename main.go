@@ -82,7 +82,7 @@ func main() {
 
 	go func() {
 		url := fmt.Sprintf("http://%s", addr)
-		log.Printf("oriel listening on %s", url)
+		srv.LogStartup(url)
 		if !*noOpen {
 			// Give the listener a beat to come up before opening the browser.
 			time.Sleep(300 * time.Millisecond)
