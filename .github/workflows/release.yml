@@ -16,14 +16,14 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
           go-version-file: go.mod
           cache: true
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 24
           cache: npm
@@ -48,9 +48,13 @@ jobs:
           (cd dist && sha256sum oriel-* > SHA256SUMS.txt)
 
       - name: Publish release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3
         with:
           files: |
             dist/oriel-*
             dist/SHA256SUMS.txt
           generate_release_notes: true
+          # Tags with a suffix (v1.2.3-rc1) are marked pre-release, so GitHub's
+          # "latest" — which install.sh and the manual curl URLs resolve to —
+          # only ever points at a stable release.
+          prerelease: ${{ contains(github.ref_name, '-') }}
