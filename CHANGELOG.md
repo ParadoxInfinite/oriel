@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Studio's Settings cards now flow in a packed masonry layout (CSS columns) instead
+  of a rigid grid, so cards sit directly under each other with no wasted whitespace.
 - The Stacks folder button adapts to context: "Reveal in Finder" (macOS) / "Open
   folder" (Linux) for a local instance, and "Copy path" when viewing Oriel
   remotely — where opening a folder on the *server* is meaningless.
