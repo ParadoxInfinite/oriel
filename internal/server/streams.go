@@ -108,6 +108,26 @@ func (s *Server) handleContainerLogs(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	// Keep the stream alive through idle proxy read-timeouts while a quiet
+	// container produces nothing. The ticker stops when the follow returns or the
+	// client disconnects.
+	stop := make(chan struct{})
+	defer close(stop)
+	go func() {
+		t := time.NewTicker(25 * time.Second)
+		defer t.Stop()
+		for {
+			select {
+			case <-stop:
+				return
+			case <-r.Context().Done():
+				return
+			case <-t.C:
+				sse.ping()
+			}
+		}
+	}()
+
 	err := s.docker.StreamLogs(r.Context(), id, 100, true, "", func(stream, ts, line string) {
 		sse.send("log", map[string]string{"stream": stream, "ts": ts, "line": line})
 	})

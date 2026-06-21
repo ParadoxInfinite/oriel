@@ -12,6 +12,7 @@ export class LogsController {
   loadingOlder = $state(false)
   noMore = $state(false) // reached the start of available history
   error = $state(null)
+  connected = $state(false) // SSE stream is open (vs still connecting)
 
   #es = null
   #id = null
@@ -23,6 +24,7 @@ export class LogsController {
     this.lines = []
     this.noMore = false
     this.error = null
+    this.connected = false
     this.#following = true
     this.#es = sse(`/api/containers/${id}/logs`, ['log', 'error'], (name, data) => {
       if (name === 'error') {
@@ -35,6 +37,9 @@ export class LogsController {
         this.lines.splice(0, this.lines.length - FOLLOW_CAP)
       }
     })
+    // onopen fires once the stream is established — lets the UI tell an empty
+    // (but live) stream apart from one that's still connecting.
+    this.#es.onopen = () => (this.connected = true)
   }
 
   // setFollowing(true) when scrolled to the live tail: drop the older history we
@@ -76,5 +81,6 @@ export class LogsController {
   stop() {
     this.#es?.close()
     this.#es = null
+    this.connected = false
   }
 }
