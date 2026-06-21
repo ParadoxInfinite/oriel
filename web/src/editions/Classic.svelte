@@ -134,7 +134,7 @@
       <span class="text-[11px] font-medium tracking-wide text-muted">Oriel</span>
       <div class="flex items-center gap-1.5">
         {#if update.available}
-          <a href={update.url} target="_blank" rel="noopener" class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available — v{update.latest}">update ↗</a>
+          <button type="button" onclick={() => (active = 'Settings')} class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available — v{update.latest} · open updates">update</button>
         {/if}
         {#if verLabel}<span class="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] font-medium text-fg/85">{verLabel}</span>{/if}
       </div>
