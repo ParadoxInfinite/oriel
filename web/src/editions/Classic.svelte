@@ -71,7 +71,7 @@
   const engineName = $derived(status.data?.engine === 'docker' ? 'docker' : 'colima')
 
   // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
-  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '')
+  const verLabel = $derived(self.version || '')
 </script>
 
 <div class="flex h-screen w-screen overflow-hidden">

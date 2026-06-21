@@ -34,7 +34,7 @@
   const field =
     'w-full rounded-[--radius] border border-border bg-bg px-3 py-1.5 text-sm outline-none placeholder:text-muted focus:border-accent/50'
 
-  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '—')
+  const verLabel = $derived(self.version || '—')
   async function doUpdate() {
     const res = await confirm({
       title: 'Update Oriel?',

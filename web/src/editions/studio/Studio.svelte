@@ -17,7 +17,7 @@
   } from '../../platform/index.js'
 
   // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
-  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '')
+  const verLabel = $derived(self.version || '')
 
   import { appearance, systemPref, initAppearance } from './theme.svelte.js'
   import Icon from './lib/Icon.svelte'
