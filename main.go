@@ -45,6 +45,12 @@ func main() {
 				log.Fatalf("doctor: %v", err)
 			}
 			return
+		case "config":
+			// `oriel config base-path …` edits settings.json config over loopback.
+			if err := runConfig(os.Args[2:]); err != nil {
+				log.Fatalf("config: %v", err)
+			}
+			return
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return

@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `oriel config base-path [<path>|--clear]` — show, set, or clear the reverse-proxy
+  sub-path in settings.json from the CLI; restarts a managed service to apply.
 - `oriel doctor` — a read-only health check that reports Docker reachability, the
   running instance's base path + allowed hosts, version skew, and service status,
   and prints the exact fix command for anything wrong (e.g. a sub-path set with no
