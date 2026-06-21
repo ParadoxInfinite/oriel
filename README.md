@@ -4,10 +4,11 @@
 
 # Oriel
 
-**A fast, local, single-binary web GUI for Colima & Docker.**
+**A fast, local, single-binary web GUI for Colima & Docker — the open-source Docker Desktop alternative.**
 
 Manage containers, images, volumes, networks and Compose stacks from a clean,
-themeable browser UI. ~15–30 MB RAM, zero dependencies, binds to `127.0.0.1`.
+themeable browser UI. The GUI Colima never had: ~15–30 MB RAM, no Electron, no
+login, free and Apache-2.0. Binds to `127.0.0.1`; runs on macOS & Linux.
 
 [![CI](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml/badge.svg)](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/ParadoxInfinite/oriel?sort=semver)](https://github.com/ParadoxInfinite/oriel/releases)
@@ -21,6 +22,12 @@ themeable browser UI. ~15–30 MB RAM, zero dependencies, binds to `127.0.0.1`.
 </p>
 
 ## Install
+
+**Homebrew** (macOS & Linux):
+
+```sh
+brew install ParadoxInfinite/oriel/oriel
+```
 
 **Quick install** — detects your platform, verifies the checksum, installs to your PATH:
 
@@ -99,6 +106,21 @@ Podman, and remote daemons also work — see [docs/DAEMONS.md](docs/DAEMONS.md).
 - **Live** — everything streams over one SSE connection; the UI never polls.
 - **Self-update** — service installs update in-app via checksum-verified downloads.
 
+## How it compares
+
+How Oriel stacks up against the common ways to manage containers on a Mac or Linux box. (Figures drift — treat as a snapshot.)
+
+| | **Oriel** | Docker Desktop | OrbStack | lazydocker | Portainer |
+|---|---|---|---|---|---|
+| License | **Apache-2.0, free** | Proprietary (paid for larger orgs) | Proprietary (paid for commercial use) | MIT, free | Free (CE) |
+| Interface | Graphical web UI | Desktop app | Native app | Terminal (TUI) | Web UI (server) |
+| Footprint | **~15–30 MB RAM, ~11 MB binary** | Heavy (Electron + VM) | Light (native) | Light | Needs a container + ≥2 GB RAM |
+| Install | **Single static binary** | Installer | Installer | Single binary | Run a container |
+| Bring-your-own engine | **Colima · Docker · OrbStack · Podman · remote** | Bundled engine | Bundled engine | Any Docker socket | Any Docker socket |
+| Runs locally, no account | **Yes** | Account/sign-in | Account | Yes | Server + auth |
+
+Oriel's wedge: a real **graphical** UI (not a TUI), as a single local binary (not a server you deploy), that's **free and open source** (not commercially licensed), pointed at **whatever engine you already run** — most often Colima.
+
 ## Editions & themes
 
 The presentation is a swappable plugin on a stable platform SDK. Ships with
@@ -122,6 +144,30 @@ ZeroTier, WireGuard, …). **Never put it on the public internet.** Full trust m
 - **Natural-language control:** set an AI resolver URL (Settings → AI); suggestions run
   through the same validated tool path, and the base binary links no ML code.
 - **Develop:** `make dev` + `make dev-web` (Vite hot reload), `make test`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Roadmap:** where Oriel is headed (auth, in-browser container shell, …) — [ROADMAP.md](ROADMAP.md).
+
+## FAQ
+
+**Is there a GUI for Colima?**
+Yes — Oriel is a graphical web UI built for Colima. Colima ships CLI-only by design; Oriel fills that gap (and also drives Docker Engine, OrbStack, Podman, and remote daemons).
+
+**Is Oriel a free Docker Desktop alternative?**
+Yes. It's Apache-2.0, with no license fees and no account — point it at any Docker-compatible engine and manage everything from the browser.
+
+**Does Oriel need Docker Desktop?**
+No. It needs any Docker Engine–compatible runtime plus the `docker` CLI. [Colima](https://github.com/abiosoft/colima) is first-class; see [docs/DAEMONS.md](docs/DAEMONS.md).
+
+**How is it different from lazydocker?**
+lazydocker is a terminal UI. Oriel is a real graphical browser UI — dashboards, streaming logs, registry search, Compose discovery, and themeable editions.
+
+**How much memory does it use?**
+~15–30 MB. The binary is ~11 MB and there's no Electron.
+
+**Which platforms are supported?**
+macOS (Apple Silicon + Intel) and Linux (amd64 + arm64).
+
+**Is it safe to run?**
+Oriel has **no authentication** and driving Docker is root-equivalent on the host. Run it on `127.0.0.1`, or reach it over a private network only — never the public internet. See [SECURITY.md](SECURITY.md).
 
 ## License
 
