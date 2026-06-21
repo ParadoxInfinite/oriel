@@ -48,10 +48,17 @@ the private interface, **never the public internet.**
 let Tailscale proxy to it, so it's reachable only by devices in *your* tailnet:
 
 ```sh
-./oriel --no-open                 # stays bound to 127.0.0.1:4321
+# Allow your tailnet hostname — the anti-rebinding guard blocks non-loopback
+# Host headers by default, and `tailscale serve` forwards the .ts.net Host:
+ORIEL_ALLOWED_HOSTS=<your-machine>.<tailnet>.ts.net ./oriel --no-open
 tailscale serve --bg 4321         # serve to your tailnet over HTTPS
 # reachable at https://<your-machine>.<tailnet>.ts.net/ from your devices
 ```
+
+For a persistent install, bake the host in instead of exporting it each run:
+`oriel service install --allowed-hosts <your-machine>.<tailnet>.ts.net`. For
+sub-path mounts, nginx/Caddy/Traefik, and the full env-var reference, see
+[docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md).
 
 This is reasonably safe **if and only if**:
 

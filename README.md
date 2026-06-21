@@ -77,6 +77,12 @@ Flags: `--port <n>` (default 4321), `--no-open`. To run on login as a background
 ./oriel service install      # launchd (macOS) / systemd (Linux); also: status, uninstall
 ```
 
+To reach Oriel from another machine through a reverse proxy or private network,
+serve it under a sub-path and allow the proxy's hostname — `service install`
+(and `install.sh`) take `--base-path` / `--allowed-hosts`. See
+[docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md). Oriel has no auth, so read the
+security note there first.
+
 Needs a Docker Engine–compatible runtime + the `docker` CLI. [Colima](https://github.com/abiosoft/colima)
 is first-class (adds VM start/stop); Docker Engine, OrbStack, Rancher/Docker Desktop,
 Podman, and remote daemons also work — see [docs/DAEMONS.md](docs/DAEMONS.md).
