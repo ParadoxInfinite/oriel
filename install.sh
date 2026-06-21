@@ -67,7 +67,7 @@ fi
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
-echo "Downloading $asset…"
+echo "Downloading ${asset}…"
 fetch "$BASE/$asset" "$tmp/oriel" || die "download failed"
 fetch "$BASE/SHA256SUMS.txt" "$tmp/sums" || die "could not fetch checksums"
 
