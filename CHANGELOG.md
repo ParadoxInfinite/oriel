@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-21
+
 ### Added
 
 - **Reverse-proxy setup as a first-class option.** `oriel service install` and
@@ -15,6 +17,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   restarts, reinstalls, and self-updates. The installer prompts for both and
   warns about the risk of allowing non-loopback hosts (no auth, root-equivalent).
   New guide: [docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md).
+
+### Fixed
+
+- SECURITY.md's Tailscale `serve` example now allows the tailnet host, which the
+  anti-rebinding guard otherwise blocks with a 403.
+
+## [0.1.1] - 2026-06-21
+
+### Changed
+
+- Build toolchain upgraded to Vite 8 and `@sveltejs/vite-plugin-svelte` 7.
+
+### Fixed
+
+- `install.sh` no longer aborts under `set -u` on the first download — a trailing
+  multibyte ellipsis was fusing onto the `$asset` variable name.
+
+### Added
+
+- The release workflow can be triggered from the Actions tab (`workflow_dispatch`)
+  to build a release from any branch HEAD, not only a pushed tag.
 
 ## [0.1.0] - 2026-06-21
 
