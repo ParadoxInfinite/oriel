@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `oriel version` (also `--version` / `-v`) prints the build version. `install.sh`
+  now reports the installed version after downloading.
+
 ## [0.1.2] - 2026-06-21
 
 ### Added

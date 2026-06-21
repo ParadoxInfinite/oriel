@@ -23,13 +23,19 @@ import (
 var version = "dev"
 
 func main() {
-	// `oriel service <install|uninstall|status>` manages the background
-	// service and exits; everything else runs the server.
-	if len(os.Args) > 1 && os.Args[1] == "service" {
-		if err := service.Run(os.Args[2:]); err != nil {
-			log.Fatalf("service: %v", err)
+	// Subcommands that run and exit before the server starts.
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "service":
+			// `oriel service <install|uninstall|status>` manages the background service.
+			if err := service.Run(os.Args[2:]); err != nil {
+				log.Fatalf("service: %v", err)
+			}
+			return
+		case "version", "--version", "-v":
+			fmt.Println("oriel", version)
+			return
 		}
-		return
 	}
 
 	port := flag.Int("port", 4321, "port to listen on (bound to 127.0.0.1 only)")
