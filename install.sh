@@ -93,7 +93,10 @@ mkdir -p "$dir" 2>/dev/null || die "cannot create $dir — re-run with sudo, or 
 [ -w "$dir" ] || die "$dir is not writable — re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
 chmod +x "$tmp/oriel"
 mv "$tmp/oriel" "$dir/oriel"
-echo "Installed oriel to $dir/oriel"
+# Report the version we just installed (older binaries without the subcommand
+# print nothing to stdout, so fall back to a plain name).
+installed_as=$("$dir/oriel" version 2>/dev/null) || installed_as=""
+echo "Installed ${installed_as:-oriel} to $dir/oriel"
 
 case ":$PATH:" in
   *":$dir:"*) ;;
