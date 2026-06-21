@@ -51,6 +51,9 @@ export { stats, history } from '../lib/live.svelte.js'
 /** The Oriel backend's own footprint + build version: `{ version, rss, goroutines, heapAlloc }`. */
 export { self } from '../lib/self.svelte.js'
 
+/** Remote-access allow-list (non-loopback Hosts permitted to reach /api). */
+export { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../lib/remote.svelte.js'
+
 /** Update check + self-update (service installs): `update` state, `checkUpdate()`,
  *  `startUpdateChecks()`/`stopUpdateChecks()` (mount + 3h re-check),
  *  `applyUpdate()` (download+verify+replace), `restartService()`. */
