@@ -1,7 +1,7 @@
 <script>
   import {
     stacks, refreshStacks, runOp, confirm,
-    discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, openDir,
+    discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, revealLabel, revealOrCopy,
   } from '../platform/index.js'
   import { action } from '../lib/ui.js'
   import StateBadge from '../components/StateBadge.svelte'
@@ -122,7 +122,7 @@
           </div>
           <div class="flex shrink-0 items-center gap-1.5">
             <button class={action('ok')} onclick={() => deployStack(d)}>Up</button>
-            <button class="pop rounded p-1.5 text-faint hover:text-fg" title="Reveal in Finder" aria-label="Reveal" onclick={() => openDir(d.dir)}>
+            <button class="pop rounded p-1.5 text-faint hover:text-fg" title={revealLabel()} aria-label={revealLabel()} onclick={() => revealOrCopy(d.dir)}>
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
             </button>
             {#if discovery.config.filter.mode !== 'allow'}

@@ -15,6 +15,7 @@ import (
 type selfStats struct {
 	Version    string `json:"version"`  // build version ("dev" for local builds)
 	BasePath   string `json:"basePath"` // configured reverse-proxy base, "/" at root
+	OS         string `json:"os"`       // server GOOS — clients label host actions by it
 	RSS        int64  `json:"rss"`      // resident set size, bytes
 	Goroutines int    `json:"goroutines"`
 	HeapAlloc  int64  `json:"heapAlloc"` // Go heap in use, bytes
@@ -28,6 +29,7 @@ func (s *Server) currentSelf(ctx context.Context) selfStats {
 	return selfStats{
 		Version:    s.version,
 		BasePath:   s.base,
+		OS:         runtime.GOOS,
 		RSS:        processRSS(ctx),
 		Goroutines: runtime.NumGoroutine(),
 		HeapAlloc:  int64(m.HeapAlloc),

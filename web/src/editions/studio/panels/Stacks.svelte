@@ -1,6 +1,6 @@
 <script>
   import { stacks, refreshStacks, stackOp, confirm } from '../../../platform/index.js'
-  import { discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, openDir } from '../../../platform/index.js'
+  import { discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, revealLabel, revealOrCopy } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import StatusPill from '../lib/StatusPill.svelte'
 
@@ -145,7 +145,7 @@
         </div>
         <div class="flex shrink-0 gap-1.5">
           <button class="btn btn-primary btn-sm" onclick={() => deployStack(d)}><Icon name="play" size={13} /> Up</button>
-          <button class="btn btn-default btn-icon btn-sm" title="Reveal in Finder" aria-label="Reveal" onclick={() => openDir(d.dir)}>
+          <button class="btn btn-default btn-icon btn-sm" title={revealLabel()} aria-label={revealLabel()} onclick={() => revealOrCopy(d.dir)}>
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" /></svg>
           </button>
           {#if discovery.config.filter.mode !== 'allow'}
