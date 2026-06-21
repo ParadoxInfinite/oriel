@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.4] - 2026-06-21
+
+### Fixed
+
+- Settings layout is now stable. It used CSS-columns masonry, which rebalanced by
+  content height — so the same page could lay out differently on two instances,
+  and any card height change (e.g. clicking "Check for updates") repainted the
+  whole page. Replaced with an explicit two-column layout: each card has a fixed
+  position regardless of content. Both editions.
+- "Check for updates" no longer flickers — "Checking…" shows for a brief minimum
+  instead of a one-frame flash, since the backend usually answers instantly from
+  cache.
+
 ## [0.2.3] - 2026-06-21
 
 ### Fixed

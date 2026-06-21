@@ -92,9 +92,10 @@
   }
 </script>
 
-<div class="mx-auto max-w-5xl pb-4 lg:columns-2 lg:gap-5">
+<div class="mx-auto grid max-w-5xl grid-cols-1 gap-5 pb-4 lg:grid-cols-2 lg:items-start">
+  <div class="flex flex-col gap-5">
   <!-- Editions & themes -->
-  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+  <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Editions &amp; themes</h2>
     <p class="mt-0.5 text-xs text-muted">Switch the whole interface, or load an external theme bundle.</p>
 
@@ -141,7 +142,7 @@
   </section>
 
   <!-- Compose discovery -->
-  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+  <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Compose discovery</h2>
     <p class="mt-0.5 text-xs text-muted">Find Docker Compose projects on disk so you can deploy them from the Stacks tab.</p>
 
@@ -197,9 +198,11 @@
       {/if}
     </div>
   </section>
+  </div>
 
+  <div class="flex flex-col gap-5">
   <!-- AI / Natural language -->
-  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+  <section class="card rounded-[--radius] p-5">
     <div class="flex items-center gap-2.5">
       <h2 class="display text-sm font-semibold tracking-tight">AI · natural language</h2>
       <span class="rounded-full px-2 py-0.5 text-[11px] {provider.enabled ? 'bg-ok/15 text-ok' : 'bg-surface-2 text-muted'}">{provider.enabled ? 'Connected' : 'Not configured'}</span>
@@ -239,7 +242,7 @@
   </section>
 
   <!-- Updates -->
-  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+  <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Updates</h2>
     <p class="mt-0.5 text-xs text-muted">Current version <span class="font-mono text-fg/85">{verLabel}</span>.</p>
 
@@ -274,7 +277,7 @@
   </section>
 
   <!-- Remote access -->
-  <section class="card mb-5 break-inside-avoid rounded-[--radius] p-5">
+  <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Remote access</h2>
     <p class="mt-0.5 text-xs text-muted">By default Oriel only answers on <span class="font-mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
     <p class="mt-2 rounded-[--radius] bg-danger/10 px-3 py-2 text-xs text-danger">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network — never the public internet.</p>
@@ -295,4 +298,5 @@
     </div>
     {#if remote.error}<p class="mt-2 text-xs text-danger">{remote.error}</p>{/if}
   </section>
+  </div>
 </div>
