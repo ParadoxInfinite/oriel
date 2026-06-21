@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-06-21
+
+### Fixed
+
+- In-app self-update on Linux: "Restart now" no longer fails with "restart is only
+  available for service-managed installs". Applying an update renames the running
+  binary to `.bak`, after which the live process reports that `.bak` path and
+  `IsManaged()` stopped matching the unit's `ExecStart`; the path is now normalized.
+
+### Changed
+
+- The siderail "update" pill opens the in-app Updates panel (Settings) instead of
+  redirecting to the GitHub releases page.
+
 ## [0.2.1] - 2026-06-21
 
 ### Fixed

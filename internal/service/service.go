@@ -39,12 +39,25 @@ func unitFiles() []string {
 // IsManaged reports whether the running executable is the one an installed Oriel
 // service launches — i.e. self-update is safe to replace it and restart. Manual
 // `./oriel` runs (a different binary path) return false.
+// normalizeManagedExe maps the live executable path back to the installed one.
+// After a self-update the running binary has been renamed to <exe>.bak before the
+// new one is swapped in; on Linux the live process then reports that .bak path (or
+// a "(deleted)" variant), which must be undone so the post-update restart still
+// recognises itself as managed.
+func normalizeManagedExe(exe string) string {
+	exe = strings.TrimSuffix(exe, " (deleted)")
+	if resolved, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = resolved
+	}
+	return strings.TrimSuffix(exe, ".bak")
+}
+
 func IsManaged() bool {
 	exe, err := os.Executable()
 	if err != nil {
 		return false
 	}
-	exe, _ = filepath.EvalSymlinks(exe)
+	exe = normalizeManagedExe(exe)
 	for _, p := range unitFiles() {
 		data, err := os.ReadFile(p)
 		if err != nil {
