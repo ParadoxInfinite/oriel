@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- UI showed the Oriel version with a doubled `v` (`vv0.1.3`) — the build version
+  already includes the `v`, so the UI no longer prepends its own.
+
 ## [0.1.3] - 2026-06-21
 
 ### Added

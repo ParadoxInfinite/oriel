@@ -49,7 +49,7 @@
   ]
   const swatches = $derived([...ACCENTS, ...appearance.custom])
 
-  const verLabel = $derived(self.version ? (self.version === 'dev' ? 'dev' : 'v' + self.version) : '—')
+  const verLabel = $derived(self.version || '—')
   async function doUpdate() {
     const res = await confirm({
       title: 'Update Oriel?',
