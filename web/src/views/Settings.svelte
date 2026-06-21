@@ -6,7 +6,7 @@
   import { update, checkNow, applyUpdate, restartService } from '../lib/update.svelte.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../lib/remote.svelte.js'
   import { confirm } from '../lib/confirm.svelte.js'
-  import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../editions/registry.svelte.js'
+  import { editions, edition, setEdition, diskThemes } from '../editions/registry.svelte.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern } from '../lib/discovery.svelte.js'
   import { PathField } from '../lib/pathfield.svelte.js'
   import { THEMES_DOC_URL } from '../lib/links.js'
@@ -51,24 +51,6 @@
     if (ok && res.checked) await restartService()
   }
 
-  // External theme loader.
-  let extUrl = $state('')
-  let extBusy = $state(false)
-  let extErr = $state('')
-  async function loadExt() {
-    if (!extUrl.trim()) return
-    extBusy = true
-    extErr = ''
-    try {
-      const m = await addExternalTheme(extUrl)
-      toast(`Loaded theme “${m.name}”`, 'ok')
-      extUrl = ''
-    } catch (e) {
-      extErr = e.message
-    } finally {
-      extBusy = false
-    }
-  }
 
   // AI provider.
   let urlDraft = $state('')
@@ -137,28 +119,26 @@
 
     <div class="mt-5 border-t border-border pt-4">
       <div class="flex items-center justify-between gap-2">
-        <span class="text-[13px] font-medium text-fg">Load external theme</span>
+        <span class="text-[13px] font-medium text-fg">Installed themes</span>
         <a href={THEMES_DOC_URL} target="_blank" rel="noopener" class="text-[11.5px] font-medium text-accent hover:underline">Build your own ↗</a>
       </div>
-      <p class="mt-0.5 text-xs text-faint">An ES-module URL that default-exports a manifest <span class="font-mono">{'{ id, name, component }'}</span>.</p>
-      <div class="mt-3 flex gap-2">
-        <input bind:value={extUrl} placeholder="https://example.com/theme.js" class={field} onkeydown={(e) => e.key === 'Enter' && loadExt()} />
-        <button class={btn} onclick={loadExt} disabled={extBusy}>{extBusy ? 'Loading…' : 'Load'}</button>
-      </div>
-      {#if extErr}<p class="mt-2 text-xs text-danger">{extErr}</p>{/if}
-      {#if externalThemes.urls.length}
+      <p class="mt-0.5 text-xs text-faint">Drop a theme bundle (an ES module default-exporting <span class="font-mono">{'{ id, name, component }'}</span>) into:</p>
+      {#if diskThemes.dir}<p class="mt-1 break-all rounded-[--radius] bg-surface px-2.5 py-1.5 font-mono text-[11.5px] text-muted">{diskThemes.dir}</p>{/if}
+      {#if diskThemes.list.length}
         <div class="mt-3 flex flex-col gap-1.5">
-          {#each externalThemes.urls as url (url)}
-            {@const loaded = externalThemes.list.find((x) => x._url === url)}
+          {#each diskThemes.list as t (t.id)}
             <div class="flex items-center gap-2 rounded-[--radius] border border-border bg-surface px-3 py-2">
-              <span class="h-2 w-2 shrink-0 rounded-full {externalThemes.errors[url] ? 'bg-danger' : 'bg-ok'}"></span>
-              <span class="min-w-0 flex-1 truncate font-mono text-xs text-muted">{loaded?.name || url}</span>
-              {#if externalThemes.errors[url]}<span class="text-[11px] text-danger">failed</span>{/if}
-              <button class="pop rounded p-1 text-faint hover:text-danger" title="Remove" aria-label="Remove theme" onclick={() => removeExternalTheme(url)}><Icon name="trash" size={13} /></button>
+              <span class="h-2 w-2 shrink-0 rounded-full bg-ok"></span>
+              <span class="min-w-0 flex-1 truncate text-[13px] text-muted">{t.name}</span>
             </div>
           {/each}
         </div>
+      {:else}
+        <p class="mt-2 text-xs text-faint">No themes installed yet.</p>
       {/if}
+      {#each Object.entries(diskThemes.errors) as [file, err] (file)}
+        <p class="mt-2 text-xs text-danger"><span class="font-mono">{file}</span>: {err}</p>
+      {/each}
     </div>
   </section>
 

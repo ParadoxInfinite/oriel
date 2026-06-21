@@ -4,7 +4,7 @@
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, applyUpdate, restartService, confirm } from '../../../platform/index.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
-  import { editions, edition, setEdition, externalThemes, addExternalTheme, removeExternalTheme } from '../../../editions/registry.svelte.js'
+  import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
   import PathInput from '../lib/PathInput.svelte'
@@ -72,24 +72,6 @@
     newName = ''
   }
 
-  // External theme form.
-  let extUrl = $state('')
-  let extBusy = $state(false)
-  let extErr = $state('')
-  async function loadExt() {
-    if (!extUrl.trim()) return
-    extBusy = true
-    extErr = ''
-    try {
-      const m = await addExternalTheme(extUrl)
-      toast(`Loaded theme “${m.name}”`, 'ok')
-      extUrl = ''
-    } catch (e) {
-      extErr = e.message
-    } finally {
-      extBusy = false
-    }
-  }
 
   // AI provider.
   let urlDraft = $state('')
@@ -176,7 +158,7 @@
   <!-- Editions & themes -->
   <section class="rise card p-5" style="animation-delay:40ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Editions &amp; themes</h2>
-    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Switch the whole interface, or load an external theme bundle.</p>
+    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Switch the whole interface, or drop a theme bundle on disk.</p>
 
     <div class="mt-4 grid gap-2 sm:grid-cols-2">
       {#each editions() as e (e.id)}
@@ -184,7 +166,7 @@
         <button class="flex items-center gap-3 rounded-lg border p-3 text-left transition-colors {on ? 'border-[var(--accent)] bg-[var(--accent-tint)]' : 'border-[var(--border)] hover:border-[var(--border-strong)] hover:bg-[var(--panel-2)]'}" onclick={() => setEdition(e.id)}>
           <span class="h-3 w-3 shrink-0 rounded-full" style="background:{e.accent};box-shadow:0 0 8px -1px {e.accent}"></span>
           <span class="min-w-0 flex-1">
-            <span class="block text-[13px] font-medium">{e.name}{#if e.external}<span class="ml-1.5 text-[10px] font-normal text-[var(--text-3)]">external</span>{/if}</span>
+            <span class="block text-[13px] font-medium">{e.name}{#if e.external}<span class="ml-1.5 text-[10px] font-normal text-[var(--text-3)]">installed</span>{/if}</span>
             <span class="block truncate text-[12px] text-[var(--text-3)]">{e.tagline}</span>
           </span>
           {#if on}<span class="text-[var(--accent)]"><Icon name="play" size={13} /></span>{/if}
@@ -194,28 +176,26 @@
 
     <div class="mt-5 border-t border-[var(--border)] pt-4">
       <div class="flex items-center justify-between gap-2">
-        <span class="text-[13px] font-medium">Load external theme</span>
+        <span class="text-[13px] font-medium">Installed themes</span>
         <a href={THEMES_DOC_URL} target="_blank" rel="noopener" class="text-[11.5px] font-medium text-[var(--accent)] hover:underline">Build your own ↗</a>
       </div>
-      <p class="mt-0.5 text-[12px] text-[var(--text-3)]">An ES-module URL that default-exports a manifest <span class="mono">{'{ id, name, component }'}</span>.</p>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <input bind:value={extUrl} placeholder="https://example.com/theme.js" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && loadExt()} />
-        <button class="btn btn-default btn-sm" onclick={loadExt} disabled={extBusy}>{extBusy ? 'Loading…' : 'Load'}</button>
-      </div>
-      {#if extErr}<p class="mt-2 text-[12px] text-[var(--red)]">{extErr}</p>{/if}
-      {#if externalThemes.urls.length}
+      <p class="mt-0.5 text-[12px] text-[var(--text-3)]">Drop a theme bundle (an ES module default-exporting <span class="mono">{'{ id, name, component }'}</span>) into:</p>
+      {#if diskThemes.dir}<p class="mono mt-1 break-all rounded-lg bg-[var(--panel-2)] px-2.5 py-1.5 text-[11.5px] text-[var(--text-2)]">{diskThemes.dir}</p>{/if}
+      {#if diskThemes.list.length}
         <div class="mt-3 flex flex-col gap-1.5">
-          {#each externalThemes.urls as url (url)}
-            {@const loaded = externalThemes.list.find((x) => x._url === url)}
+          {#each diskThemes.list as t (t.id)}
             <div class="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2">
-              <span class="h-2 w-2 shrink-0 rounded-full" style="background:{externalThemes.errors[url] ? 'var(--red)' : 'var(--green)'}"></span>
-              <span class="mono min-w-0 flex-1 truncate text-[12px] text-[var(--text-2)]">{loaded?.name || url}</span>
-              {#if externalThemes.errors[url]}<span class="text-[11px] text-[var(--red)]">failed</span>{/if}
-              <button class="btn btn-ghost btn-icon btn-sm" title="Remove" aria-label="Remove theme" onclick={() => removeExternalTheme(url)}><Icon name="trash" size={13} /></button>
+              <span class="h-2 w-2 shrink-0 rounded-full" style="background:var(--green)"></span>
+              <span class="min-w-0 flex-1 truncate text-[12.5px] text-[var(--text-2)]">{t.name}</span>
             </div>
           {/each}
         </div>
+      {:else}
+        <p class="mt-2 text-[12px] text-[var(--text-3)]">No themes installed yet.</p>
       {/if}
+      {#each Object.entries(diskThemes.errors) as [file, err] (file)}
+        <p class="mt-2 text-[12px] text-[var(--red)]"><span class="mono">{file}</span>: {err}</p>
+      {/each}
     </div>
   </section>
 

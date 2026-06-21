@@ -9,8 +9,8 @@ There are three levels of customization, from cheapest to deepest:
 
 1. **Accent / appearance** — recolor Studio (light/dark + a custom accent) from
    **Settings**. No code. See [Appearance](#appearance).
-2. **External theme** — ship a whole new UI as an ES module and load it by URL at
-   runtime, no rebuild. See [Runtime external themes](#runtime-external-themes).
+2. **Installed theme** — ship a whole new UI as an ES module, drop it in the
+   themes directory, no rebuild. See [Installed themes](#installed-themes).
 3. **Built-in edition** — add a first-class edition to the source tree. See
    [Add a built-in edition](#add-a-built-in-edition).
 
@@ -113,21 +113,25 @@ A manifest is `{ id, name, tagline, accent, component }`. Switch to it from
 `.studio-root`, Classic uses Tailwind theme tokens) so themes never leak into one
 another. Pick a unique root class and prefix your styles with it.
 
-## Runtime external themes
+## Installed themes
 
-Ship an edition as an ES module that default-exports a manifest, then load it by
-URL — **Settings → Themes → Load external theme**, no rebuild. Or pre-register
-before mount:
+Ship an edition as a single ES-module bundle (`*.js`) that **default-exports** a
+manifest, then drop it into Oriel's themes directory — no rebuild, no URLs.
+Oriel discovers it at startup, serves it same-origin, and lists it under
+**Settings → Editions & themes**. The exact directory is shown there (typically
+`~/.config/oriel/themes`, or `~/Library/Application Support/oriel/themes` on macOS).
 
 ```js
-window.__orielThemes = [
-  { id: 'neon', name: 'Neon', tagline: 'Dropped in at runtime', accent: '#39ff14', component: NeonRoot },
-]
+// my-theme.js
+export default { id: 'neon', name: 'Neon', tagline: 'Installed theme', accent: '#39ff14', component: NeonRoot }
 ```
 
-`component` must be a mounted Svelte component constructor compiled against the
-same Svelte runtime. Loaded URLs are persisted and re-imported on next launch. It
-appears under **Settings → Editions** alongside the built-ins.
+`component` must be a Svelte component constructor compiled against the same
+Svelte runtime. Themes are **code you choose to install** — there's deliberately
+no load-by-URL, so a link can't trick anyone into running a malicious theme.
+
+For ephemeral/dev use you can also pre-register before mount via
+`window.__orielThemes = [{ id, name, component, … }]`.
 
 ## Appearance
 

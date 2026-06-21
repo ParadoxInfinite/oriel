@@ -103,6 +103,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/self", s.handleSelf)
 	s.mux.HandleFunc("GET /api/remote", s.handleGetRemote)
 	s.mux.HandleFunc("PUT /api/remote", s.handlePutRemote)
+	s.mux.HandleFunc("GET /api/themes", s.handleListThemes)
+	s.mux.HandleFunc("GET /api/themes/{file}", s.handleServeTheme)
 	s.mux.HandleFunc("GET /api/update", s.handleUpdateCheck)
 	s.mux.HandleFunc("POST /api/update/apply", s.handleUpdateApply)
 	s.mux.HandleFunc("POST /api/update/restart", s.handleUpdateRestart)
