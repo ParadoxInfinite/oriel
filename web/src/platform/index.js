@@ -136,6 +136,8 @@ export {
   setAlias,
   deployStack,
   openDir,
+  revealLabel,
+  revealOrCopy,
   listDirs,
 } from '../lib/discovery.svelte.js'
 

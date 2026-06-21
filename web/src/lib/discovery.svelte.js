@@ -2,6 +2,7 @@ import { apiGet, apiPut, apiPost } from './api.js'
 import { runOp } from './op.svelte.js'
 import { refreshStacks } from './stacks.svelte.js'
 import { confirm } from './confirm.svelte.js'
+import { self } from './self.svelte.js'
 
 // Compose-discovery state, shared by both editions' Settings + Stacks views so
 // the directory config, scan results, filter and deploy live in one place. The
@@ -31,8 +32,35 @@ export function ensureDiscovery() {
 }
 
 // Reveal a project's directory in Finder / the file manager (best-effort).
+// fs/open runs on the SERVER, so it only makes sense for a local instance.
 export function openDir(path) {
   return apiPost(`/api/fs/open?path=${encodeURIComponent(path)}`).catch(() => {})
+}
+
+// True when the UI is viewed from another machine, where opening a folder on the
+// server is meaningless.
+export function isRemote() {
+  const h = location.hostname
+  return !(h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '[::1]')
+}
+
+// The verb for the host-folder action, by access mode and server OS.
+export function revealLabel() {
+  if (isRemote()) return 'Copy path'
+  return self.os === 'darwin' ? 'Reveal in Finder' : 'Open folder'
+}
+
+// Open the directory on a local server, or copy the path when viewing remotely.
+export async function revealOrCopy(path) {
+  if (isRemote()) {
+    try {
+      await navigator.clipboard.writeText(path)
+    } catch {
+      /* clipboard may be unavailable over plain http — best-effort */
+    }
+    return
+  }
+  return openDir(path)
 }
 
 export async function rescan() {

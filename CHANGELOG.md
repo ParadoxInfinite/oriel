@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The Stacks folder button adapts to context: "Reveal in Finder" (macOS) / "Open
+  folder" (Linux) for a local instance, and "Copy path" when viewing Oriel
+  remotely — where opening a folder on the *server* is meaningless.
 - **Config is a single JSON file now, not environment variables.** `ORIEL_BASE_PATH`,
   `ORIEL_ALLOWED_HOSTS`, and `ORIEL_PROVIDER_URL` are deprecated: on first start
   they're migrated into `settings.json` automatically (and logged), then ignored.
