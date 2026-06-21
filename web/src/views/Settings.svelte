@@ -254,7 +254,7 @@
           <button class={btnPrimary} onclick={() => restartService()}>Restart now</button>
         </div>
       {:else if !update.managed}
-        <p class="text-[13px] text-faint">In-app updates need a service install (<span class="font-mono">oriel service install</span>).{#if update.available} A new version <span class="font-mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-accent hover:underline">see release ↗</a>.{/if}</p>
+        <p class="text-[13px] text-faint">In-app updates need a service install (<span class="font-mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="font-mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-accent hover:underline">see release ↗</a>.{/if}</p>
       {:else if update.available}
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="text-[13px] text-muted">Update available: <span class="font-mono font-medium text-fg">v{update.latest}</span></span>
