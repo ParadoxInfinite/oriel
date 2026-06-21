@@ -51,6 +51,12 @@ func main() {
 				log.Fatalf("config: %v", err)
 			}
 			return
+		case "update":
+			// `oriel update` drives the running instance's checksum-verified self-update.
+			if err := runUpdate(os.Args[2:]); err != nil {
+				log.Fatalf("update: %v", err)
+			}
+			return
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return

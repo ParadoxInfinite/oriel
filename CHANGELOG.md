@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `oriel update [--check]` — checksum-verified CLI self-update for service-managed
+  installs (check → download + verify → restart), so a headless box can upgrade
+  from the terminal without the UI.
 - `oriel config base-path [<path>|--clear]` — show, set, or clear the reverse-proxy
   sub-path in settings.json from the CLI; restarts a managed service to apply.
 - `oriel doctor` — a read-only health check that reports Docker reachability, the
