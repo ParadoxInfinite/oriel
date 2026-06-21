@@ -133,7 +133,11 @@
         </div>
       {/each}
       {#if logs.lines.length === 0}
-        <div class="px-3 py-3 text-muted">{logs.error || 'Waiting for logs…'}</div>
+        <div class="px-3 py-3 text-muted">
+          {#if logs.error}{logs.error}
+          {:else if !logs.connected}Connecting…
+          {:else}No logs yet — this container hasn't written anything to stdout/stderr.{/if}
+        </div>
       {/if}
     </div>
 

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-21
+
+### Fixed
+
+- Container logs: an empty but live stream now shows "No logs yet — this container
+  hasn't written to stdout/stderr" instead of a blank panel that looked like it
+  failed to load. Log streams also send an initial flush + a periodic keepalive,
+  so they open promptly through a reverse proxy and idle (quiet-container) streams
+  aren't dropped by proxy read-timeouts.
+
 ## [0.2.0] - 2026-06-21
 
 ### Changed
