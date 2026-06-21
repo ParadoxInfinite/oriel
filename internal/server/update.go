@@ -68,6 +68,21 @@ const (
 	errorTTL   = 5 * time.Minute // retry sooner after a failed check
 )
 
+// updateClient handles all self-update network I/O. It refuses to follow a
+// redirect to anything but HTTPS, so a downgrade can't strip transport security
+// out from under the checksum verification.
+var updateClient = &http.Client{
+	CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if req.URL.Scheme != "https" {
+			return fmt.Errorf("refusing non-HTTPS redirect")
+		}
+		if len(via) >= 10 {
+			return fmt.Errorf("too many redirects")
+		}
+		return nil
+	},
+}
+
 // handleUpdateCheck reports whether a newer release exists. Lazy and cached, so
 // it only reaches GitHub when the cache is stale. `?force=1` (the manual "check
 // for updates" button) lowers the staleness floor to an hour, but never below it.
@@ -121,7 +136,7 @@ func githubLatestRelease(ctx context.Context) (*ghRelease, error) {
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "oriel-update-check")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := updateClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("could not reach GitHub")
 	}
@@ -239,8 +254,17 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "could not set permissions: "+err.Error())
 		return
 	}
+	// Keep the old binary as <exe>.bak so a bad update can be rolled back, and so
+	// the swap stays recoverable if the second rename fails.
+	bak := exe + ".bak"
+	_ = os.Remove(bak)
+	if err := os.Rename(exe, bak); err != nil {
+		httpError(w, http.StatusInternalServerError, "could not back up current binary: "+err.Error())
+		return
+	}
 	if err := os.Rename(tmp, exe); err != nil {
-		httpError(w, http.StatusInternalServerError, "could not replace binary: "+err.Error())
+		_ = os.Rename(bak, exe) // roll back to the previous binary
+		httpError(w, http.StatusInternalServerError, "could not install update: "+err.Error())
 		return
 	}
 	// Refresh the cached check so the UI reflects the new state.
@@ -270,7 +294,7 @@ func fetchChecksum(ctx context.Context, url, asset string) (string, error) {
 	defer cancel()
 	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)
 	req.Header.Set("User-Agent", "oriel-update")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := updateClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -296,7 +320,7 @@ func downloadFile(ctx context.Context, url, dir string) (string, string, error) 
 	defer cancel()
 	req, _ := http.NewRequestWithContext(reqCtx, http.MethodGet, url, nil)
 	req.Header.Set("User-Agent", "oriel-update")
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := updateClient.Do(req)
 	if err != nil {
 		return "", "", err
 	}
