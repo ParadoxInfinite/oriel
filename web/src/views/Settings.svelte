@@ -1,15 +1,13 @@
 <script>
   import { onMount } from 'svelte'
-  import { provider, checkProvider, setProvider, resolveText } from '../lib/provider.svelte.js'
-  import { toast } from '../lib/toast.svelte.js'
-  import { self } from '../lib/self.svelte.js'
-  import { update, checkNow, applyUpdate, restartService } from '../lib/update.svelte.js'
-  import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../lib/remote.svelte.js'
-  import { confirm } from '../lib/confirm.svelte.js'
+  import {
+    provider, checkProvider, setProvider, resolveText, toast,
+    self, update, checkNow, applyUpdate, restartService,
+    remote, loadRemote, addRemoteHost, removeRemoteHost, confirm,
+    discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern,
+    PathField, THEMES_DOC_URL,
+  } from '../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../editions/registry.svelte.js'
-  import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern } from '../lib/discovery.svelte.js'
-  import { PathField } from '../lib/pathfield.svelte.js'
-  import { THEMES_DOC_URL } from '../lib/links.js'
   import { btn, btnPrimary } from '../lib/ui.js'
   import Icon from '../components/Icon.svelte'
   import PathInput from '../components/PathInput.svelte'

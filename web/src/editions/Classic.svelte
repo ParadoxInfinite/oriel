@@ -1,7 +1,15 @@
 <script>
-  import { status } from '../lib/status.svelte.js'
-  import { self } from '../lib/self.svelte.js'
-  import { update } from '../lib/update.svelte.js'
+  import {
+    status,
+    self,
+    update,
+    openPalette,
+    refreshImages,
+    refreshVolumes,
+    refreshNetworks,
+    refreshStacks,
+    setOverlayTheme,
+  } from '../platform/index.js'
   import Dashboard from '../views/Dashboard.svelte'
   import Containers from '../views/Containers.svelte'
   import Images from '../views/Images.svelte'
@@ -12,10 +20,6 @@
   import Icon from '../components/Icon.svelte'
   import RecentOutages from '../components/RecentOutages.svelte'
   import OpTray from '../components/OpTray.svelte'
-  import { openPalette } from '../lib/palette.svelte.js'
-  import { refreshImages, refreshVolumes, refreshNetworks } from '../lib/resources.svelte.js'
-  import { refreshStacks } from '../lib/stacks.svelte.js'
-  import { setOverlayTheme } from '../lib/overlayTheme.svelte.js'
 
   // Classic's own @theme tokens already style the global overlays — no override.
   $effect(() => setOverlayTheme('classic'))
