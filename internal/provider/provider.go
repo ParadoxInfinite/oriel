@@ -1,9 +1,10 @@
 // Package provider is the dormant extension seam for natural-language actions.
-// The base ships NO model. If ORIEL_PROVIDER_URL is set, the base POSTs the
-// user's text plus the available tools and live entities to that URL, and the
-// provider (a separate process — rules, embeddings, or an LLM) returns a tool
-// call. The returned call is always re-validated through the tool Registry
-// before it executes, so a provider can never invoke an unknown tool or entity.
+// The base ships NO model. When a provider URL is configured (Settings → AI /
+// settings.json), the base POSTs the user's text plus the available tools and
+// live entities to that URL, and the provider (a separate process — rules,
+// embeddings, or an LLM) returns a tool call. The returned call is always
+// re-validated through the tool Registry before it executes, so a provider can
+// never invoke an unknown tool or entity.
 package provider
 
 import (
@@ -13,13 +14,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"time"
 )
 
-// EnvURL configures the provider endpoint. Unset means the seam is dormant.
+// EnvURL is the legacy environment variable that used to configure the provider
+// endpoint. It is no longer read at runtime; the one-time config migration uses
+// this name to import a pre-0.2 value into settings.json.
 const EnvURL = "ORIEL_PROVIDER_URL"
 
 // ToolCall is what a provider must return: which tool to run with what args.
@@ -36,19 +38,19 @@ type Request struct {
 	Entities map[string][]string `json:"entities"`
 }
 
-// Provider is an HTTP client for a configured resolver. The URL can be set from
-// the environment at startup or swapped at runtime (Settings → AI), so the mutex
-// guards it against concurrent request and config goroutines.
+// Provider is an HTTP client for a configured resolver. The URL is set by the
+// server from settings.json at startup and can be swapped at runtime (Settings →
+// AI), so the mutex guards it against concurrent request and config goroutines.
 type Provider struct {
 	mu   sync.RWMutex
 	url  string
 	http *http.Client
 }
 
-// New reads the endpoint from the environment. Resolve fails until configured.
+// New returns a dormant provider; the server sets the URL from settings.json.
+// Resolve fails until configured.
 func New() *Provider {
 	return &Provider{
-		url:  normalizeURL(os.Getenv(EnvURL)),
 		http: &http.Client{Timeout: 30 * time.Second},
 	}
 }

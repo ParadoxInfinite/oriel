@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Config is a single JSON file now, not environment variables.** `ORIEL_BASE_PATH`,
+  `ORIEL_ALLOWED_HOSTS`, and `ORIEL_PROVIDER_URL` are deprecated: on first start
+  they're migrated into `settings.json` automatically (and logged), then ignored.
+  Config is now visible in the UI, editable from the CLI, and durable across
+  reinstalls and self-updates. (`ORIEL_OUTAGE_RETENTION_DAYS` remains an advanced
+  env-only tuning knob.)
+
 ### Added
 
 - `oriel doctor` — a read-only health check that reports Docker reachability, the
