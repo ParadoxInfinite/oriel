@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
-	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -17,37 +16,33 @@ import (
 // cross-site and (b) carry a loopback or explicitly-allowed Host header.
 //
 // Default is loopback-only. To reach Oriel over a private network (Tailscale,
-// nginx, a domain), add the host(s) in Settings → Remote access, or set
-// ORIEL_ALLOWED_HOSTS=host1,host2 for headless boxes.
+// nginx, a domain), add the host(s) in Settings → Remote access, with
+// `oriel remote allow <host>`, or in settings.json.
 
 type hostGuard struct {
 	mu    sync.RWMutex
-	hosts map[string]bool // allowed non-loopback hosts (lowercased), incl. env
+	hosts map[string]bool // allowed non-loopback hosts (lowercased)
 }
 
 func normHost(h string) string { return strings.ToLower(strings.TrimSpace(h)) }
 
-func envAllowedHosts() []string { return strings.Split(os.Getenv("ORIEL_ALLOWED_HOSTS"), ",") }
-
-func buildHostSet(lists ...[]string) map[string]bool {
+func buildHostSet(hosts []string) map[string]bool {
 	m := map[string]bool{}
-	for _, list := range lists {
-		for _, h := range list {
-			if n := normHost(h); n != "" {
-				m[n] = true
-			}
+	for _, h := range hosts {
+		if n := normHost(h); n != "" {
+			m[n] = true
 		}
 	}
 	return m
 }
 
 func newHostGuard() *hostGuard {
-	return &hostGuard{hosts: buildHostSet(loadSettings().AllowedHosts, envAllowedHosts())}
+	return &hostGuard{hosts: buildHostSet(loadSettings().AllowedHosts)}
 }
 
-// set rebuilds the effective allow-set from the persisted list plus the env var.
+// set rebuilds the effective allow-set from the persisted host list.
 func (g *hostGuard) set(persisted []string) {
-	m := buildHostSet(persisted, envAllowedHosts())
+	m := buildHostSet(persisted)
 	g.mu.Lock()
 	g.hosts = m
 	g.mu.Unlock()

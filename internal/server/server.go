@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"io/fs"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/ParadoxInfinite/oriel/internal/actions"
@@ -34,11 +33,15 @@ type Server struct {
 // New constructs the router. web is the embedded frontend filesystem; version is
 // the build version ("dev" for local builds, the release tag otherwise).
 func New(web fs.FS, version string) *Server {
+	// One-time: fold any legacy env-var config into settings.json (deprecated).
+	migrateLegacyEnvConfig()
+	cfg := loadSettings()
+
 	dc := docker.New()
 	s := &Server{
 		mux:      http.NewServeMux(),
 		web:      web,
-		base:     normalizeBase(os.Getenv("ORIEL_BASE_PATH")),
+		base:     normalizeBase(cfg.BasePath),
 		version:  version,
 		docker:   dc,
 		tools:    actions.New(dc),
@@ -47,12 +50,9 @@ func New(web fs.FS, version string) *Server {
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),
 	}
-	// The env var wins as an explicit override; otherwise restore a URL the user
-	// configured at runtime (Settings → AI) so it survives restarts.
-	if s.provider.URL() == "" {
-		if u := loadSettings().ProviderURL; u != "" {
-			s.provider.SetURL(u)
-		}
+	// Restore the AI provider URL the user configured (Settings → AI / settings.json).
+	if cfg.ProviderURL != "" {
+		s.provider.SetURL(cfg.ProviderURL)
 	}
 	// Always-on metrics recorder for the live stream + 30-min history buffer.
 	ctx, cancel := context.WithCancel(context.Background())
