@@ -24,6 +24,10 @@ const db = {
 let seq = 0
 const uid = (p) => `${p}-${++seq}`
 
+// Dangling = untagged. Docker (and the real API) report these as a single
+// '<none>' tag, so match both that and a truly empty tag list.
+const isDangling = (i) => !(i.tags || []).length || i.tags[0] === '<none>'
+
 // The /api/events + /api/live SSE streams register their callbacks here, so
 // store mutations can push refresh-events and status changes back to the UI.
 let eventsCb = null
@@ -177,7 +181,7 @@ function invokeTool(tool, args) {
     case 'container.remove': db.containers = db.containers.filter((x) => x.id !== args.id); return done('container')
     case 'image.remove': db.images = db.images.filter((i) => i.id !== args.id && !(i.tags || []).includes(args.id)); return done('image')
     case 'image.tag': { const i = db.images.find((x) => x.id === args.id); if (i && args.tag) i.tags = [...new Set([...(i.tags || []), args.tag])]; return done('image', args.tag || true) }
-    case 'image.prune': db.images = db.images.filter((i) => (i.tags || []).length > 0); return done('image')
+    case 'image.prune': db.images = db.images.filter((i) => !isDangling(i)); return done('image')
     case 'volume.remove': db.volumes = db.volumes.filter((v) => v.name !== args.name); return done('volume')
     case 'volume.prune': db.volumes = db.volumes.slice(0, -1); return done('volume')
     case 'network.remove': db.networks = db.networks.filter((nw) => nw.id !== args.id && !['bridge', 'host', 'none'].includes(nw.name)); return done('network')
@@ -340,7 +344,7 @@ function jobSummary(job) {
 function applyJob(job) {
   if (job.kind === 'image-prune') {
     const ids = new Set((job.items || []).map((x) => x.id))
-    db.images = ids.size ? db.images.filter((i) => !ids.has(i.id)) : db.images.filter((i) => (i.tags || []).length > 0)
+    db.images = ids.size ? db.images.filter((i) => !ids.has(i.id)) : db.images.filter((i) => !isDangling(i))
     emit('image')
   } else if (job.kind === 'volume-prune') {
     const names = new Set((job.items || []).map((x) => x.name))
@@ -348,7 +352,7 @@ function applyJob(job) {
     emit('volume')
   } else {
     db.containers = db.containers.filter((c) => c.state === 'running')
-    db.images = db.images.filter((i) => (i.tags || []).length > 0)
+    db.images = db.images.filter((i) => !isDangling(i))
     db.volumes = db.volumes.slice(0, -1)
     emit('container'); emit('image'); emit('volume'); emit('network')
   }
