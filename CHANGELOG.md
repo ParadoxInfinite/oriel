@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-22
+
+### Added
+
+- **Containers — select a whole stack at once.** Each stack group header now has a
+  checkbox that selects (or clears) all of its containers, so you can
+  start / stop / restart / remove an entire Compose stack from the bulk bar.
+
+### Fixed
+
+- **Homebrew installs no longer fight the in-app updater.** Oriel detects a
+  Homebrew-managed binary and routes you to `brew upgrade oriel` instead of
+  self-updating in place (which would desync Homebrew's tracked files). And
+  `oriel service install` on a brew binary now targets the stable Homebrew
+  symlink, so the service survives `brew upgrade` (the Caskroom path is versioned).
+
+### Docs
+
+- Clarified that the supported-runtimes **Platform** column is where *Oriel*
+  runs — macOS and Linux only. Dropped "Windows" from runtime rows where it
+  implied Windows support Oriel doesn't have; a Windows-hosted daemon is still
+  reachable as a remote daemon.
+
+## [0.3.0] - 2026-06-21
+
 ### Added
 
 - **Homebrew install (macOS):** `brew install ParadoxInfinite/oriel/oriel`, via a

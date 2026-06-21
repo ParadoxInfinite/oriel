@@ -24,12 +24,17 @@ for Oriel to manage).
 | **Colima** | macOS, Linux | ✅ First-class | Auto-detected; adds VM start/stop/restart |
 | **Docker Engine** (`dockerd`) | Linux | ✅ Supported | The native daemon at `/var/run/docker.sock` |
 | **OrbStack** | macOS | ✅ Supported | Exposes a Docker-compatible socket |
-| **Rancher Desktop** | macOS, Linux, Windows | ✅ Supported | Use the **dockerd (moby)** backend, not containerd |
-| **Docker Desktop** | macOS, Linux, Windows | ✅ Supported | Works fine; just not the default on this project's dev machine |
+| **Rancher Desktop** | macOS, Linux | ✅ Supported | Use the **dockerd (moby)** backend, not containerd |
+| **Docker Desktop** | macOS, Linux | ✅ Supported | Works fine; just not the default on this project's dev machine |
 | **Lima** (docker template) | macOS, Linux | ✅ Supported | Colima is built on Lima |
 | **Podman** | macOS, Linux | ⚠️ Mostly | Via its Docker-compatible API (`podman system service` + `DOCKER_HOST`); a few endpoints differ |
 | **Remote daemon** | any | ✅ Supported | Point `DOCKER_HOST=tcp://…` or `ssh://…` at it |
 | **containerd / nerdctl** (directly) | — | ❌ Not supported | Not the Docker Engine API — needs a Docker-API shim |
+
+The **Platform** column is where **Oriel itself** runs — it ships macOS and Linux
+binaries only. Several of these runtimes also run on Windows; Oriel does not. A
+Windows-hosted Docker daemon is still reachable as a **remote daemon** — point
+`DOCKER_HOST` at it from a macOS or Linux machine (see below).
 
 ### Pointing Oriel at a non-Colima daemon
 
