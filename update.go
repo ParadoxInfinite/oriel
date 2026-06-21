@@ -18,6 +18,7 @@ type updateStatus struct {
 	Latest          string `json:"latest"` // without the leading "v"
 	UpdateAvailable bool   `json:"updateAvailable"`
 	Managed         bool   `json:"managed"`
+	PackageManager  string `json:"packageManager"`
 	Error           string `json:"error"`
 }
 
@@ -53,6 +54,10 @@ func runUpdate(args []string) error {
 	fmt.Printf("latest:  v%s\n", st.Latest)
 	if !st.UpdateAvailable {
 		fmt.Println("You're on the latest version.")
+		return nil
+	}
+	if st.PackageManager == "homebrew" {
+		fmt.Printf("v%s is available. Oriel was installed with Homebrew — update it with: brew upgrade oriel\n", st.Latest)
 		return nil
 	}
 	if *checkOnly {

@@ -74,6 +74,40 @@ func IsManaged() bool {
 	return false
 }
 
+func isHomebrewPath(p string) bool {
+	return strings.Contains(p, "/Caskroom/") || strings.Contains(p, "/Cellar/")
+}
+
+// PackageManager reports which package manager owns the running binary, or "" for
+// a standalone install. Only Homebrew is detected (its cask/formula staging dirs).
+// Such installs must update via `brew upgrade` — an in-app self-update would
+// overwrite Homebrew-tracked files and desync brew's state.
+func PackageManager() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	if r, err := filepath.EvalSymlinks(exe); err == nil {
+		exe = r
+	}
+	if isHomebrewPath(exe) {
+		return "homebrew"
+	}
+	return ""
+}
+
+// stableBrewBin returns the Homebrew `bin` symlink that resolves to `resolved`,
+// or "". A cask's versioned Caskroom path changes on every `brew upgrade`, but the
+// symlink is stable — so a service should launch via the symlink, not the path.
+func stableBrewBin(resolved string) string {
+	for _, p := range []string{"/opt/homebrew/bin/oriel", "/usr/local/bin/oriel", "/home/linuxbrew/.linuxbrew/bin/oriel"} {
+		if r, err := filepath.EvalSymlinks(p); err == nil && r == resolved {
+			return p
+		}
+	}
+	return ""
+}
+
 // Restart restarts the installed service so a freshly-replaced binary takes
 // effect. On macOS a clean exit is enough (launchd KeepAlive relaunches us); on
 // Linux systemd needs an explicit restart (the unit is Restart=on-failure).
@@ -141,6 +175,18 @@ func install(port int, system bool) error {
 		return err
 	}
 	bin, _ = filepath.EvalSymlinks(bin)
+
+	// Homebrew installs live at a versioned Caskroom path that `brew upgrade`
+	// replaces. Point the unit at the stable brew symlink so the service survives
+	// upgrades; updates then flow through `brew upgrade`, not in-app self-update.
+	if isHomebrewPath(bin) {
+		if sym := stableBrewBin(bin); sym != "" {
+			fmt.Printf("Homebrew install detected — the service will launch %s; update with `brew upgrade oriel`.\n", sym)
+			bin = sym
+		} else {
+			fmt.Println("Warning: Homebrew install at a versioned path — after `brew upgrade` you may need to re-run `oriel service install`.")
+		}
+	}
 
 	switch runtime.GOOS {
 	case "darwin":

@@ -8,6 +8,7 @@ export const update = $state({
   checking: false, // a manual "check for updates" is in flight
   available: false,
   managed: false,
+  packageManager: '', // e.g. 'homebrew' → update via the package manager, not in-app
   current: '',
   latest: '',
   url: '',
@@ -22,6 +23,7 @@ function applyInfo(d) {
   update.url = d.url || ''
   update.available = !!d.updateAvailable
   update.managed = !!d.managed
+  update.packageManager = d.packageManager || ''
 }
 
 // The backend caches the GitHub result for a day; this interval just keeps a

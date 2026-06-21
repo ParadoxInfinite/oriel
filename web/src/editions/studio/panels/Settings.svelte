@@ -315,6 +315,8 @@
           <span class="text-[13px] text-[var(--text-2)]">Installed <span class="mono">v{update.latest}</span> — restart to apply.</span>
           <button class="btn btn-primary btn-sm" onclick={() => restartService()}>Restart now</button>
         </div>
+      {:else if update.packageManager === 'homebrew'}
+        <p class="text-[13px] text-[var(--text-3)]">Installed via Homebrew — update with <span class="mono">brew upgrade oriel</span>.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
       {:else if !update.managed}
         <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
       {:else if update.available}
