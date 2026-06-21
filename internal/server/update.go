@@ -28,7 +28,8 @@ type updateInfo struct {
 	Current         string `json:"current"`
 	Latest          string `json:"latest"`
 	UpdateAvailable bool   `json:"updateAvailable"`
-	Managed         bool   `json:"managed"` // service-managed install → self-update is offered
+	Managed         bool   `json:"managed"`                  // service-managed install → self-update is offered
+	PackageManager  string `json:"packageManager,omitempty"` // e.g. "homebrew" → update via the package manager, not in-app
 	URL             string `json:"url"`
 	PublishedAt     string `json:"publishedAt,omitempty"`
 	Error           string `json:"error,omitempty"`
@@ -111,7 +112,7 @@ func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) fetchLatestRelease(ctx context.Context) updateInfo {
-	info := updateInfo{Current: s.version, Managed: service.IsManaged()}
+	info := updateInfo{Current: s.version, Managed: service.IsManaged(), PackageManager: service.PackageManager()}
 	rel, err := githubLatestRelease(ctx)
 	if err != nil {
 		info.Error = err.Error()
@@ -201,6 +202,10 @@ func httpError(w http.ResponseWriter, code int, msg string) {
 // restart cleanly brings the new binary up. It does NOT restart — the client
 // calls /api/update/restart when the user is ready.
 func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
+	if service.PackageManager() == "homebrew" {
+		httpError(w, http.StatusBadRequest, "Oriel was installed with Homebrew — update it with: brew upgrade oriel")
+		return
+	}
 	if !service.IsManaged() {
 		httpError(w, http.StatusBadRequest, "self-update is only available for service-managed installs — run: oriel service install")
 		return
