@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte'
   import {
-    status, refreshStatus, runOp, containers, stats, history, stacks,
+    status, lifecycle, containers, stats, history, stacks,
     images, volumes, networks, refreshImages, refreshVolumes, refreshNetworks,
     self, fmt,
   } from '../platform/index.js'
@@ -12,9 +12,6 @@
   const { bytes } = fmt
 
   let { navigate } = $props()
-
-  const titles = { start: 'Starting Colima', stop: 'Stopping Colima', restart: 'Restarting Colima' }
-  const lifecycle = (action) => runOp(titles[action], `/api/colima/${action}`, refreshStatus)
 
   const s = $derived(status.data)
   const isDocker = $derived(s?.engine === 'docker')

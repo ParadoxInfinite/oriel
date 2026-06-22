@@ -4,7 +4,7 @@
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
-  import { grant, loadGrant, openGrant, lockGrant } from '../../../platform/index.js'
+  import { grant, loadGrant, openGrant, lockGrant, fmtRemaining } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -45,14 +45,6 @@
   let hostDraft = $state('')
   onMount(loadRemote)
   onMount(loadGrant)
-  // Round a seconds count to a friendly "5h 12m" / "3d 4h" string.
-  function fmtRemaining(s) {
-    if (s <= 0) return ''
-    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60)
-    if (d) return `${d}d ${h}h`
-    if (h) return `${h}h ${m}m`
-    return `${m}m`
-  }
   async function grantFor(hours) {
     try {
       await openGrant(hours)

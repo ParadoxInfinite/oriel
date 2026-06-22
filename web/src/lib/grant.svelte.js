@@ -41,3 +41,14 @@ export async function lockGrant() {
     grant.busy = false
   }
 }
+
+// Format a seconds count as a short "3d 4h" / "5h 12m" / "12m" window remaining.
+export function fmtRemaining(s) {
+  if (s <= 0) return ''
+  const d = Math.floor(s / 86400),
+    h = Math.floor((s % 86400) / 3600),
+    m = Math.floor((s % 3600) / 60)
+  if (d) return `${d}d ${h}h`
+  if (h) return `${h}h ${m}m`
+  return `${m}m`
+}

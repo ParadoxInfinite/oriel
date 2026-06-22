@@ -104,7 +104,7 @@ export { apiGet, apiPost, apiPut, apiDelete, streamPost, sse } from '../lib/api.
 
 /** Destructive-grant window for MCP/assistant: `grant` state + `loadGrant()`,
  *  `openGrant(hours)`, `lockGrant()`. */
-export { grant, loadGrant, openGrant, lockGrant } from '../lib/grant.svelte.js'
+export { grant, loadGrant, openGrant, lockGrant, fmtRemaining } from '../lib/grant.svelte.js'
 
 /** Public-registry helpers for the pull dialog: the source list plus search and
  *  tag-listing proxies (Docker Hub, Quay, AWS ECR Public). */
