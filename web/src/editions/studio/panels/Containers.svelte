@@ -124,7 +124,7 @@
     <div class="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2">
       <span class="text-[13px] font-medium text-[var(--accent)]">{selectedIds.size} selected</span>
       <div class="ml-auto flex gap-1.5">
-        <button class="btn btn-default btn-sm" onclick={() => bulk('container.start', 'Started', (c) => c.state !== 'running')}><Icon name="play" size={13} /> Start</button>
+        <button class="btn btn-default btn-sm" onclick={() => bulk('container.start', 'Started', (c) => c.state === 'exited' || c.state === 'created')}><Icon name="play" size={13} /> Start</button>
         <button class="btn btn-default btn-sm" onclick={() => bulk('container.stop', 'Stopped', (c) => c.state === 'running')}><Icon name="stop" size={13} /> Stop</button>
         <button class="btn btn-default btn-sm" onclick={() => bulk('container.restart', 'Restarted', (c) => c.state === 'running')}><Icon name="restart" size={13} /> Restart</button>
         <button class="btn btn-danger btn-sm" onclick={() => bulk('container.remove', 'Removed', () => true)}><Icon name="trash" size={13} /> Remove</button>

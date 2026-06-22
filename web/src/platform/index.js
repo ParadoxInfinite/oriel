@@ -46,7 +46,7 @@ export { stacks, refreshStacks } from '../lib/stacks.svelte.js'
 /** Live telemetry from the event streams.
  *  stats.byId[id] → { id, cpu, mem, memLimit }
  *  history.points → [{ t, cpu, mem, down }] (rolling ~30 min) */
-export { stats, history } from '../lib/live.svelte.js'
+export { stats, history, connection } from '../lib/live.svelte.js'
 
 /** The Oriel backend's own footprint + build version: `{ version, rss, goroutines, heapAlloc }`. */
 export { self } from '../lib/self.svelte.js'

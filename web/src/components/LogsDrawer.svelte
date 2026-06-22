@@ -134,7 +134,7 @@
       {:else if logs.noMore && logs.lines.length}
         <div class="px-3 py-1.5 text-center text-[11px] text-faint">Beginning of available logs</div>
       {/if}
-      {#each logs.lines as l, i (i)}
+      {#each logs.lines as l, i (l.seq)}
         <div class="group flex gap-2.5 border-l-2 px-3 transition-colors hover:bg-accent/5 {streamEdge(l.stream)} {i % 2 ? 'bg-white/[0.015]' : ''}">
           <span class="tnum shrink-0 select-none border-r border-border/50 py-px pr-2.5 text-[11px] text-faint" title={l.ts}>{fmtTs(l.ts)}</span>
           <span class="flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>

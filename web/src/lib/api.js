@@ -96,8 +96,8 @@ export async function streamPost(path, { onEvent, signal } = {}) {
 
 // sse opens an EventSource, listening for the named events. onEvent receives
 // (name, parsedData). Returns the EventSource so callers can close() it.
-export function sse(path, events, onEvent) {
-  if (DEMO) return demo.demoSse(path, events, onEvent)
+export function sse(path, events, onEvent, onError) {
+  if (DEMO) return demo.demoSse(path, events, onEvent, onError)
   const es = new EventSource(url(path))
   for (const name of events) {
     es.addEventListener(name, (e) => {
@@ -110,5 +110,8 @@ export function sse(path, events, onEvent) {
       onEvent(name, data)
     })
   }
+  // EventSource auto-reconnects, but a drop/terminal failure is otherwise silent.
+  // Surface readyState so callers can show a "stream lost" state.
+  if (onError) es.onerror = () => onError(es.readyState)
   return es
 }

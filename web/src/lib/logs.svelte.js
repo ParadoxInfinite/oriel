@@ -17,6 +17,7 @@ export class LogsController {
   #es = null
   #id = null
   #following = true
+  #seq = 0 // monotonic id per line, for stable {#each} keys across prepend/trim
 
   start(id) {
     this.stop()
@@ -26,12 +27,13 @@ export class LogsController {
     this.error = null
     this.connected = false
     this.#following = true
+    this.#seq = 0
     this.#es = sse(`/api/containers/${id}/logs`, ['log', 'error'], (name, data) => {
       if (name === 'error') {
         this.error = data.error || 'stream error'
         return
       }
-      this.lines.push({ stream: data.stream, ts: data.ts, line: data.line })
+      this.lines.push({ stream: data.stream, ts: data.ts, line: data.line, seq: this.#seq++ })
       // While following, keep only the freshest FOLLOW_CAP lines in memory.
       if (this.#following && this.lines.length > FOLLOW_CAP) {
         this.lines.splice(0, this.lines.length - FOLLOW_CAP)
@@ -67,7 +69,7 @@ export class LogsController {
         this.noMore = true
         return 0
       }
-      this.lines.unshift(...fresh)
+      this.lines.unshift(...fresh.map((l) => ({ ...l, seq: this.#seq++ })))
       if (fresh.length < BATCH) this.noMore = true
       return fresh.length
     } catch (e) {

@@ -309,9 +309,19 @@ async function streamPull(ref, onEvent) {
 }
 
 // Fakes the bits of EventSource callers touch (.onopen, .close()); streams driven on timers.
-export function demoSse(path, _events, onEvent) {
+export function demoSse(path, _events, onEvent, _onError) {
   const [p] = path.split('?')
-  const es = { onopen: null, _closed: false, _timer: null, close() { this._closed = true; if (this._timer) clearInterval(this._timer) } }
+  const es = {
+    onopen: null,
+    _closed: false,
+    _timer: null,
+    close() {
+      this._closed = true
+      if (this._timer) clearInterval(this._timer)
+      if (eventsCb === onEvent) eventsCb = null // drop the closed stream's callback
+      if (liveCb === onEvent) liveCb = null
+    },
+  }
   setTimeout(() => { if (!es._closed) es.onopen?.() }, 30)
 
   if (p === '/api/events') {

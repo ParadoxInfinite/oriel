@@ -14,6 +14,13 @@ export const confirmState = $state({
 let resolver = null
 
 export function confirm(opts = {}) {
+  // Cancel any still-pending confirm so its awaiter resolves (false) instead of
+  // hanging forever when we overwrite the single resolver.
+  if (resolver) {
+    const prev = resolver
+    resolver = null
+    prev(false)
+  }
   confirmState.title = opts.title ?? 'Are you sure?'
   confirmState.message = opts.message ?? ''
   confirmState.confirmLabel = opts.confirmLabel ?? 'Confirm'
