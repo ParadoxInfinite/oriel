@@ -22,7 +22,13 @@ func TestIsSensitive(t *testing.T) {
 		{"WEBHOOK_URL", "https://hooks.example.com/x", true}, // name: WEBHOOK
 		{"FOO", "abcdefabcdefabcdefabcdefabcdef", true},      // 30-char all-hex token (no digit)
 		{"FOO", "aGVsbG8vd29ybGQvc2VjcmV0L3Rva2Vu", true},    // base64 with internal slash
+		{"DATABASE_URL", "postgres://user:pass@localhost:5432/db", true}, // url userinfo creds
+		{"REDIS_URL", "redis://:secret@redis:6379", true},               // url password-only userinfo
+		{"MONGO_URI", "mongodb+srv://u:p@cluster0.example/db", true},     // url userinfo creds
 		{"NODE_ENV", "production", false},
+		{"PUBLIC_URL", "https://example.com/path", false},               // plain url, no creds
+		{"CALLBACK", "postgres://localhost/db", false},                  // dsn, no creds
+		{"FOO", "https://host/long/path@version/segment", false},        // '@' in path, not userinfo
 		{"PATH", "/usr/local/bin:/usr/bin:/bin", false},                  // path (has ':')
 		{"HOME", "/Users/apple/some/long/path/to/a/file/here", false},    // path (leading '/')
 		{"PORT", "3000", false},
@@ -61,6 +67,48 @@ func TestMaskEnvOff(t *testing.T) {
 	in := []string{"API_KEY=sk-secret"}
 	if got := MaskEnv(in, MaskOff); !slices.Equal(got, in) {
 		t.Errorf("MaskEnv(off) = %v, want unchanged", got)
+	}
+}
+
+func TestMaskCommand(t *testing.T) {
+	cases := []struct {
+		in   string
+		mode Mode
+		want string
+	}{
+		{"server --token=sk-abc --port 8080", MaskSensitive, "server --token=•••••••• --port 8080"},
+		{"app --password=hunter2 run", MaskAll, "app --password=•••••••• run"},
+		{"loader ghp_0123456789abcdef --v", MaskSensitive, "loader •••••••• --v"},
+		{"server --token=sk-abc", MaskOff, "server --token=sk-abc"},
+		{"plain --port 8080 --name web", MaskAll, "plain --port 8080 --name web"},
+		{"", MaskAll, ""},
+	}
+	for _, c := range cases {
+		if got := MaskCommand(c.in, c.mode); got != c.want {
+			t.Errorf("MaskCommand(%q,%v)=%q want %q", c.in, c.mode, got, c.want)
+		}
+	}
+}
+
+func TestMaskLabels(t *testing.T) {
+	in := map[string]string{"com.docker.compose.project": "myapp", "api_token": "sk-secret", "empty": ""}
+	got := MaskLabels(in, MaskAll)
+	if got["com.docker.compose.project"] != "myapp" {
+		t.Errorf("metadata label masked: %q", got["com.docker.compose.project"])
+	}
+	if got["api_token"] != masked {
+		t.Errorf("sensitive label not masked: %q", got["api_token"])
+	}
+	if got["empty"] != "" {
+		t.Errorf("empty label changed: %q", got["empty"])
+	}
+	// Input must not be mutated.
+	if in["api_token"] != "sk-secret" {
+		t.Errorf("MaskLabels mutated input")
+	}
+	// Off is a pass-through.
+	if off := MaskLabels(in, MaskOff); off["api_token"] != "sk-secret" {
+		t.Errorf("MaskLabels(off) masked: %q", off["api_token"])
 	}
 }
 
