@@ -27,9 +27,8 @@ func (s *Server) handleSetProvider(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.provider.SetURL(body.URL)
-	cfg := loadSettings()
-	cfg.ProviderURL = s.provider.URL()
-	if err := saveSettings(cfg); err != nil {
+	url := s.provider.URL()
+	if err := updateSettings(func(st *settings) { st.ProviderURL = url }); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
 		return
 	}
