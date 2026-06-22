@@ -11,6 +11,7 @@ import (
 
 	"github.com/ParadoxInfinite/oriel/internal/actions"
 	"github.com/ParadoxInfinite/oriel/internal/docker"
+	"github.com/ParadoxInfinite/oriel/internal/grant"
 	"github.com/ParadoxInfinite/oriel/internal/provider"
 	"github.com/ParadoxInfinite/oriel/internal/secrets"
 	"github.com/ParadoxInfinite/oriel/internal/tools"
@@ -28,6 +29,7 @@ type Server struct {
 	recorder *recorder
 	jobs     *jobManager
 	guard    *hostGuard
+	grant    *grant.Store
 	cancel   context.CancelFunc
 }
 
@@ -50,7 +52,11 @@ func New(web fs.FS, version string) *Server {
 		recorder: newRecorder(dc),
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),
+		grant:    grant.New(),
 	}
+	// Destructive tools are locked for non-interactive callers (MCP, provider)
+	// unless a grant window is open; the UI/palette pass consent instead.
+	s.tools.SetDestructiveWindow(s.grant.Active)
 	// Restore the AI provider URL the user configured (Settings → AI / settings.json).
 	if cfg.ProviderURL != "" {
 		s.provider.SetURL(cfg.ProviderURL)
@@ -118,6 +124,11 @@ func (s *Server) routes() {
 	// Tool registry — the canonical action layer.
 	s.mux.HandleFunc("GET /api/tools", s.handleTools)
 	s.mux.HandleFunc("POST /api/invoke", s.handleInvoke)
+
+	// Destructive-grant window (unlocks Destructive tools for MCP / the assistant).
+	s.mux.HandleFunc("GET /api/grant", s.handleGrantStatus)
+	s.mux.HandleFunc("POST /api/grant", s.handleGrantOpen)
+	s.mux.HandleFunc("DELETE /api/grant", s.handleGrantLock)
 
 	// Provider seam (dormant unless ORIEL_PROVIDER_URL is set, or configured
 	// at runtime via Settings → AI).
