@@ -224,7 +224,7 @@
                 <td class="px-4 py-2.5 {col.right ? 'text-right' : ''}">
                   {#if col.tags}
                     <div class="flex flex-col gap-0.5">
-                      {#each item.tags as t}
+                      {#each item.tags as t (t)}
                         <div class="group/tag flex items-center gap-1.5">
                           <span class="mono truncate text-[13px] font-medium text-[var(--text)]" title={t}>{fmt.shortRef(t)}</span>
                           {#if t !== '<none>' && item.tags.length > 1}

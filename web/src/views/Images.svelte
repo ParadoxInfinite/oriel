@@ -115,7 +115,7 @@
     {#each sorted as img (img.id)}
       <tr class="rowx border-t border-border">
         <td class="max-w-[22rem] px-4 py-2.5">
-          {#each img.tags as t}
+          {#each img.tags as t (t)}
             <div class="group/tag flex items-center gap-1.5">
               <span class="truncate font-mono text-[13px]" title={t}>{shortRef(t)}</span>
               {#if t !== '<none>' && img.tags.length > 1}
