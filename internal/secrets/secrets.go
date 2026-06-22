@@ -32,9 +32,10 @@ const masked = "••••••••"
 
 // sensitiveKey substrings (matched case-insensitively against the var name).
 var sensitiveKey = []string{
-	"KEY", "SECRET", "TOKEN", "PASSWORD", "PASSWD", "PASS",
+	"KEY", "SECRET", "TOKEN", "PASSWORD", "PASSWD", "PASS", "PWD",
 	"CREDENTIAL", "CRED", "AUTH", "PRIVATE", "SIGNING", "SALT",
 	"APIKEY", "ACCESS", "SESSION", "DSN", "CONNECTIONSTRING",
+	"BEARER", "JWT", "WEBHOOK", "CERT", "PEM", "GPG", "PGP", "OTP", "LICENSE",
 }
 
 // secretPrefix value shapes that are almost always a credential.
@@ -62,25 +63,28 @@ func looksSecret(v string) bool {
 			return true
 		}
 	}
-	// High-entropy token: long, no spaces, no path separators (so we don't mask
-	// PATH-like values), a mix of letters and digits.
-	if len(v) < 32 || strings.ContainsAny(v, " \t/") {
+	// Best-effort: a long, whitespace-free, token-shaped run is probably a
+	// credential (hex, base64, base64url). Exclude obvious filesystem paths and
+	// URLs/DSNs — when those carry a secret they're caught by name instead
+	// (e.g. DATABASE_URL). Sensitive mode is heuristic; "all" is the safe default.
+	if len(v) < 24 || strings.ContainsAny(v, " \t\n") {
 		return false
 	}
-	var hasLetter, hasDigit bool
+	if v[0] == '/' || v[0] == '~' || strings.Contains(v, "://") {
+		return false
+	}
 	for _, r := range v {
 		switch {
-		case r >= '0' && r <= '9':
-			hasDigit = true
-		case (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z'):
-			hasLetter = true
-		case r == '_' || r == '-' || r == '+' || r == '=' || r == '.':
-			// token-safe punctuation
+		case r >= '0' && r <= '9',
+			r >= 'a' && r <= 'z',
+			r >= 'A' && r <= 'Z',
+			r == '_' || r == '-' || r == '+' || r == '=' || r == '.' || r == '/':
+			// token-safe character
 		default:
-			return false // unexpected char → probably not a token
+			return false // a non-token char → likely not a bare credential
 		}
 	}
-	return hasLetter && hasDigit
+	return true
 }
 
 // MaskValue returns the placeholder for a non-empty value (empty stays empty —

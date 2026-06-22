@@ -18,8 +18,13 @@ func TestIsSensitive(t *testing.T) {
 		{"FOO", "AKIAIOSFODNN7EXAMPLE", true},       // value prefix
 		{"FOO", "eyJhbGciOiJIUzI1NiJ9.payload", true}, // jwt-ish
 		{"RANDOM", "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", true}, // high-entropy
+		{"DB_PWD", "short", true},                            // name: PWD
+		{"WEBHOOK_URL", "https://hooks.example.com/x", true}, // name: WEBHOOK
+		{"FOO", "abcdefabcdefabcdefabcdefabcdef", true},      // 30-char all-hex token (no digit)
+		{"FOO", "aGVsbG8vd29ybGQvc2VjcmV0L3Rva2Vu", true},    // base64 with internal slash
 		{"NODE_ENV", "production", false},
-		{"PATH", "/usr/local/bin:/usr/bin:/bin", false}, // path, not masked
+		{"PATH", "/usr/local/bin:/usr/bin:/bin", false},                  // path (has ':')
+		{"HOME", "/Users/apple/some/long/path/to/a/file/here", false},    // path (leading '/')
 		{"PORT", "3000", false},
 		{"GREETING", "hello world this is a long but spaced sentence", false},
 	}

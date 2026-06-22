@@ -42,21 +42,21 @@ func (s *Server) handleStartSystemPrune(w http.ResponseWriter, r *http.Request) 
 
 // handleStartImagePrune removes the given images (by id) in the background.
 func (s *Server) handleStartImagePrune(w http.ResponseWriter, r *http.Request) {
-	s.startItemPrune(w, r, "image-prune", "Pruning images", func(ctx context.Context, id string, force bool) error {
-		return s.docker.RemoveImage(ctx, id, true)
+	s.startItemPrune(w, r, "image-prune", "Pruning images", func(ctx context.Context, id string) error {
+		return s.docker.RemoveImage(ctx, id, true) // force: dangling prune removes tagged layers too
 	})
 }
 
 // handleStartVolumePrune removes the given volumes (by name) in the background.
 func (s *Server) handleStartVolumePrune(w http.ResponseWriter, r *http.Request) {
-	s.startItemPrune(w, r, "volume-prune", "Pruning volumes", func(ctx context.Context, name string, force bool) error {
+	s.startItemPrune(w, r, "volume-prune", "Pruning volumes", func(ctx context.Context, name string) error {
 		return s.docker.RemoveVolume(ctx, name, false)
 	})
 }
 
 // startItemPrune decodes the chosen items and launches a job that removes them
 // one by one, emitting progress and honouring cancellation between items.
-func (s *Server) startItemPrune(w http.ResponseWriter, r *http.Request, kind, title string, remove func(ctx context.Context, id string, force bool) error) {
+func (s *Server) startItemPrune(w http.ResponseWriter, r *http.Request, kind, title string, remove func(ctx context.Context, id string) error) {
 	var body struct {
 		Items []pruneItem `json:"items"`
 	}
@@ -78,7 +78,7 @@ func (s *Server) startItemPrune(w http.ResponseWriter, r *http.Request, kind, ti
 				return ctx.Err()
 			}
 			rep.Progress(i+1, len(items)) // drives the bar; no per-item log spam
-			if err := remove(ctx, it.ID, true); err != nil {
+			if err := remove(ctx, it.ID); err != nil {
 				rep.Line(fmt.Sprintf("skipped %s: %s", shortID(it.ID), err.Error()))
 				continue
 			}
