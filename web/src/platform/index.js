@@ -57,7 +57,7 @@ export { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../lib/remo
 /** Update check + self-update (service installs): `update` state, `checkUpdate()`,
  *  `startUpdateChecks()`/`stopUpdateChecks()` (mount + 3h re-check),
  *  `applyUpdate()` (download+verify+replace), `restartService()`. */
-export { update, checkUpdate, checkNow, startUpdateChecks, stopUpdateChecks, applyUpdate, restartService } from '../lib/update.svelte.js'
+export { update, checkUpdate, checkNow, startUpdateChecks, stopUpdateChecks, applyUpdate, restartService, canSelfUpdate, promptUpdate } from '../lib/update.svelte.js'
 
 /** Persisted downtime log (~30-day window). outages.list → [{ start, end, kind }]
  *  where kind is 'down' (colima unreachable) or 'offline' (gui itself wasn't running). */

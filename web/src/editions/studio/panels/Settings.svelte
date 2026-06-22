@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
-  import { self, update, checkNow, applyUpdate, restartService, confirm, apiPut } from '../../../platform/index.js'
+  import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
@@ -63,19 +63,6 @@
   const swatches = $derived([...ACCENTS, ...appearance.custom])
 
   const verLabel = $derived(self.version || '—')
-  async function doUpdate() {
-    const res = await confirm({
-      title: 'Update Oriel?',
-      message: `Download v${update.latest}, verify its checksum, and replace the binary. Oriel must restart to apply.`,
-      confirmLabel: 'Update',
-      danger: false,
-      checkbox: 'Restart automatically when done',
-      checked: true,
-    })
-    if (!res || !res.ok) return
-    const ok = await applyUpdate()
-    if (ok && res.checked) await restartService()
-  }
 
   // Custom accent form.
   let newColor = $state('#22c55e')
@@ -364,7 +351,7 @@
       {:else if update.available}
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="text-[13px] text-[var(--text-2)]">Update available: <span class="mono font-medium text-[var(--text)]">v{update.latest}</span></span>
-          <button class="btn btn-primary btn-sm" onclick={doUpdate}>Update now</button>
+          <button class="btn btn-primary btn-sm" onclick={promptUpdate}>Update now</button>
         </div>
       {:else}
         <div class="flex flex-wrap items-center justify-between gap-3">
