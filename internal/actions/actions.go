@@ -51,27 +51,26 @@ func registerContainers(r *tools.Registry, dc *docker.Client) {
 		},
 	}
 	ref := func() *tools.EntityRef { return &tools.EntityRef{Param: "id", Kind: "container"} }
-	ok := map[string]any{"ok": true}
 
 	r.Register(&tools.Tool{
 		Name: "container.start", Title: "Start container", Description: "Start a stopped container",
 		Schema: idArg, Entity: ref(),
 		Handler: func(ctx context.Context, a map[string]any) (any, error) {
-			return ok, dc.StartContainer(ctx, a["id"].(string))
+			return okResult, dc.StartContainer(ctx, a["id"].(string))
 		},
 	})
 	r.Register(&tools.Tool{
 		Name: "container.stop", Title: "Stop container", Description: "Stop a running container",
 		Schema: idArg, Entity: ref(),
 		Handler: func(ctx context.Context, a map[string]any) (any, error) {
-			return ok, dc.StopContainer(ctx, a["id"].(string))
+			return okResult, dc.StopContainer(ctx, a["id"].(string))
 		},
 	})
 	r.Register(&tools.Tool{
 		Name: "container.restart", Title: "Restart container", Description: "Restart a container",
 		Schema: idArg, Entity: ref(),
 		Handler: func(ctx context.Context, a map[string]any) (any, error) {
-			return ok, dc.RestartContainer(ctx, a["id"].(string))
+			return okResult, dc.RestartContainer(ctx, a["id"].(string))
 		},
 	})
 	r.Register(&tools.Tool{
@@ -87,7 +86,7 @@ func registerContainers(r *tools.Registry, dc *docker.Client) {
 		Entity: ref(),
 		Handler: func(ctx context.Context, a map[string]any) (any, error) {
 			force, _ := a["force"].(bool)
-			return ok, dc.RemoveContainer(ctx, a["id"].(string), force)
+			return okResult, dc.RemoveContainer(ctx, a["id"].(string), force)
 		},
 	})
 }

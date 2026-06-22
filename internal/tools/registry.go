@@ -7,6 +7,7 @@
 package tools
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -140,9 +141,5 @@ func (r *Registry) Execute(ctx context.Context, name string, args map[string]any
 }
 
 func sortByName(ts []*Tool) {
-	for i := 1; i < len(ts); i++ {
-		for j := i; j > 0 && ts[j-1].Name > ts[j].Name; j-- {
-			ts[j-1], ts[j] = ts[j], ts[j-1]
-		}
-	}
+	slices.SortFunc(ts, func(a, b *Tool) int { return cmp.Compare(a.Name, b.Name) })
 }

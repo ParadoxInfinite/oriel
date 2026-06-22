@@ -32,6 +32,7 @@ func runDoctor(args []string) error {
 	}
 
 	fmt.Printf("oriel %s\n\n", version)
+	problems := 0
 
 	// --- Docker daemon (checked directly, independent of the running server) ---
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
@@ -40,6 +41,7 @@ func runDoctor(args []string) error {
 		doctorLine("✓", "Docker", fmt.Sprintf("reachable — %s (%s)", eng.ServerVersion, eng.Host))
 	} else {
 		doctorLine("✗", "Docker", "unreachable — is the daemon (or colima) running?")
+		problems++
 	}
 
 	// --- Running instance + its live config ---
@@ -66,6 +68,7 @@ func runDoctor(args []string) error {
 		case len(hosts) == 0 && !atRoot:
 			doctorLine("✗", "Allowed hosts", "none set, but a sub-path proxy is configured — /api will 403 over the proxy")
 			fmt.Println("      fix: oriel remote allow <your-proxy-hostname>")
+			problems++
 		case len(hosts) == 0:
 			doctorLine("✓", "Allowed hosts", "none (loopback only)")
 		default:
@@ -80,6 +83,9 @@ func runDoctor(args []string) error {
 		doctorLine("○", "Service", "not a managed service — install with: oriel service install")
 	}
 
+	if problems > 0 {
+		return fmt.Errorf("%d problem(s) found", problems)
+	}
 	return nil
 }
 
