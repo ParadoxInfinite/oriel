@@ -100,7 +100,7 @@ export { icons } from '../lib/icons.js'
 /** Low-level fetch helpers for endpoints without a dedicated store: apiGet/apiPost
  *  (e.g. /api/volumes/prune/preview) and streamPost for SSE-over-POST actions
  *  (e.g. /api/images/pull). Prefer the typed stores where they exist. */
-export { apiGet, apiPost, streamPost, sse } from '../lib/api.js'
+export { apiGet, apiPost, apiPut, streamPost, sse } from '../lib/api.js'
 
 /** Public-registry helpers for the pull dialog: the source list plus search and
  *  tag-listing proxies (Docker Hub, Quay, AWS ECR Public). */

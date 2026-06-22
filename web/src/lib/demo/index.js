@@ -19,6 +19,8 @@ const db = {
   provider: clone(seed.provider),
   remoteHosts: [],
   discovery: clone(seed.discovery),
+  maskEnv: 'all', // inspect env masking mode (Settings → Secrets)
+  envReveal: 'local',
 }
 
 let seq = 0
@@ -64,7 +66,7 @@ export async function demoGet(path) {
     case '/api/stacks': return seed.makeStacks(db.containers)
     case '/api/system/df': return seed.makeDf(db.containers, db.images, db.volumes)
     case '/api/colima/status': return clone(db.colima)
-    case '/api/self': return clone(seed.self)
+    case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, envReveal: db.envReveal }
     case '/api/update': return clone(seed.update)
     case '/api/provider': return clone(db.provider)
     case '/api/remote': return { hosts: clone(db.remoteHosts) }
@@ -77,15 +79,30 @@ export async function demoGet(path) {
     case '/api/images/tags': return tagResults(q.get('repo') || '')
     case '/api/fs/list': return fsList(q.get('path') || '')
   }
-  if (p.endsWith('/inspect')) return inspectFor(p.split('/')[3])
+  if (p.endsWith('/inspect')) return inspectFor(p.split('/')[3], q.has('reveal'))
   if (p.includes('/logs/before')) return [] // demo carries no deep log history
   return null
 }
 
-function inspectFor(id) {
+// All env values are fake. Masked per db.maskEnv so the demo mirrors the real
+// server's secret-masking + reveal flow.
+const looksSecret = (v) => /^(sk-|ghp_|AKIA|eyJ)/.test(v)
+const maskKV = (kv, mode) => {
+  const i = kv.indexOf('=')
+  if (i < 0) return kv
+  const k = kv.slice(0, i)
+  const v = kv.slice(i + 1)
+  if (!v) return kv
+  if (mode === 'all' || /KEY|SECRET|TOKEN|PASSWORD|AUTH|CRED|PRIVATE|SESSION|DSN/i.test(k) || looksSecret(v)) return `${k}=••••••••`
+  return kv
+}
+
+function inspectFor(id, reveal) {
   const c = db.containers.find((x) => x.id === id)
   if (!c) return {}
   const exit = Number(c.status.match(/\((\d+)\)/)?.[1] ?? 0)
+  const env = ['PATH=/usr/local/sbin:/usr/local/bin', 'NODE_ENV=production', `HOSTNAME=${c.name}`, 'TZ=UTC', 'API_KEY=sk-demo-1a2b3c4d5e6f', 'DATABASE_URL=postgres://app:s3cr3t@db:5432/app']
+  const doMask = !reveal && db.maskEnv !== 'off'
   return {
     image: c.image,
     imageId: c.imageId,
@@ -98,7 +115,9 @@ function inspectFor(id) {
     health: c.status.includes('healthy') ? 'healthy' : '',
     networks: [{ name: c.project ? `${c.project}_default` : 'bridge', ipAddress: `172.18.0.${(seq % 240) + 2}` }],
     mounts: c.project ? [{ type: 'volume', destination: '/var/lib/data', rw: true, name: `${c.project}_data`, source: '' }] : [],
-    env: ['PATH=/usr/local/sbin:/usr/local/bin:/usr/local/sbin', 'NODE_ENV=production', `HOSTNAME=${c.name}`, 'TZ=UTC'],
+    env: doMask ? env.map((kv) => maskKV(kv, db.maskEnv)) : env,
+    envMasked: doMask,
+    canReveal: db.envReveal !== 'off',
   }
 }
 
@@ -199,6 +218,11 @@ export async function demoPut(path, body) {
   await delay()
   if (path === '/api/discovery') { db.discovery = body || db.discovery; return clone(db.discovery) }
   if (path === '/api/remote') { db.remoteHosts = body?.hosts || []; return { hosts: clone(db.remoteHosts) } }
+  if (path === '/api/config') {
+    if (body?.maskEnv) db.maskEnv = body.maskEnv
+    if (body?.envReveal) db.envReveal = body.envReveal
+    return { maskEnv: db.maskEnv, envReveal: db.envReveal, restarting: false }
+  }
   return null
 }
 

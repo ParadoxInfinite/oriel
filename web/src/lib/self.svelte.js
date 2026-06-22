@@ -1,6 +1,6 @@
 // The app's own backend footprint + build version, kept current by the live
 // stream (see live.svelte).
-export const self = $state({ version: '', os: '', rss: 0, goroutines: 0, heapAlloc: 0 })
+export const self = $state({ version: '', os: '', rss: 0, goroutines: 0, heapAlloc: 0, maskEnv: 'all', envReveal: 'local' })
 
 // applySelf updates the store from a live-stream "self" event.
 export function applySelf(d) {
@@ -10,4 +10,6 @@ export function applySelf(d) {
   self.rss = d.rss
   self.goroutines = d.goroutines
   self.heapAlloc = d.heapAlloc
+  if (d.maskEnv) self.maskEnv = d.maskEnv
+  if (d.envReveal) self.envReveal = d.envReveal
 }

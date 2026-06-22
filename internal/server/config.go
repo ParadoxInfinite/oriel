@@ -21,6 +21,8 @@ type settings struct {
 	ProviderURL  string           `json:"providerUrl"` // AI resolver endpoint ("" = dormant)
 	Discovery    discovery.Config `json:"discovery"`
 	AllowedHosts []string         `json:"allowedHosts"` // non-loopback Hosts allowed to reach /api
+	MaskEnv      string           `json:"maskEnv"`      // inspect env masking: "all" (default) | "sensitive" | "off"
+	EnvReveal    string           `json:"envReveal"`    // where "reveal values" works: "local" (default) | "remote" | "off"
 }
 
 // mergeEnvConfig folds pre-0.2 environment config into c without overwriting
