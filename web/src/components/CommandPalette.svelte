@@ -1,5 +1,6 @@
 <script>
   import { palette, closePalette } from '../lib/palette.svelte.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
   import { containers, refreshContainers } from '../lib/containers.svelte.js'
   import { fuzzyScore } from '../lib/fuzzy.js'
   import { invoke } from '../lib/invoke.js'
@@ -10,6 +11,11 @@
   let query = $state('')
   let selected = $state(0)
   let inputEl = $state(null)
+
+  // Escape via the shared modal stack so it closes only the top overlay.
+  $effect(() => {
+    if (palette.open) return registerEscape(closePalette)
+  })
 
   // Per-container actions, gated by state so the palette only offers what's
   // valid. Each maps to a {tool, args} call — the same shape a provider emits.
@@ -94,7 +100,6 @@
   }
 
   function onKeydown(e) {
-    if (e.key === 'Escape') return closePalette()
     if (e.key === 'ArrowDown') {
       e.preventDefault()
       selected = Math.min(selected + 1, filtered.length - 1)

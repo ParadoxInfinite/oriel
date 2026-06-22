@@ -86,6 +86,10 @@ export { toast } from '../lib/toast.svelte.js'
 /** confirm({ title, message, confirmLabel }) → Promise<boolean>. */
 export { confirm } from '../lib/confirm.svelte.js'
 
+/** registerEscape(close) → unregister. Shared modal stack so Escape closes only
+ *  the top overlay. Wire to an overlay's lifetime in an $effect. */
+export { registerEscape } from '../lib/modalStack.svelte.js'
+
 /** Command-palette controls, shared across editions. */
 export { openPalette, togglePalette } from '../lib/palette.svelte.js'
 

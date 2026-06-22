@@ -1,5 +1,6 @@
 <script>
   import { ops, dismissOp, cancelOp, minimizeOp } from '../lib/op.svelte.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
 
   // The modal shows the focused operation; the rest live in the sidebar tray.
   const cur = $derived(ops.list.find((o) => o.id === ops.focused) ?? null)
@@ -11,11 +12,11 @@
     if (cur.done) dismissOp(cur.id)
     else minimizeOp()
   }
-  const onKey = (e) => e.key === 'Escape' && close()
+  $effect(() => {
+    if (cur) return registerEscape(close)
+  })
   const pct = $derived(cur && cur.total > 0 ? Math.round((cur.cur / cur.total) * 100) : 0)
 </script>
-
-<svelte:window onkeydown={onKey} />
 
 {#if cur}
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6" role="presentation" onclick={(e) => e.target === e.currentTarget && close()}>

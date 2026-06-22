@@ -1,5 +1,5 @@
 <script>
-  import { PullController, fmtStars } from '../../../platform/index.js'
+  import { PullController, fmtStars, registerEscape } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   let { onClose, initial = '' } = $props()
@@ -10,9 +10,8 @@
     inputEl?.focus()
   })
   $effect(() => () => pc.destroy())
+  $effect(() => registerEscape(() => !pc.pulling && onClose()))
 </script>
-
-<svelte:window onkeydown={(e) => e.key === 'Escape' && !pc.pulling && onClose()} />
 
 <div class="fixed inset-0 z-[70] flex items-start justify-center bg-black/45 p-4 pt-[10vh] backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && !pc.pulling && onClose()}>
   <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">

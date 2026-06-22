@@ -1,9 +1,11 @@
 <script>
   import { onMount } from 'svelte'
-  import { apiGet, startSystemPrune, fmt } from '../../../platform/index.js'
+  import { apiGet, startSystemPrune, fmt, registerEscape } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   let { onClose } = $props()
+
+  $effect(() => registerEscape(onClose))
 
   let df = $state(null)
   let loadErr = $state('')
@@ -41,8 +43,6 @@
     startSystemPrune({ ...sel })
   }
 </script>
-
-<svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
 
 <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
   <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">

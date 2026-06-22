@@ -1,5 +1,6 @@
 <script>
   import { PullController, fmtStars } from '../lib/pull.svelte.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
   import { btnPrimary } from '../lib/ui.js'
 
   let { onClose, initial = '' } = $props()
@@ -12,9 +13,8 @@
     inputEl?.focus()
   })
   $effect(() => () => pc.destroy())
+  $effect(() => registerEscape(() => !pc.pulling && onClose()))
 </script>
-
-<svelte:window onkeydown={(e) => e.key === 'Escape' && !pc.pulling && onClose()} />
 
 <div class="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[10vh]" role="presentation" onclick={(e) => e.target === e.currentTarget && !pc.pulling && onClose()}>
   <div class="w-full max-w-md overflow-hidden rounded-[--radius] border border-border bg-surface shadow-2xl">

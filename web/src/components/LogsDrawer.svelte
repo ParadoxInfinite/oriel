@@ -2,8 +2,11 @@
   import { tick } from 'svelte'
   import { LogsController } from '../lib/logs.svelte.js'
   import { logTime as fmtTs } from '../lib/format.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
 
   let { container, onClose } = $props()
+
+  $effect(() => registerEscape(onClose))
 
   const logs = new LogsController()
   let paused = $state(false)
@@ -79,7 +82,6 @@
   }
 </script>
 
-<svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
 
 <div
   class="fixed inset-0 z-40 flex justify-end bg-black/40"

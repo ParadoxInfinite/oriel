@@ -1,7 +1,10 @@
 <script>
-  import { outages, fmt } from '../../../platform/index.js'
+  import { outages, fmt, registerEscape } from '../../../platform/index.js'
 
   let open = $state(false)
+  $effect(() => {
+    if (open) return registerEscape(() => (open = false))
+  })
 
   const meta = {
     down: { label: 'Colima down', cls: 'bad' },
@@ -11,8 +14,6 @@
   const recent = $derived(sorted.slice(0, 3))
   const has = $derived(outages.list.length > 0)
 </script>
-
-<svelte:window onkeydown={(e) => e.key === 'Escape' && (open = false)} />
 
 <div
   class="mx-3 mb-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] p-3 shadow-[var(--shadow-sm)] transition-colors {has ? 'cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--panel-2)]' : ''}"

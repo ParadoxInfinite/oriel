@@ -1,5 +1,5 @@
 <script>
-  import { fmt } from '../../../platform/index.js'
+  import { fmt, registerEscape } from '../../../platform/index.js'
 
   // items: [{ id, primary, secondary?, size }]. onPrune receives the chosen items.
   let { title, note = '', items, onClose, onPrune } = $props()
@@ -27,9 +27,8 @@
     busy = false
     onClose()
   }
+  $effect(() => registerEscape(() => !busy && onClose()))
 </script>
-
-<svelte:window onkeydown={(e) => e.key === 'Escape' && !busy && onClose()} />
 
 <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && !busy && onClose()}>
   <div class="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">

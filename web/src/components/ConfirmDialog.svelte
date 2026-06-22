@@ -1,18 +1,21 @@
 <script>
   import { confirmState, resolveConfirm } from '../lib/confirm.svelte.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
 
   let confirmEl = $state(null)
 
   $effect(() => {
     if (confirmState.open) queueMicrotask(() => confirmEl?.focus())
   })
+  // Escape goes through the shared modal stack (closes only the top overlay);
+  // the window handler below stays for Enter.
+  $effect(() => {
+    if (confirmState.open) return registerEscape(() => resolveConfirm(false))
+  })
 
   function onKeydown(e) {
     if (!confirmState.open) return
-    if (e.key === 'Escape') {
-      e.preventDefault()
-      resolveConfirm(false)
-    } else if (e.key === 'Enter') {
+    if (e.key === 'Enter') {
       // If a button is focused, let its native activation handle Enter — so Enter
       // on a focused Cancel cancels, instead of always confirming.
       if (document.activeElement?.tagName === 'BUTTON') return
