@@ -56,6 +56,8 @@ feedback; the best way to influence them is to open an
 - **homebrew-core submission** — `brew install oriel` with no tap, once the
   project clears Homebrew's notability bar.
 
+
+
 ## Demand- or sponsor-gated
 
 These aren't planned on their own. They happen only if the gate below is met.
