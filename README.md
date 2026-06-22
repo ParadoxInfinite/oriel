@@ -146,11 +146,9 @@ it gets the same guardrails you do:
 { "mcpServers": { "oriel": { "command": "oriel", "args": ["mcp"] } } }
 ```
 
-Most Docker MCP servers hand an AI raw, unrestricted access to the socket — Oriel
-is effectively the only one that's also a GUI, and among the very few that mask
-secrets and gate destructive actions. It's early, too: [the roadmap](ROADMAP.md)
-adds read-only & audited MCP access and Colima-native AI control (start/stop the
-VM, not just the containers on it). Full details: [docs/MCP.md](docs/MCP.md).
+It's early — [the roadmap](ROADMAP.md) adds read-only & audited MCP access and
+Colima-native AI control (start/stop the VM, not just the containers on it). Full
+details: [docs/MCP.md](docs/MCP.md).
 
 ## Editions & themes
 
