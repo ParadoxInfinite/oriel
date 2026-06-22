@@ -8,16 +8,20 @@ import (
 	"fmt"
 
 	"github.com/ParadoxInfinite/oriel/internal/docker"
+	"github.com/ParadoxInfinite/oriel/internal/secrets"
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
-// New builds the registry with all builtin tools registered.
-func New(dc *docker.Client) *tools.Registry {
+// New builds the registry with all builtin tools registered. envMask supplies
+// the current env-masking mode (from settings) so container.inspect can mask
+// secrets in its output; it is read per call, not captured once.
+func New(dc *docker.Client, envMask func() secrets.Mode) *tools.Registry {
 	r := tools.NewRegistry(resolver{dc})
 	registerContainers(r, dc)
 	registerImages(r, dc)
 	registerVolumes(r, dc)
 	registerNetworks(r, dc)
+	registerReads(r, dc, envMask)
 	return r
 }
 
