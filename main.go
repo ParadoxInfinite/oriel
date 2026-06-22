@@ -64,6 +64,12 @@ func main() {
 				log.Fatalf("ai: %v", err)
 			}
 			return
+		case "mcp":
+			// `oriel mcp` serves the tool registry to an MCP client over stdio.
+			if err := runMCP(os.Args[2:]); err != nil {
+				log.Fatalf("mcp: %v", err)
+			}
+			return
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return
