@@ -15,6 +15,13 @@ export function shortId(id) {
   return (id || '').replace(/^sha256:/, '').slice(0, 12)
 }
 
+// Wall-clock time (24h) for a log line's RFC3339 timestamp; '' if absent/invalid.
+export function logTime(ts) {
+  if (!ts) return ''
+  const d = new Date(ts)
+  return isNaN(d) ? '' : d.toLocaleTimeString([], { hour12: false })
+}
+
 export function bytes(n) {
   if (!n || n < 0) return '0 B'
   let i = 0

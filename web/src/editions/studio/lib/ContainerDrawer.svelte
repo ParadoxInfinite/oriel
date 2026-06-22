@@ -40,11 +40,7 @@
   const lineColor = (s) => (s === 'stderr' ? 'text-[var(--amber)]' : s === 'error' ? 'text-[var(--red)]' : 'text-[var(--text)]')
   // Per-line markers: a wall-clock timestamp gutter + a stream-coloured left edge.
   const streamEdge = (s) => (s === 'stderr' ? 'border-[var(--amber)]' : s === 'error' ? 'border-[var(--red)]' : 'border-transparent')
-  function fmtTs(ts) {
-    if (!ts) return ''
-    const d = new Date(ts)
-    return isNaN(d) ? '' : d.toLocaleTimeString([], { hour12: false })
-  }
+  const fmtTs = fmt.logTime
 
   // ── Inspect (fetched on first open; refetched if the drawer is reused for a
   //    different container, so one container's revealed env never shows for
