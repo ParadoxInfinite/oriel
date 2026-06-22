@@ -14,7 +14,8 @@ const hex = (seed) => {
   return h
 }
 const sha = (seed) => 'sha256:' + hex(seed)
-const now = 1782060000 // fixed "now" (unix sec) so timestamps read sensibly
+// Real load time (unix sec) — so seeded history lands in the chart's Date.now()-based 30-min window.
+const now = Math.floor(Date.now() / 1000)
 const ago = (sec) => now - sec
 const GiB = 1024 * 1024 * 1024
 
