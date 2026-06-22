@@ -7,31 +7,6 @@ feedback; the best way to influence them is to open an
 
 ## Now
 
-- **Secret masking in inspect.** Container env vars often hold API keys and
-  tokens; the inspect panel shows them in full today — easy to leak in a
-  screenshot or screen-share. Mask sensitive values **server-side** by default
-  (detected by key name or value shape), with a gated "Reveal values" action.
-  Because it's server-side, the same masking keeps raw keys out of the MCP
-  `inspect` tool below — so it lands first. See [docs/MCP.md](docs/MCP.md).
-- **Oriel as an MCP server.** Expose Oriel's validated tool layer over the
-  [Model Context Protocol](https://modelcontextprotocol.io) so any MCP-capable AI
-  client — Claude Desktop, Claude Code, Cursor, a local Ollama-backed host, … —
-  can inspect and manage your Docker/Colima **through Oriel's safety layer**.
-  Every call still routes through the same argument + entity validation the UI
-  uses. Starts with the **local stdio transport** (no network, no auth needed).
-  This brings natural-language control **without bundling any model**: your client
-  brings the model, so Oriel stays vendor-neutral and works with cloud or local
-  LLMs. Includes adding **read/query tools** (list / inspect / logs / stats) so an
-  AI can see state and target by description, not just mutate blind.
-- **Time-boxed destructive grant.** AI-driven actions are read-only and reversible
-  by default; destructive ones (remove / prune) stay **locked** until you grant
-  them for a window you choose (`oriel ai allow-destructive --for 6h`, or a
-  Settings toggle), then **auto-relock**. One control covering the MCP server and
-  the in-app assistant alike — so even a headless AI can only do damage inside a
-  window you opened on purpose.
-
-## Next
-
 - **Optional authentication.** Today Oriel binds to `127.0.0.1` and only guards
   against DNS rebinding (host allow-list) — there is no login. Add an **opt-in**
   token/password gate so Oriel (and MCP-over-HTTP) can be exposed safely beyond
@@ -41,18 +16,17 @@ feedback; the best way to influence them is to open an
 - **MCP over HTTP (Streamable HTTP).** Reach Oriel's MCP server from remote clients
   and hosted-AI connectors. Gated on optional authentication landing first.
 
-## Later
+## Next
 
 - **In-app natural-language assistant.** A built-in command-palette mode that
-  drives the same validated registry. **Provider-agnostic by design:** the base
-  binary bundles no model — it talks to a resolver you point it at (a documented
-  HTTP contract, plus an out-of-tree reference resolver you can run against Claude,
-  an OpenAI-compatible endpoint, or a local model). For most users the MCP server
-  above already delivers NL control through their own AI client, so this is a
-  convenience layer, not the main path.
+  drives the same validated registry, for users who'd rather not wire up an
+  external MCP client. Provider-agnostic — the base bundles no model.
 - **MCP resources & prompts.** Expose container logs, inspect output, and Compose
   files as readable MCP **resources**, plus canned diagnostic **prompts** — so an
   AI can read a crashing container's logs as context, not just call tools.
+
+## Later
+
 - **homebrew-core submission** — `brew install oriel` with no tap, once the
   project clears Homebrew's notability bar.
 
@@ -79,6 +53,7 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: themeable swappable editions,
-Compose discovery & deploy, CLI self-update + `doctor`, reverse-proxy hosting,
-and Homebrew install (macOS).
+See the [CHANGELOG](CHANGELOG.md). Highlights: **MCP server (`oriel mcp`) + read
+tools, secret masking in inspect, and the time-boxed destructive grant** (v0.4.0);
+themeable swappable editions, Compose discovery & deploy, CLI self-update +
+`doctor`, reverse-proxy hosting, and Homebrew install (macOS).
