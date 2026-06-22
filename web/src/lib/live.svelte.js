@@ -9,6 +9,10 @@ import { applyOutages } from './outages.svelte.js'
 // Latest per-container stats, keyed by id (for tables and cards).
 export const stats = $state({ byId: {} })
 
+// Live-stream health: `ok` flips false when the SSE stream drops, true once data
+// flows again — so the UI can flag stale state instead of silently showing it.
+export const connection = $state({ ok: true })
+
 // Rolling ~30-min aggregate series {t, cpu, mem, down}. Seeded by the stream's
 // "history" event on connect, then appended one "point" per second — no polling.
 export const history = $state({ points: [] })
@@ -44,12 +48,18 @@ function appendPoint(p) {
 }
 
 export function startLive() {
+  stopLive() // idempotent: never leak a previous pair of EventSources
+
   // Docker events drive list refreshes (change-triggered, already push-based).
   esEvents = sse('/api/events', ['event'], (_name, data) => schedule(data?.type))
 
   // One consolidated stream for everything periodic — no polling anywhere.
-  esLive = sse('/api/live', ['history', 'stats', 'point', 'status', 'self', 'outages'], (name, data) => {
-    switch (name) {
+  esLive = sse(
+    '/api/live',
+    ['history', 'stats', 'point', 'status', 'self', 'outages'],
+    (name, data) => {
+      connection.ok = true // any frame means the stream is alive
+      switch (name) {
       case 'history':
         history.points = (data || []).map((p) => ({ t: p.t, cpu: p.cpu, mem: p.mem, down: !!p.down }))
         break
@@ -71,12 +81,18 @@ export function startLive() {
       case 'outages':
         applyOutages(data)
         break
-    }
-  })
+      }
+    },
+    (readyState) => {
+      connection.ok = readyState === 1 // OPEN; CONNECTING/CLOSED means dropped
+    },
+  )
 }
 
 export function stopLive() {
   esEvents?.close()
   esLive?.close()
+  esEvents = esLive = undefined
+  connection.ok = true
   for (const t of Object.values(timers)) clearTimeout(t)
 }

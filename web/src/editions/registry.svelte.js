@@ -29,6 +29,9 @@ export async function loadDiskThemes() {
   }
   diskThemes.dir = data.dir || ''
   for (const t of data.themes || []) {
+    // A theme is JS imported into the app origin, so guard the import specifier:
+    // basename ending in .js only (defense in depth — the backend already does).
+    if (!t.file || !/^[\w.-]+\.js$/.test(t.file)) continue
     try {
       const mod = await import(/* @vite-ignore */ `${BASE}/api/themes/${t.file}`)
       const m = mod.default

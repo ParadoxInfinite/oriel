@@ -46,19 +46,28 @@
     return isNaN(d) ? '' : d.toLocaleTimeString([], { hour12: false })
   }
 
-  // ── Inspect (fetched on first open) ────────────────────────────────────────
+  // ── Inspect (fetched on first open; refetched if the drawer is reused for a
+  //    different container, so one container's revealed env never shows for
+  //    another) ────────────────────────────────────────────────────────────────
   let detail = $state(null)
   let inspectErr = $state('')
   let revealed = $state(false) // env values unmasked (re-fetched with ?reveal=1)
   let revealing = $state(false)
-  let loaded = false
+  let inspectedId = null // the container.id that `detail` belongs to
   $effect(() => {
-    if (tab === 'inspect' && !loaded) {
-      loaded = true
-      apiGet(`/api/containers/${container.id}/inspect`)
-        .then((d) => (detail = d))
-        .catch((e) => (inspectErr = e.message))
-    }
+    const id = container.id
+    if (tab !== 'inspect' || inspectedId === id) return
+    inspectedId = id
+    detail = null
+    revealed = false
+    inspectErr = ''
+    apiGet(`/api/containers/${id}/inspect`)
+      .then((d) => {
+        if (inspectedId === id) detail = d // ignore a result for a since-swapped container
+      })
+      .catch((e) => {
+        if (inspectedId === id) inspectErr = e.message
+      })
   })
   // Masking is enforced server-side; revealing re-fetches the raw payload (only
   // succeeds when the envReveal policy allows this viewer).
@@ -123,7 +132,7 @@
         {:else if logs.noMore && logs.lines.length}
           <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">Beginning of available logs</div>
         {/if}
-        {#each logs.lines as l, i (i)}
+        {#each logs.lines as l (l.seq)}
           <div class="flex gap-2.5 border-l-2 px-3 hover:bg-[var(--hover)] {streamEdge(l.stream)}">
             <span class="tnum shrink-0 select-none border-r border-[var(--border)] py-px pr-2.5 text-[11px] text-[var(--text-3)]" title={l.ts}>{fmtTs(l.ts)}</span>
             <span class="min-w-0 flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>

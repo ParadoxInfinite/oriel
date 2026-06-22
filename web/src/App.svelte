@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte'
-  import { startLive, stopLive } from './lib/live.svelte.js'
+  import { startLive, stopLive, connection } from './lib/live.svelte.js'
   import { refreshContainers } from './lib/containers.svelte.js'
   import { refreshStacks } from './lib/stacks.svelte.js'
   import { checkProvider } from './lib/provider.svelte.js'
@@ -53,6 +53,12 @@
 {#key active.id}
   <Edition />
 {/key}
+
+{#if !connection.ok}
+  <div role="status" style="position:fixed;top:0;left:0;right:0;z-index:60;padding:5px 12px;text-align:center;font-size:12px;font-weight:500;background:#b45309;color:#fff;">
+    Live connection lost — reconnecting…
+  </div>
+{/if}
 
 <div style={overlayStyle}>
   <OpOverlay />
