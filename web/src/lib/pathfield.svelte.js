@@ -9,6 +9,7 @@ export class PathField {
   open = $state(false)
   highlight = $state(-1)
   #debounce
+  #reqId = 0
 
   constructor(initial = '') {
     this.value = initial
@@ -59,7 +60,9 @@ export class PathField {
   }
 
   #load = async () => {
+    const id = ++this.#reqId
     const res = await listDirs(this.value)
+    if (id !== this.#reqId) return // a newer load superseded this one
     this.entries = res.entries || []
   }
 }

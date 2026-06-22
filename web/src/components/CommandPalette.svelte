@@ -112,7 +112,6 @@
   <div
     class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[12vh]"
     onclick={closePalette}
-    onkeydown={null}
     role="presentation"
   >
     <div

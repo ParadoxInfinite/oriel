@@ -9,6 +9,7 @@
   $effect(() => {
     inputEl?.focus()
   })
+  $effect(() => () => pc.destroy())
 </script>
 
 <svelte:window onkeydown={(e) => e.key === 'Escape' && !pc.pulling && onClose()} />

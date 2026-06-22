@@ -72,7 +72,11 @@ export async function rescan() {
     discovery.roots = res.roots || []
     discovery.hidden = res.hidden || 0
   } catch {
+    // Clear all scan-derived state so a failed rescan reads as "scan failed",
+    // not "roots found projects but none are available".
     discovery.stacks = []
+    discovery.roots = []
+    discovery.hidden = 0
   } finally {
     discovery.loading = false
     discovery.loaded = true
