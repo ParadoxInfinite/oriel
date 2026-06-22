@@ -3,10 +3,10 @@
 > Status: **shipped** (stdio). `oriel mcp` serves the tool registry; destructive
 > tools are gated behind the grant window. See [ROADMAP.md](../ROADMAP.md).
 
-Expose Oriel's validated tool layer over the
-[Model Context Protocol](https://modelcontextprotocol.io) so **any** MCP-capable
-AI client (Claude Desktop, Claude Code, Cursor, a local Ollama-backed host, …)
-can inspect and manage Docker/Colima **through Oriel's safety checks**.
+Oriel's tool layer, exposed over the
+[Model Context Protocol](https://modelcontextprotocol.io). Any MCP client (Claude
+Desktop, Claude Code, Cursor, a local Ollama host) can inspect and manage
+Docker/Colima, and every call goes through the same checks the UI does.
 
 ## Use it
 
@@ -65,23 +65,19 @@ server does and serves MCP over stdio.
 | start/restart | `annotations.idempotentHint: true` |
 | `Entity *EntityRef` | enforced server-side (existence check before the handler) |
 
-## Tool surface
+## Tools
 
-**Existing (mutations, already in the registry):** `container.start` / `stop` /
-`restart` / `remove`, `image.remove` / `tag` / `prune`, `volume.remove` / `prune`,
-`network.remove`.
+Mutations: `container.start` / `stop` / `restart` / `remove`, `image.remove` /
+`tag` / `prune`, `volume.remove` / `prune`, `network.remove`.
 
-**New read/query tools — added as first-class registry tools.** These are the
-unlock: an AI can *see* state and target by description, not just mutate blind.
-They become available to MCP **and** the future in-app assistant for free.
+Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
+`network.list`, `stacks.list`, `system.df`, `colima.status`. These let an AI see
+the current state and target things by description, instead of acting blind. The
+in-app assistant uses the same set.
 
-- `container.list`, `container.inspect`, `container.logs` (tail N), `container.stats`
-- `image.list`, `volume.list`, `network.list`
-- `system.df`, `colima.status`, `stacks.list`
-
-> Logs and inspect may **also** be exposed as MCP **resources** later (so a client
-> can attach "this container's logs" as context). That's additive — they are
-> tools first; resources never replace them.
+> Logs and inspect may also show up as MCP **resources** later (so a client can
+> attach "this container's logs" as context). That's additive — they stay tools
+> first.
 
 ## Safety: time-boxed destructive grant
 
@@ -118,50 +114,18 @@ keys to a model.
 - **Later — Streamable HTTP.** Reach the server from remote/hosted clients and the
   hosted-AI MCP connectors. **Gated on the optional-auth tier landing first.**
 
-## Implementation spike — done (shipped to main)
+## How it's built
 
-MCP is JSON-RPC 2.0. The spike wired the whole registry to MCP over stdio using
-the **official `modelcontextprotocol/go-sdk` v1.6.1** and drove it end-to-end
-(`initialize` → `tools/list` returns all 19 tools → `tools/call`).
+Built on the official [`modelcontextprotocol/go-sdk`](https://github.com/modelcontextprotocol/go-sdk).
+`oriel mcp` maps each registry tool to an MCP tool one-to-one — the SDK's
+`Server.AddTool` with our JSON Schema, and a thin handler over `Registry.Execute`
+— so the validation and masking are reused, not reimplemented. It adds about 2 MB
+to the binary.
 
-Measured cost of the official SDK:
-
-| Metric | Baseline | With MCP | Delta |
-| --- | --- | --- | --- |
-| Binary | 15.59 MiB | 17.90 MiB | **+2.31 MiB (+14.9%)** |
-| Modules | — | — | +7 (`go-sdk`, `jsonschema-go`, `segmentio/encoding`+`asm`, `uritemplate`, `oauth2`, `jwt`) |
-| Glue LOC | — | — | ~157 (`internal/mcp/server.go` + `mcp_cmd.go`) |
-
-Candidates considered:
-
-- **official `modelcontextprotocol/go-sdk` — chosen.** Anthropic + Google
-  co-maintain it; handles protocol-version negotiation, capabilities, the
-  HTTP/SSE transport we'll want for the "MCP over HTTP" phase, and
-  resources/prompts for later. The registry maps one-to-one — `Server.AddTool`
-  with our own JSON-Schema and a thin handler over `Registry.Execute`, so all
-  validation/masking is reused.
-- `mark3labs/mcp-go` — the old community default, now superseded by the official
-  SDK. Not pursued.
-- hand-rolled JSON-RPC — would save the ~2.3 MiB and the deps, but takes on
-  permanent protocol-correctness maintenance and re-implements transport
-  negotiation we'd otherwise get free. Not worth it for a headline feature.
-
-Verdict: **+2.3 MiB on a 15.6 MiB binary is an acceptable price** for an
-official, spec-correct, transport-extensible MCP surface.
-
-### Shipped
-
-- **Destructive tools gated.** `container.remove`, `*.prune`, etc. carry a
-  `destructiveHint` *and* are locked in `Registry.Execute` unless a grant window
-  is open — the MCP path never sets consent, so a locked call returns the
-  structured "open a window" error. See [the grant](#safety-time-boxed-destructive-grant).
-- **Env masking** is `MaskAll` for the MCP path (LLM consumer).
-
-### Still open
-
-- Revisit `sensitive`-mode masking if the assistant needs more env context.
-- MCP **resources** (logs/inspect) + **prompts** (phase 3).
-- MCP over **HTTP** (phase 4, after optional auth).
+Destructive tools (`container.remove`, `*.prune`, …) carry a `destructiveHint`
+and are locked in `Registry.Execute` until a grant window is open; the MCP path
+never sets consent, so a locked call returns the "open a window" error. Env
+values are always masked on this path.
 
 ## Phasing
 
