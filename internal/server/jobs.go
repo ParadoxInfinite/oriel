@@ -4,7 +4,12 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 )
+
+// finishedJobTTL is how long a completed job lingers so a reconnecting client can
+// still read its final snapshot before it's reaped.
+const finishedJobTTL = 30 * time.Second
 
 // A Job is a long-running operation (prune, …) that runs on a background context
 // decoupled from any request, so it survives client refresh/disconnect. Progress
@@ -170,8 +175,18 @@ func (m *jobManager) start(kind, title string, fn func(ctx context.Context, rep 
 		default:
 			j.finish(false, err.Error())
 		}
+		// Reap this job after a grace window even if no other job starts, so the
+		// map can't grow unbounded from completed work.
+		time.AfterFunc(finishedJobTTL, func() { m.remove(id) })
 	}()
 	return j
+}
+
+// remove drops a job from the map (used by the post-finish reaper).
+func (m *jobManager) remove(id string) {
+	m.mu.Lock()
+	delete(m.jobs, id)
+	m.mu.Unlock()
 }
 
 func (m *jobManager) get(id string) *Job {

@@ -1,6 +1,8 @@
 // Package docker talks to the Docker Engine API exposed by Colima's unix
 // socket. The client is created lazily so the app starts even when the VM is
-// down, and re-dials if the socket path changes.
+// down. The connection is cached once established and survives colima restarts
+// as long as the socket path is stable; a profile or socket-path change needs an
+// Oriel restart.
 package docker
 
 import (
@@ -14,9 +16,8 @@ import (
 
 // Client wraps the Docker SDK with lazy, socket-aware connection management.
 type Client struct {
-	mu     sync.Mutex
-	cli    *client.Client
-	socket string
+	mu  sync.Mutex
+	cli *client.Client
 }
 
 // New returns an unconnected client. The connection is established on first use.
@@ -67,7 +68,6 @@ func (c *Client) api(ctx context.Context) (*client.Client, error) {
 		return c.cli, nil
 	}
 	c.cli = cli
-	c.socket = sock
 	return cli, nil
 }
 
