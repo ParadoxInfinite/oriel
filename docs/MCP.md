@@ -28,14 +28,6 @@ a window with `oriel ai allow-destructive --for 6h` (`oriel ai status` / `oriel
 ai lock` to check / close). Env values in `container.inspect` are always masked
 on this path.
 
-## Why this is different
-
-Most Docker-management MCP servers hand an AI raw, unrestricted access to the
-socket. Oriel routes every call through the same validation, secret-masking, and
-time-boxed destructive grant the GUI uses — bringing the read-only / redaction /
-gated-destructive patterns already proven in the Kubernetes MCP world to **local
-Docker + Colima**, in a binary that is *also* the GUI.
-
 ## Principles
 
 - **No model in the base binary.** Oriel ships no LLM, no LLM client, no API-key
