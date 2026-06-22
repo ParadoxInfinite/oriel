@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-06-23
+
+A second hardening pass from a full adversarial code review: every fix below was
+independently verified before merging. No new features; recommended for everyone
+on 0.4.1 (it carries a UI regression fixed here).
+
+### Fixed
+
+- **Classic Dashboard "Retry" button** worked again — it threw a reference error
+  in the Docker-unreachable state (a 0.4.1 regression), leaving the recovery
+  action dead.
+- **Disk prune reports failures.** A prune step that failed (daemon gone,
+  permission denied, cancelled) was silently dropped and the job still reported
+  success with a reclaim total; failures now surface and a cancelled run stops.
+- **Pull dialog spinner** no longer sticks on after a search is superseded
+  mid-type, and a dialog closed while typing cancels its pending request.
+- **Settings writes are atomic.** Concurrent changes to different settings (mask
+  mode, allowed hosts, provider URL, discovery) can no longer clobber each other.
+- **One Escape closes one overlay.** With dialogs stacked (e.g. a confirm over a
+  drawer), Escape dismissed the whole stack; now only the top layer closes.
+- **Stale scan state cleared.** A failed Compose rescan no longer shows the prior
+  scan's directories as if current.
+- **Sturdier internals:** metrics-recorder shutdown no longer races its own
+  flush, the update check no longer serializes behind a slow GitHub call, long
+  command-output lines aren't silently truncated, and `service uninstall`/`status`
+  as root no longer target the wrong unit (or claim success when nothing was
+  removed). Service plists with special characters in the path render correctly.
+
+### Security
+
+- **Connection-string credentials are masked.** `DATABASE_URL` / `REDIS_URL` and
+  similar values with embedded `user:pass@` no longer pass through in plaintext.
+- **The AI/MCP path can't be talked out of masking.** `container.inspect` on the
+  non-interactive (assistant/provider) path keeps a hard masking floor even when
+  the local UI is set to reveal, and now also masks secrets in the command line
+  and labels, not just env.
+
 ## [0.4.1] - 2026-06-22
 
 A hardening and cleanup release: reliability and safety fixes from a full code
