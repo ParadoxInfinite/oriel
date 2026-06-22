@@ -14,10 +14,20 @@
     setOverlayTheme,
     self,
     update,
+    canSelfUpdate,
+    promptUpdate,
   } from '../../platform/index.js'
 
   // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
   const verLabel = $derived(self.version || '')
+
+  // The update pill opens the confirm-update modal directly when this install can
+  // self-update; otherwise it falls back to the Updates panel (e.g. Homebrew,
+  // where the user updates via `brew upgrade`).
+  function onUpdatePill() {
+    if (canSelfUpdate()) promptUpdate()
+    else active = 'Settings'
+  }
 
   import { appearance, systemPref, initAppearance } from './theme.svelte.js'
   import Icon from './lib/Icon.svelte'
@@ -119,7 +129,7 @@
       <span class="text-[11px] font-medium tracking-wide text-[var(--text-3)]">Oriel</span>
       <div class="flex items-center gap-1.5">
         {#if update.available}
-          <button type="button" onclick={() => (active = 'Settings')} class="rounded-full bg-[var(--accent-tint-2)] px-2 py-0.5 font-mono text-[10px] font-medium text-[var(--accent)] hover:underline" title="Update available — v{update.latest} · open updates">update</button>
+          <button type="button" onclick={onUpdatePill} class="rounded-full bg-[var(--accent-tint-2)] px-2 py-0.5 font-mono text-[10px] font-medium text-[var(--accent)] hover:underline" title="Update available — v{update.latest} · {canSelfUpdate() ? 'install now' : 'open updates'}">update</button>
         {/if}
         {#if verLabel}<span class="mono rounded-full border border-[var(--border)] bg-[var(--panel-2)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-2)]">{verLabel}</span>{/if}
       </div>

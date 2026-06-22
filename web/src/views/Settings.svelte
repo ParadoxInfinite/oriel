@@ -2,8 +2,8 @@
   import { onMount } from 'svelte'
   import {
     provider, checkProvider, setProvider, resolveText, toast,
-    self, update, checkNow, applyUpdate, restartService,
-    remote, loadRemote, addRemoteHost, removeRemoteHost, confirm,
+    self, update, checkNow, restartService, promptUpdate,
+    remote, loadRemote, addRemoteHost, removeRemoteHost,
     discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern,
     PathField, THEMES_DOC_URL,
   } from '../platform/index.js'
@@ -35,19 +35,6 @@
     'w-full rounded-[--radius] border border-border bg-bg px-3 py-1.5 text-sm outline-none placeholder:text-muted focus:border-accent/50'
 
   const verLabel = $derived(self.version || '—')
-  async function doUpdate() {
-    const res = await confirm({
-      title: 'Update Oriel?',
-      message: `Download v${update.latest}, verify its checksum, and replace the binary. Oriel must restart to apply.`,
-      confirmLabel: 'Update',
-      danger: false,
-      checkbox: 'Restart automatically when done',
-      checked: true,
-    })
-    if (!res || !res.ok) return
-    const ok = await applyUpdate()
-    if (ok && res.checked) await restartService()
-  }
 
 
   // AI provider.
@@ -261,7 +248,7 @@
       {:else if update.available}
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="text-[13px] text-muted">Update available: <span class="font-mono font-medium text-fg">v{update.latest}</span></span>
-          <button class={btnPrimary} onclick={doUpdate}>Update now</button>
+          <button class={btnPrimary} onclick={promptUpdate}>Update now</button>
         </div>
       {:else}
         <div class="flex flex-wrap items-center justify-between gap-3">
