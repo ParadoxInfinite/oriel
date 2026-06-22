@@ -63,6 +63,7 @@ type recorder struct {
 	downSince int64 // unix ms an in-progress colima outage began, 0 if up
 	outPath   string
 	retention time.Duration
+	done      chan struct{} // closed when run() returns (after its shutdown flush)
 }
 
 func newRecorder(dc *docker.Client) *recorder {
@@ -71,6 +72,7 @@ func newRecorder(dc *docker.Client) *recorder {
 		path:      dataPath("history.json"),
 		outPath:   dataPath("outages.json"),
 		retention: retentionWindow(),
+		done:      make(chan struct{}),
 	}
 	r.load()
 	r.loadOutages()
@@ -110,6 +112,7 @@ func (r *recorder) detectStartupOffline() {
 }
 
 func (r *recorder) run(ctx context.Context) {
+	defer close(r.done)
 	t := time.NewTicker(recordInterval)
 	defer t.Stop()
 	flush := time.NewTicker(flushInterval)

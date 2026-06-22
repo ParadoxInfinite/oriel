@@ -62,7 +62,6 @@ type jobView struct {
 	ID    string `json:"id"`
 	Kind  string `json:"kind"`
 	Title string `json:"title"`
-	Done  bool   `json:"done"`
 }
 
 // broadcast sends ev to every subscriber without blocking; the caller holds mu.
@@ -203,7 +202,7 @@ func (m *jobManager) active() []jobView {
 	for _, j := range m.jobs {
 		j.mu.Lock()
 		if !j.done {
-			out = append(out, jobView{ID: j.ID, Kind: j.Kind, Title: j.Title, Done: j.done})
+			out = append(out, jobView{ID: j.ID, Kind: j.Kind, Title: j.Title})
 		}
 		j.mu.Unlock()
 	}
