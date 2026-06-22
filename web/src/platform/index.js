@@ -51,8 +51,9 @@ export { stats, history, connection } from '../lib/live.svelte.js'
 /** The Oriel backend's own footprint + build version: `{ version, rss, goroutines, heapAlloc }`. */
 export { self } from '../lib/self.svelte.js'
 
-/** Remote-access allow-list (non-loopback Hosts permitted to reach /api). */
-export { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../lib/remote.svelte.js'
+/** Remote-access allow-list (non-loopback Hosts permitted to reach /api).
+ *  `RemoteHostForm` is the headless "add a host" input both editions render. */
+export { remote, loadRemote, addRemoteHost, removeRemoteHost, RemoteHostForm } from '../lib/remote.svelte.js'
 
 /** Update check + self-update (service installs): `update` state, `checkUpdate()`,
  *  `startUpdateChecks()`/`stopUpdateChecks()` (mount + 3h re-check),
@@ -110,7 +111,7 @@ export { apiGet, apiPost, apiPut, apiDelete, streamPost, sse } from '../lib/api.
 
 /** Destructive-grant window for MCP/assistant: `grant` state + `loadGrant()`,
  *  `openGrant(hours)`, `lockGrant()`. */
-export { grant, loadGrant, openGrant, lockGrant, fmtRemaining } from '../lib/grant.svelte.js'
+export { grant, loadGrant, openGrant, requestGrant, lockGrant, fmtRemaining } from '../lib/grant.svelte.js'
 
 /** Public-registry helpers for the pull dialog: the source list plus search and
  *  tag-listing proxies (Docker Hub, Quay, AWS ECR Public). */
@@ -149,6 +150,8 @@ export {
   revealLabel,
   revealOrCopy,
   listDirs,
+  FILTER_MODES,
+  DiscoveryForm,
 } from '../lib/discovery.svelte.js'
 
 /** Headless directory typeahead controller (Radarr-style) for path inputs. */

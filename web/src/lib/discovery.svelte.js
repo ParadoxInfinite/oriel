@@ -3,6 +3,7 @@ import { runOp } from './op.svelte.js'
 import { refreshStacks } from './stacks.svelte.js'
 import { confirm } from './confirm.svelte.js'
 import { self } from './self.svelte.js'
+import { PathField } from './pathfield.svelte.js'
 
 // Compose-discovery state, shared by both editions' Settings + Stacks views so
 // the directory config, scan results, filter and deploy live in one place. The
@@ -185,5 +186,29 @@ export async function listDirs(path) {
     return await apiGet(`/api/fs/list?path=${encodeURIComponent(path || '')}`)
   } catch {
     return { dir: path, entries: [] }
+  }
+}
+
+// The three filter modes, in display order. Shared so editions don't redeclare it.
+export const FILTER_MODES = [
+  ['off', 'Off'],
+  ['allow', 'Allow-list'],
+  ['deny', 'Deny-list'],
+]
+
+// The "add a directory" path typeahead + "add a pattern" box in Settings, so
+// editions render only the markup bound to this controller.
+export class DiscoveryForm {
+  pathField = new PathField()
+  pattern = $state('')
+  addDir() {
+    if (this.pathField.value.trim()) {
+      addRoot(this.pathField.value)
+      this.pathField.reset()
+    }
+  }
+  addPattern() {
+    addPattern(this.pattern)
+    this.pattern = ''
   }
 }

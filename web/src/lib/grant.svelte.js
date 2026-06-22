@@ -2,6 +2,7 @@
 // for a bounded time. The UI itself never needs it (human clicks carry consent);
 // this panel just opens/closes the window for automated callers.
 import { apiGet, apiPost, apiDelete } from './api.js'
+import { toast } from './toast.svelte.js'
 
 export const grant = $state({
   active: false,
@@ -30,6 +31,16 @@ export async function openGrant(hours) {
     apply(await apiPost('/api/grant', { hours }))
   } finally {
     grant.busy = false
+  }
+}
+
+// requestGrant opens the window and surfaces any failure as a toast — the
+// shape both editions' "open window" buttons want.
+export async function requestGrant(hours) {
+  try {
+    await openGrant(hours)
+  } catch (e) {
+    toast(e?.message || 'Could not open window', 'error')
   }
 }
 

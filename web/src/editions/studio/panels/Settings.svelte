@@ -1,17 +1,20 @@
 <script>
   import { onMount } from 'svelte'
   import { provider, toast, ProviderSettings } from '../../../platform/index.js'
-  import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
+  import { discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
-  import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
-  import { grant, loadGrant, openGrant, lockGrant, fmtRemaining } from '../../../platform/index.js'
+  import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
+  import { grant, loadGrant, requestGrant, lockGrant, fmtRemaining } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
   import PathInput from '../lib/PathInput.svelte'
 
   ensureDiscovery()
-  const pf = new PathField()
+  const df = new DiscoveryForm()
+  const hostForm = new RemoteHostForm()
+  onMount(loadRemote)
+  onMount(loadGrant)
   // Secret-masking + reveal policy (Settings → Secrets), saved via /api/config.
   async function saveSecret(patch) {
     const prev = { maskEnv: self.maskEnv, envReveal: self.envReveal }
@@ -23,40 +26,6 @@
     } catch (e) {
       Object.assign(self, prev)
       toast(e?.message || 'Could not save', 'error')
-    }
-  }
-  function addDir() {
-    if (pf.value.trim()) {
-      addRoot(pf.value)
-      pf.reset()
-    }
-  }
-  let newPattern = $state('')
-  function addPat() {
-    addPattern(newPattern)
-    newPattern = ''
-  }
-  const FILTER_MODES = [
-    ['off', 'Off'],
-    ['allow', 'Allow-list'],
-    ['deny', 'Deny-list'],
-  ]
-
-  let hostDraft = $state('')
-  onMount(loadRemote)
-  onMount(loadGrant)
-  async function grantFor(hours) {
-    try {
-      await openGrant(hours)
-    } catch (e) {
-      toast(e?.message || 'Could not open window', 'error')
-    }
-  }
-  function addHost() {
-    const h = hostDraft.trim()
-    if (h) {
-      addRemoteHost(h)
-      hostDraft = ''
     }
   }
 
@@ -212,8 +181,8 @@
     {/if}
 
     <div class="mt-3 flex gap-2">
-      <PathInput field={pf} onEnter={addDir} placeholder="Add a directory…  /Users/you/projects" />
-      <button class="btn btn-default btn-sm" onclick={addDir} disabled={!pf.value.trim()}>Add</button>
+      <PathInput field={df.pathField} onEnter={() => df.addDir()} placeholder="Add a directory…  /Users/you/projects" />
+      <button class="btn btn-default btn-sm" onclick={() => df.addDir()} disabled={!df.pathField.value.trim()}>Add</button>
     </div>
     <p class="mt-1.5 text-[11px] text-[var(--text-3)]">Turn on <span class="font-medium text-[var(--text-2)]">Traverse</span> to scan subdirectories; off treats the directory itself as one project.</p>
 
@@ -233,8 +202,8 @@
           {/each}
         </div>
         <div class="mt-2 flex gap-2">
-          <input bind:value={newPattern} placeholder="web-*  ·  My App  ·  ~/lab/**" class="input mono min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && addPat()} />
-          <button class="btn btn-default btn-sm" onclick={addPat} disabled={!newPattern.trim()}>Add</button>
+          <input bind:value={df.pattern} placeholder="web-*  ·  My App  ·  ~/lab/**" class="input mono min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && df.addPattern()} />
+          <button class="btn btn-default btn-sm" onclick={() => df.addPattern()} disabled={!df.pattern.trim()}>Add</button>
         </div>
         <p class="mt-1.5 text-[11px] text-[var(--text-3)]">Matches a project name, its Oriel name, or a directory path (globs &amp; <span class="mono">**</span> allowed). Running stacks are never hidden.</p>
       {/if}
@@ -323,12 +292,12 @@
         <span class="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-tint-2)] px-2.5 py-1 text-[12px] font-medium text-[var(--accent)]">
           Unlocked · {fmtRemaining(grant.remainingSeconds)} left
         </span>
-        <button class="btn btn-sm btn-default" onclick={() => grantFor(6)} disabled={grant.busy}>Extend 6h</button>
+        <button class="btn btn-sm btn-default" onclick={() => requestGrant(6)} disabled={grant.busy}>Extend 6h</button>
         <button class="btn btn-sm btn-default" onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
       {:else}
         <span class="text-[13px] text-[var(--text-3)]">Destructive actions are <span class="font-medium text-[var(--text-2)]">locked</span> for automation.</span>
-        <button class="btn btn-sm btn-primary" onclick={() => grantFor(6)} disabled={grant.busy}>Allow 6h</button>
-        <button class="btn btn-sm btn-default" onclick={() => grantFor(24 * 6)} disabled={grant.busy}>Allow 6d</button>
+        <button class="btn btn-sm btn-primary" onclick={() => requestGrant(6)} disabled={grant.busy}>Allow 6h</button>
+        <button class="btn btn-sm btn-default" onclick={() => requestGrant(24 * 6)} disabled={grant.busy}>Allow 6d</button>
       {/if}
     </div>
     <p class="mt-2 text-[12px] text-[var(--text-3)]">
@@ -390,8 +359,8 @@
       </div>
     {/if}
     <div class="mt-3 flex gap-2">
-      <input bind:value={hostDraft} placeholder="oriel.example.com" class="input flex-1 text-[13px]" onkeydown={(e) => e.key === 'Enter' && addHost()} />
-      <button class="btn btn-default btn-sm" onclick={addHost} disabled={!hostDraft.trim() || remote.saving}>Add</button>
+      <input bind:value={hostForm.draft} placeholder="oriel.example.com" class="input flex-1 text-[13px]" onkeydown={(e) => e.key === 'Enter' && hostForm.add()} />
+      <button class="btn btn-default btn-sm" onclick={() => hostForm.add()} disabled={!hostForm.draft.trim() || remote.saving}>Add</button>
     </div>
     {#if remote.error}<p class="mt-2 text-[12px] text-[var(--red)]">{remote.error}</p>{/if}
   </section>
