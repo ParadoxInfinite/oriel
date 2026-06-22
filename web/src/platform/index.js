@@ -48,6 +48,10 @@ export { stacks, refreshStacks } from '../lib/stacks.svelte.js'
  *  history.points → [{ t, cpu, mem, down }] (rolling ~30 min) */
 export { stats, history, connection } from '../lib/live.svelte.js'
 
+/** Headless dashboard telemetry: CPU/mem utilisation + sparkline points, so both
+ *  editions read the same derived numbers and differ only in chrome. */
+export { DashboardStats } from '../lib/dashboard.svelte.js'
+
 /** The Oriel backend's own footprint + build version: `{ version, rss, goroutines, heapAlloc }`. */
 export { self } from '../lib/self.svelte.js'
 

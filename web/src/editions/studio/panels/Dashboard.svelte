@@ -3,8 +3,6 @@
   import {
     status,
     containers,
-    stats,
-    history,
     stacks,
     images,
     volumes,
@@ -15,6 +13,7 @@
     refreshImages,
     refreshVolumes,
     refreshNetworks,
+    DashboardStats,
   } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import Chart from '../lib/Chart.svelte'
@@ -30,25 +29,17 @@
     refreshNetworks()
   })
 
-  const s = $derived(status.data)
-  const isDocker = $derived(s?.engine === 'docker')
-
-  const running = $derived(containers.list.filter((c) => c.state === 'running'))
-  const samples = $derived(running.map((c) => stats.byId[c.id]).filter(Boolean))
-  const totalCpu = $derived(samples.reduce((a, x) => a + x.cpu, 0))
-  const usedMem = $derived(samples.reduce((a, x) => a + x.mem, 0))
-  const memLimit = $derived(samples.find((x) => x.memLimit)?.memLimit || s?.memory || 0)
-  const cpuCap = $derived((s?.cpu || 1) * 100)
-  const cpuPct = $derived(Math.min(100, (totalCpu / cpuCap) * 100))
-  const memPct = $derived(memLimit ? Math.min(100, (usedMem / memLimit) * 100) : 0)
-  const pulse = $derived(
-    history.points.map((p) => ({
-      t: p.t,
-      cpu: cpuCap ? Math.min(100, (p.cpu / cpuCap) * 100) : 0,
-      down: p.down,
-    }))
-  )
-  const servicesUp = $derived(stacks.list.reduce((a, x) => a + x.running, 0))
+  // Shared telemetry (CPU/mem utilisation, sparkline); chrome below is Studio's.
+  const d = new DashboardStats()
+  const s = $derived(d.sys)
+  const isDocker = $derived(d.isDocker)
+  const running = $derived(d.running)
+  const usedMem = $derived(d.usedMem)
+  const memLimit = $derived(d.memLimit)
+  const cpuPct = $derived(d.cpuPct)
+  const memPct = $derived(d.memPct)
+  const pulse = $derived(d.pulse)
+  const servicesUp = $derived(d.servicesUp)
 
   // Inventory cards follow sidebar order: Containers, Images, Volumes, Networks, Stacks.
   const cards = $derived([
