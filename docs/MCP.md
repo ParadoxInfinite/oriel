@@ -53,7 +53,7 @@ MCP client (Claude Desktop / Code / Cursor / Ollama host)
 `oriel mcp` is a subcommand that resolves the same Docker/Colima connection the
 server does and serves MCP over stdio.
 
-### Registry → MCP mapping (mechanical)
+### Registry → MCP mapping
 
 | `tools.Tool` field | MCP tool field |
 |---|---|
@@ -93,17 +93,14 @@ in-app assistant uses the same set.
 
 ## Secret masking (shared with the inspect UI)
 
-Lands **before** the `container.inspect` tool, or MCP would feed raw API
-keys to a model.
+`container.inspect` masks env values server-side, so MCP never feeds raw API
+keys to a model. The placeholder is fixed (`OPENAI_API_KEY=••••••••`) — no value
+or length is leaked.
 
-- `container.inspect` returns env with sensitive **values masked server-side** by
-  default (e.g. `OPENAI_API_KEY = sk-ant-••••••••3f2a`).
-- **Detection:** sensitive if the key name matches (`KEY` / `SECRET` / `TOKEN` /
-  `PASSWORD` / `AUTH` / `CREDENTIAL` / `PRIVATE` / …) **or** the value matches a
-  secret shape (`sk-`, `ghp_`, `AKIA`, `-----BEGIN … PRIVATE KEY`, JWT, long
-  high-entropy string).
-- **Over MCP:** raw secret values are **never** returned to the model (no reveal,
-  or behind a separate explicit grant).
+- **Detection (sensitive mode):** by key name (`KEY` / `SECRET` / `TOKEN` /
+  `PASSWORD` / `AUTH` / `CREDENTIAL` / `PRIVATE` / …) or by value shape (`sk-`,
+  `ghp_`, `AKIA`, `-----BEGIN … PRIVATE KEY`, JWT, long high-entropy token).
+- **Over MCP:** every env value is masked; there is no reveal on this path.
 - **In the UI:** masked by default (setting: off / sensitive-only / all); a
   "Reveal values" action requests raw values explicitly and is gated to loopback.
 
@@ -127,21 +124,9 @@ and are locked in `Registry.Execute` until a grant window is open; the MCP path
 never sets consent, so a locked call returns the "open a window" error. Env
 values are always masked on this path.
 
-## Phasing
-
-1. Read tools in the registry + server-side secret masking.
-2. MCP stdio server (tools) + the time-boxed destructive grant.
-3. MCP resources (logs/inspect) + prompts.
-4. MCP over HTTP (after optional auth).
-
 ## Non-goals
 
-- No model bundled in the binary.
-- No MCP **client** (Oriel consuming other servers) for now. The value is
-  exposing Docker, not consuming external tools.
+Oriel exposes Docker and Colima over MCP. It is not an MCP *client* (it doesn't
+consume other servers), and it bundles no model — the client brings that.
 
-## Open questions
-
-- Logs as tool vs. additionally a resource (tool first; resource later).
-- Grant scope: global window in v1; per-client/session later.
-- Reveal mechanism for masked secrets (gated server endpoint vs. never over MCP).
+Planned work (resources/prompts, MCP over HTTP) is on the [roadmap](../ROADMAP.md).
