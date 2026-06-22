@@ -89,9 +89,8 @@ var updateClient = &http.Client{
 // for updates" button) lowers the staleness floor to an hour, but never below it.
 func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	force := r.URL.Query().Has("force")
-	updateMu.Lock()
-	defer updateMu.Unlock()
 
+	updateMu.Lock()
 	if updateCache != nil {
 		ttl := passiveTTL
 		if force {
@@ -101,13 +100,22 @@ func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 			ttl = errorTTL
 		}
 		if time.Since(updateFetched) < ttl {
-			writeJSON(w, http.StatusOK, updateCache)
+			cached := updateCache // immutable once published; safe to read after unlock
+			updateMu.Unlock()
+			writeJSON(w, http.StatusOK, cached)
 			return
 		}
 	}
+	updateMu.Unlock()
+
+	// Fetch without the lock so concurrent checks don't serialize behind a slow
+	// (up to 10s) GitHub round-trip. A rare double fetch just refreshes twice.
 	info := s.fetchLatestRelease(r.Context())
+
+	updateMu.Lock()
 	updateCache = &info
 	updateFetched = time.Now()
+	updateMu.Unlock()
 	writeJSON(w, http.StatusOK, info)
 }
 

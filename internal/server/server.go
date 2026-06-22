@@ -72,8 +72,13 @@ func New(web fs.FS, version string) *Server {
 // Close stops the recorder and persists the history + outage logs. Call on shutdown.
 func (s *Server) Close() {
 	if s.cancel != nil {
+		// run()'s ctx.Done() branch does the shutdown flush; wait for it rather
+		// than racing it on the same temp files.
 		s.cancel()
+		<-s.recorder.done
+		return
 	}
+	// recorder was never started: flush directly.
 	s.recorder.closeOpenOutage()
 	s.recorder.flush()
 	s.recorder.flushOutages()

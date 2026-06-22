@@ -54,8 +54,10 @@ func installDarwin(bin string, port int) error {
 	// so include them (plus the binary's own dir) or lifecycle calls would fail.
 	pathEnv := filepath.Dir(bin) + ":/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
+	// The plist is XML; a path with &, <, or > would otherwise produce an invalid
+	// document that `launchctl bootstrap` rejects.
 	if err := render(plistPath, darwinPlist, map[string]any{
-		"Label": label, "Bin": bin, "Port": port, "Path": pathEnv, "Log": logPath,
+		"Label": label, "Bin": xmlEscape(bin), "Port": port, "Path": xmlEscape(pathEnv), "Log": xmlEscape(logPath),
 	}); err != nil {
 		return err
 	}
@@ -133,6 +135,42 @@ func linuxUserUnitPath() (string, error) {
 // (root has no user session bus, so a user unit can't work).
 func useSystem(system bool) bool { return system || os.Geteuid() == 0 }
 
+func fileExists(p string) bool {
+	_, err := os.Stat(p)
+	return err == nil
+}
+
+// manageUnit picks the unit to act on for status/uninstall. An explicit --system
+// wins; otherwise it prefers whichever scope's unit file actually exists, so a
+// root/sudo invocation doesn't silently target a nonexistent system unit while
+// the user unit is the one really installed. Falls back to the euid default.
+func manageUnit(system bool) (sys bool, unitPath string) {
+	if system {
+		return true, systemUnitPath
+	}
+	userPath, _ := linuxUserUnitPath()
+	sysExists := fileExists(systemUnitPath)
+	userExists := userPath != "" && fileExists(userPath)
+	switch {
+	case userExists && !sysExists:
+		return false, userPath
+	case sysExists && !userExists:
+		return true, systemUnitPath
+	case useSystem(system):
+		return true, systemUnitPath
+	default:
+		return false, userPath
+	}
+}
+
+// xmlEscape escapes the five XML metacharacters for safe interpolation into the
+// launchd plist template.
+func xmlEscape(s string) string { return xmlReplacer.Replace(s) }
+
+var xmlReplacer = strings.NewReplacer(
+	"&", "&amp;", "<", "&lt;", ">", "&gt;", `"`, "&quot;", "'", "&apos;",
+)
+
 // sctl prefixes systemctl with --user for per-user units.
 func sctl(system bool, args ...string) []string {
 	if system {
@@ -199,32 +237,34 @@ func installLinux(bin string, port int, system bool) error {
 }
 
 func uninstallLinux(system bool) error {
-	sys := useSystem(system)
-	unitPath := systemUnitPath
-	if !sys {
-		p, err := linuxUserUnitPath()
-		if err != nil {
-			return err
-		}
-		unitPath = p
-	}
+	sys, unitPath := manageUnit(system)
+	existed := fileExists(unitPath)
 	_ = run("systemctl", sctl(sys, "disable", "--now", "oriel.service")...)
 	if err := os.Remove(unitPath); err != nil && !os.IsNotExist(err) {
 		return err
 	}
 	_ = run("systemctl", sctl(sys, "daemon-reload")...)
+	if !existed {
+		fmt.Println("○ No Oriel service was installed")
+		return nil
+	}
 	fmt.Println("✓ Oriel service removed")
 	return nil
 }
 
 func statusLinux(system bool) error {
-	out, _ := exec.Command("systemctl", sctl(useSystem(system), "is-active", "oriel.service")...).CombinedOutput()
-	state := strings.TrimSpace(string(out))
-	if state == "active" {
+	sys, unitPath := manageUnit(system)
+	if !fileExists(unitPath) {
+		fmt.Println("○ Oriel service is not installed")
+		return nil
+	}
+	out, _ := exec.Command("systemctl", sctl(sys, "is-active", "oriel.service")...).CombinedOutput()
+	switch strings.TrimSpace(string(out)) {
+	case "active":
 		fmt.Println("● Oriel service is installed (running)")
-	} else if state == "inactive" || state == "failed" {
-		fmt.Printf("● Oriel service is installed (%s)\n", state)
-	} else {
+	case "inactive", "failed":
+		fmt.Printf("● Oriel service is installed (%s)\n", strings.TrimSpace(string(out)))
+	default:
 		fmt.Println("○ Oriel service is not installed")
 	}
 	return nil
