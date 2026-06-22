@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-06-22
+
+### Fixed
+
+- **The live demo no longer ships inside the release binary.** The `VITE_DEMO`
+  guard didn't fold to a constant, so the mock backend and synthetic seed data
+  were bundled into the real binary (v0.3.0–0.3.2). Now gated on a build-time
+  literal with the demo modules marked side-effect-free, so they tree-shake out
+  completely (verified: zero demo strings in the prod bundle).
+- **Container logs: proper connecting and empty states (Studio).** While the
+  stream connects you get a spinner; a container that has written nothing now
+  shows "No logs yet — this container hasn't written anything to stdout/stderr."
+  instead of a stuck "Waiting for logs…".
+
+### Security
+
+- Pinned all third-party GitHub Actions to full commit SHAs (`goreleaser-action`
+  and the three GitHub Pages actions) — supply-chain hardening, especially for
+  the release workflow which runs alongside a cross-repo Homebrew-tap token.
+
+### Demo
+
+- The dashboard CPU graph now renders (its seeded history is anchored to real
+  time, so it falls inside the chart's last-30-min window) and is smooth (a
+  single system-level sample per tick instead of a per-container sum that spiked).
+
 ## [0.3.2] - 2026-06-22
 
 ### Fixed
