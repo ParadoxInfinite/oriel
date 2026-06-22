@@ -8,5 +8,5 @@ Drop PNGs here; they're referenced from the root `README.md`.
 | `studio-dark.png`   | Studio dashboard, dark appearance       |
 | `classic.png`       | Classic edition (optional)              |
 
-Capture at 1440×900 (or 2× for retina) with a populated dashboard — the system
-pulse chart and a few containers — for the best first impression.
+Capture at 1440×900 (or 2× for retina) with a populated dashboard (the system
+pulse chart and a few containers) for the best first impression.

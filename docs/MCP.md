@@ -31,10 +31,10 @@ on this path.
 ## Principles
 
 - **No model in the base binary.** Oriel ships no LLM, no LLM client, no API-key
-  handling. The user's MCP client brings the model — so this stays vendor-neutral
+  handling. The user's MCP client brings the model, so this stays vendor-neutral
   and works with cloud or local LLMs.
 - **One validated path.** Every MCP call routes through
-  `internal/tools/Registry.Execute` — the same argument + entity-existence
+  `internal/tools/Registry.Execute`, the same argument + entity-existence
   validation the UI uses. The MCP server is a thin adapter, not a second system.
 - **Safe by default.** Read-only and reversible actions are allowed; destructive
   ones are locked behind a user-granted, time-boxed window (below).
@@ -76,7 +76,7 @@ the current state and target things by description, instead of acting blind. The
 in-app assistant uses the same set.
 
 > Logs and inspect may also show up as MCP **resources** later (so a client can
-> attach "this container's logs" as context). That's additive — they stay tools
+> attach "this container's logs" as context). That's additive; they stay tools
 > first.
 
 ## Safety: time-boxed destructive grant
@@ -86,14 +86,14 @@ in-app assistant uses the same set.
 - **Grant:** `oriel ai allow-destructive --for 6h` (or a Settings toggle). Stored
   with an `ExpiresAt`; **auto-relocks** when the window lapses.
 - **Enforced once** on `tool.Destructive` inside the execution path, so it covers
-  the MCP server and the in-app assistant identically — even a headless AI can
+  the MCP server and the in-app assistant identically. Even a headless AI can
   only do damage inside a window the user opened on purpose.
 - A locked call returns a structured error explaining how to grant, which an MCP
   client surfaces to the user.
 
 ## Secret masking (shared with the inspect UI)
 
-Lands **before** the `container.inspect` tool — otherwise MCP would feed raw API
+Lands **before** the `container.inspect` tool, or MCP would feed raw API
 keys to a model.
 
 - `container.inspect` returns env with sensitive **values masked server-side** by
@@ -109,17 +109,17 @@ keys to a model.
 
 ## Transports
 
-- **v1 — stdio.** `oriel mcp`. Local, no network, no auth needed; the client
+- **v1 (stdio).** `oriel mcp`. Local, no network, no auth needed; the client
   spawns it as a subprocess.
-- **Later — Streamable HTTP.** Reach the server from remote/hosted clients and the
+- **Later (Streamable HTTP).** Reach the server from remote/hosted clients and the
   hosted-AI MCP connectors. **Gated on the optional-auth tier landing first.**
 
 ## How it's built
 
 Built on the official [`modelcontextprotocol/go-sdk`](https://github.com/modelcontextprotocol/go-sdk).
-`oriel mcp` maps each registry tool to an MCP tool one-to-one — the SDK's
-`Server.AddTool` with our JSON Schema, and a thin handler over `Registry.Execute`
-— so the validation and masking are reused, not reimplemented. It adds about 2 MB
+`oriel mcp` maps each registry tool to an MCP tool one-to-one: the SDK's
+`Server.AddTool` with our JSON Schema, and a thin handler over `Registry.Execute`.
+The validation and masking are reused, not reimplemented. It adds about 2 MB
 to the binary.
 
 Destructive tools (`container.remove`, `*.prune`, …) carry a `destructiveHint`
@@ -137,11 +137,11 @@ values are always masked on this path.
 ## Non-goals
 
 - No model bundled in the binary.
-- No MCP **client** (Oriel consuming other servers) for now — the value is
+- No MCP **client** (Oriel consuming other servers) for now. The value is
   exposing Docker, not consuming external tools.
 
 ## Open questions
 
 - Logs as tool vs. additionally a resource (tool first; resource later).
-- Grant scope — global window in v1; per-client/session later.
+- Grant scope: global window in v1; per-client/session later.
 - Reveal mechanism for masked secrets (gated server endpoint vs. never over MCP).

@@ -29,7 +29,7 @@ That module is the entire stable surface. Highlights:
   `openPalette`; prune starters `startSystemPrune` / `startImagePrune` /
   `startVolumePrune`; op controls `cancelOp` / `resumeOps` / `focusOp` /
   `minimizeOp`.
-- **Headless controllers:** `PullController`, `LogsController` — own the stateful
+- **Headless controllers:** `PullController`, `LogsController` own the stateful
   logic so editions stay presentational.
 - **Helpers:** `fmt`, `icons`, `containersForImage`, `isPinnedImage`,
   `suggestTag`, `setOverlayTheme`, plus the discovery store.
@@ -39,7 +39,7 @@ Never reach into `../lib/*` directly; if it isn't re-exported from
 
 An edition is a Svelte component that renders the whole app from that state. It
 does **not** own data fetching or the global overlays (op progress, command
-palette, confirm dialog, toasts) — the host owns the single push-based live
+palette, confirm dialog, toasts). The host owns the single push-based live
 stream (no polling) and mounts the overlays around the edition. It *does* publish
 how those overlays should look via `setOverlayTheme(scheme, accent)` so they
 match the active edition (see `lib/overlayTheme.svelte.js`).
@@ -62,7 +62,7 @@ leak into one another.
 
 ## Add a runtime edition (no rebuild)
 
-Push a manifest onto `window.__orielThemes` before the app mounts — e.g. from
+Push a manifest onto `window.__orielThemes` before the app mounts, e.g. from
 a `<script>` in `index.html` or an injected bundle. `component` must be a mounted
 Svelte component constructor:
 

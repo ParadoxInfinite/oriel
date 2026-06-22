@@ -11,11 +11,11 @@
 
 ## Checklist
 
-- [ ] Scope is focused — unrelated fixes/refactors are split into their own PRs.
+- [ ] Scope is focused; unrelated fixes/refactors are split into their own PRs.
 - [ ] Commits follow [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, …).
 - [ ] `go build ./...`, `go vet ./...`, and `go test -race ./...` pass.
 - [ ] `cd web && npm run build` succeeds (UI changes).
-- [ ] Editions stay pure presentation — no new `../lib/*` imports outside the SDK (`web/src/platform/index.js`).
+- [ ] Editions stay pure presentation: no new `../lib/*` imports outside the SDK (`web/src/platform/index.js`).
 - [ ] Docs/CHANGELOG updated if behavior or flags changed.
 
 ## Screenshots

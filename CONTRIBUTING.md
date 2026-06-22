@@ -33,7 +33,7 @@ internal/
   provider/              the dormant NL/AI seam
   service/               launchd / systemd install
 web/src/
-  platform/index.js      the platform SDK — the stable contract for editions
+  platform/index.js      the platform SDK, the stable contract for editions
   lib/                   shared stores, helpers (sort, format, registry, api)
   components/            host-level global overlays (palette, confirm, toasts…)
   editions/              the swappable UIs (studio, classic) + registry
@@ -47,7 +47,7 @@ web/src/
 - **Frontend logic used by more than one edition** → put it behind the platform
   SDK (`web/src/platform` / `web/src/lib`), not inside an edition. Editions should
   be presentation, not behavior.
-- **A new look** → that's an edition or theme — see
+- **A new look** → that's an edition or theme. See
   [docs/THEMES.md](docs/THEMES.md). New editions and themes are very welcome.
 
 ## Style
@@ -60,7 +60,7 @@ web/src/
 
 ## Pull requests
 
-- Keep PRs focused — one coherent change. Flag unrelated fixes for a separate PR.
+- Keep PRs focused: one coherent change. Flag unrelated fixes for a separate PR.
 - `make build` and `make test` should pass.
 - Note any new env vars, endpoints, or platform-SDK exports in your description.
 

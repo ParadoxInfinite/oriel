@@ -8,12 +8,12 @@
 
 Manage containers, images, volumes, networks, and Compose stacks from a clean
 browser UI. Or skip the UI entirely and point an MCP client at it (Claude Desktop,
-Claude Code, Cursor, a local LLM) — the AI works through the same validation,
+Claude Code, Cursor, a local LLM). The AI works through the same validation,
 secret-masking, and destructive-action grant the UI does.
 
 It's the GUI Colima never shipped: ~15–30 MB of RAM, no Electron, Apache-2.0.
 Light enough to leave running as a service, or just start it when you need it.
-Everything stays on your machine — no account, no central server, and if you want
+Everything stays on your machine. No account, no central server, and if you want
 a login you run it yourself. Binds to `127.0.0.1`; works on macOS and Linux.
 
 [![CI](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml/badge.svg)](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml)
@@ -23,8 +23,8 @@ a login you run it yourself. Binds to `127.0.0.1`; works on macOS and Linux.
 </div>
 
 <p align="center">
-  <img src="docs/img/studio-light.png" alt="Oriel — Studio (light)" width="49%" />
-  <img src="docs/img/studio-dark.png" alt="Oriel — Studio (dark)" width="49%" />
+  <img src="docs/img/studio-light.png" alt="Oriel Studio (light)" width="49%" />
+  <img src="docs/img/studio-dark.png" alt="Oriel Studio (dark)" width="49%" />
 </p>
 
 ## Install
@@ -35,16 +35,16 @@ a login you run it yourself. Binds to `127.0.0.1`; works on macOS and Linux.
 brew install ParadoxInfinite/oriel/oriel
 ```
 
-**Quick install** — detects your platform, verifies the checksum, installs to your PATH:
+**Quick install**: detects your platform, verifies the checksum, installs to your PATH:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ParadoxInfinite/oriel/main/install.sh | sh
 ```
 
 > [!CAUTION]
-> This pipes a script into your shell, which runs as you. **[Read `install.sh`](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh) first** — or use the explicit per-platform commands below, which do the same thing, one intentional step at a time.
+> This pipes a script into your shell, which runs as you. **[Read `install.sh`](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh) first**, or use the explicit per-platform commands below, which do the same thing, one intentional step at a time.
 
-**Manual** — copy the one-liner for your platform:
+**Manual**: copy the one-liner for your platform:
 
 macOS · Apple Silicon (M1+)
 
@@ -92,26 +92,26 @@ Flags: `--port <n>` (default 4321), `--no-open`. To run on login as a background
 
 To reach Oriel from another machine through a reverse proxy or private network,
 allow the proxy's hostname (`oriel remote allow <host>`) and, for a sub-path,
-`oriel config base-path /oriel` — config is stored in `settings.json`. Run
+`oriel config base-path /oriel`. Config is stored in `settings.json`. Run
 `oriel doctor` to check it. See [docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md).
 Oriel has no auth, so read the security note there first.
 
 Needs a Docker Engine–compatible runtime + the `docker` CLI. [Colima](https://github.com/abiosoft/colima)
 is first-class (adds VM start/stop); Docker Engine, OrbStack, Rancher/Docker Desktop,
-Podman, and remote daemons also work — see [docs/DAEMONS.md](docs/DAEMONS.md).
+Podman, and remote daemons also work. See [docs/DAEMONS.md](docs/DAEMONS.md).
 
 ## Features
 
-- **Containers** — live CPU/mem, exit codes, bulk actions, streaming logs, full inspect.
-- **AI control (MCP)** — `oriel mcp` lets any MCP client (Claude, Cursor, a local LLM) drive Docker/Colima through the same validated, secret-masked tools, with destructive actions locked behind a grant. [More ↓](#ai-control-mcp)
-- **Images** — pull with registry search, prune, digest-pinned naming, one-click tag.
-- **Compose** — manage running stacks, plus discover & deploy projects from disk.
-- **Reclaim space** — selectable prune as cancelable background jobs that survive a refresh.
-- **Dashboard** — CPU history, memory, disk, and uptime/outage tracking.
-- **Command palette** (`⌘K`) — fuzzy-run any action; optional natural-language mode.
-- **Editions & themes** — swap the whole UI (Studio / Classic), light/dark/system, custom accents.
-- **Live** — everything streams over one SSE connection; the UI never polls.
-- **Self-update** — service installs update in-app via checksum-verified downloads.
+- **Containers**: live CPU/mem, exit codes, bulk actions, streaming logs, full inspect.
+- **AI control (MCP)**: `oriel mcp` lets any MCP client (Claude, Cursor, a local LLM) drive Docker/Colima through the same validated, secret-masked tools, with destructive actions locked behind a grant. [More ↓](#ai-control-mcp)
+- **Images**: pull with registry search, prune, digest-pinned naming, one-click tag.
+- **Compose**: manage running stacks, plus discover & deploy projects from disk.
+- **Reclaim space**: selectable prune as cancelable background jobs that survive a refresh.
+- **Dashboard**: CPU history, memory, disk, and uptime/outage tracking.
+- **Command palette** (`⌘K`): fuzzy-run any action, with an optional natural-language mode.
+- **Editions & themes**: swap the whole UI (Studio / Classic), light/dark/system, custom accents.
+- **Live**: everything streams over one SSE connection; the UI never polls.
+- **Self-update**: service installs update in-app via checksum-verified downloads.
 
 ## How it compares
 
@@ -129,25 +129,25 @@ The usual ways to run containers on a Mac or Linux box, and where Oriel fits. (F
 
 When to reach for it:
 
-- **Over Docker Desktop or OrbStack** — you want a graphical UI without a paid license, a bundled VM, or a desktop app sitting in your menu bar. Oriel is ~13 MB and drives the engine you already run.
-- **Over lazydocker** — you want a real browser UI with dashboards and graphs, not a terminal one.
-- **Over Portainer** — you want a binary you run for yourself, not a server to deploy and lock down.
+- **Over Docker Desktop or OrbStack**: you want a graphical UI without a paid license, a bundled VM, or a desktop app sitting in your menu bar. Oriel is ~13 MB and drives the engine you already run.
+- **Over lazydocker**: you want a real browser UI with dashboards and graphs, not a terminal one.
+- **Over Portainer**: you want a binary you run for yourself, not a server to deploy and lock down.
 
 And it's the only one here an AI can drive directly, through the same checks the UI gives you.
 
-> **Coming:** read-only and audited MCP access, Colima VM control (start/stop, profiles), an in-browser shell, and MCP over HTTP. The gap is only getting wider — see the [roadmap](ROADMAP.md).
+> **Coming:** read-only and audited MCP access, Colima VM control (start/stop, profiles), an in-browser shell, and MCP over HTTP. More on the [roadmap](ROADMAP.md).
 
 ## AI control (MCP)
 
 `oriel mcp` runs Oriel as a [Model Context Protocol](https://modelcontextprotocol.io)
 server, so an MCP client (Claude Desktop, Claude Code, Cursor, a local LLM) can
 manage your Docker/Colima in plain English. You don't have to open the GUI at
-all — it works headless. Either way the AI uses the same tools the UI does, with
+all. It works headless. Either way the AI uses the same tools the UI does, with
 the same guardrails:
 
-- **Secrets stay masked** — `container.inspect` never hands raw env values to a model.
+- **Secrets stay masked**: `container.inspect` never hands raw env values to a model.
 - **Destructive actions are locked** until you open a window on purpose (`oriel ai allow-destructive --for 6h`). Reads always work; remove/prune don't, until you say so.
-- **No model in the binary** — your client brings the model; Oriel stays vendor-neutral.
+- **No model in the binary**: your client brings the model; Oriel stays vendor-neutral.
 
 ```json
 { "mcpServers": { "oriel": { "command": "oriel", "args": ["mcp"] } } }
@@ -162,7 +162,7 @@ The presentation is a swappable plugin on a stable platform SDK. Ships with
 either, or drop in your own. See [docs/THEMES.md](docs/THEMES.md).
 
 <p align="center">
-  <img src="docs/img/classic.png" alt="Oriel — Classic edition" width="70%" />
+  <img src="docs/img/classic.png" alt="Oriel Classic edition" width="70%" />
 </p>
 
 ## Security
@@ -174,27 +174,27 @@ ZeroTier, WireGuard, …). **Never put it on the public internet.** Full trust m
 
 ## More
 
-- **Reverse-proxy subpath:** `oriel config base-path /oriel` — one build serves root or a subpath.
-- **AI / natural-language control:** point any MCP client at `oriel mcp` (see [AI control](#ai-control-mcp)), or wire the in-app command palette to your own resolver URL (Settings → AI) — either way the base binary links no ML code.
+- **Reverse-proxy subpath:** `oriel config base-path /oriel`. One build serves root or a subpath.
+- **AI / natural-language control:** point any MCP client at `oriel mcp` (see [AI control](#ai-control-mcp)), or wire the in-app command palette to your own resolver URL (Settings → AI). Either way the base binary links no ML code.
 - **Develop:** `make dev` + `make dev-web` (Vite hot reload), `make test`. See [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Roadmap:** actively developed — optional auth, read-only & audited MCP access, Colima-native AI control, in-browser shell — [ROADMAP.md](ROADMAP.md).
+- **Roadmap:** actively developed. Optional auth, read-only & audited MCP access, Colima-native AI control, in-browser shell, and more in [ROADMAP.md](ROADMAP.md).
 
 ## FAQ
 
 **Is there a GUI for Colima?**
-Yes — Oriel is a graphical web UI built for Colima. Colima ships CLI-only by design; Oriel fills that gap (and also drives Docker Engine, OrbStack, Podman, and remote daemons).
+Yes. Oriel is a graphical web UI built for Colima. Colima ships CLI-only by design, and Oriel fills that gap. It also drives Docker Engine, OrbStack, Podman, and remote daemons.
 
 **Is Oriel a free Docker Desktop alternative?**
-Yes. It's Apache-2.0, with no license fees and no account — point it at any Docker-compatible engine and manage everything from the browser.
+Yes. It's Apache-2.0, with no license fees and no account. Point it at any Docker-compatible engine and manage everything from the browser.
 
 **Does Oriel need Docker Desktop?**
 No. It needs any Docker Engine–compatible runtime plus the `docker` CLI. [Colima](https://github.com/abiosoft/colima) is first-class; see [docs/DAEMONS.md](docs/DAEMONS.md).
 
 **Can an AI manage my containers?**
-Yes — run `oriel mcp` and point any MCP client (Claude Desktop, Claude Code, Cursor, a local LLM) at it. The AI uses the same validated, secret-masked tools the UI does, and destructive actions stay locked until you open a window (`oriel ai allow-destructive --for 6h`). See [AI control](#ai-control-mcp).
+Yes. Run `oriel mcp` and point any MCP client (Claude Desktop, Claude Code, Cursor, a local LLM) at it. The AI uses the same validated, secret-masked tools the UI does, and destructive actions stay locked until you open a window (`oriel ai allow-destructive --for 6h`). See [AI control](#ai-control-mcp).
 
 **How is it different from lazydocker?**
-lazydocker is a terminal UI. Oriel is a real graphical browser UI — dashboards, streaming logs, registry search, Compose discovery, and themeable editions.
+lazydocker is a terminal UI. Oriel is a real graphical browser UI, with dashboards, streaming logs, registry search, Compose discovery, and themeable editions.
 
 **How much memory does it use?**
 ~15–30 MB. The binary is ~13 MB and there's no Electron.
@@ -203,20 +203,20 @@ lazydocker is a terminal UI. Oriel is a real graphical browser UI — dashboards
 macOS (Apple Silicon + Intel) and Linux (amd64 + arm64).
 
 **Is it safe to run?**
-Oriel has **no authentication** and driving Docker is root-equivalent on the host. Run it on `127.0.0.1`, or reach it over a private network only — never the public internet. See [SECURITY.md](SECURITY.md).
+Oriel has **no authentication** and driving Docker is root-equivalent on the host. Run it on `127.0.0.1`, or reach it over a private network only. Never the public internet. See [SECURITY.md](SECURITY.md).
 
 ## Where it's headed
 
 Actively developed. Next up:
 
-- **Optional auth** — opt-in, your auth, not a login to anyone's server.
-- **Read-only & audited MCP access** — scope what an AI can do, and keep a trail of what it did.
-- **Colima-native AI control** — start/stop the VM and manage profiles, not just the containers on it.
+- **Optional auth**: opt-in, your auth, not a login to anyone's server.
+- **Read-only & audited MCP access**: scope what an AI can do, and keep a trail of what it did.
+- **Colima-native AI control**: start/stop the VM and manage profiles, not just the containers on it.
 - **In-browser container shell** and **MCP over HTTP** for remote clients.
 
 See the [full roadmap](ROADMAP.md). If there's something you want, open an
 [issue](https://github.com/ParadoxInfinite/oriel/issues) or a
-[discussion](https://github.com/ParadoxInfinite/oriel/discussions) — no promises,
+[discussion](https://github.com/ParadoxInfinite/oriel/discussions). No promises,
 but good ideas get taken seriously.
 
 ## License

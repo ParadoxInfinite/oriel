@@ -1,6 +1,6 @@
 # Supported container runtimes
 
-Oriel is a GUI for the **Docker Engine API**. It doesn't bundle a runtime — it
+Oriel is a GUI for the **Docker Engine API**. It doesn't bundle a runtime. It
 connects to one already on your machine. How it picks the connection
 (`internal/docker/client.go`):
 
@@ -9,7 +9,7 @@ connects to one already on your machine. How it picks the connection
    **lifecycle controls** (start / stop / restart) on the dashboard.
 2. **If Colima is installed but not started**, Oriel waits and retries rather
    than connecting to the wrong socket.
-3. **Otherwise**, Oriel uses the standard Docker environment — `DOCKER_HOST` if
+3. **Otherwise**, Oriel uses the standard Docker environment: `DOCKER_HOST` if
    set, else the platform's default socket (`/var/run/docker.sock`).
 
 So anything that exposes the Docker Engine API over a unix socket (or
@@ -29,11 +29,11 @@ for Oriel to manage).
 | **Lima** (docker template) | macOS, Linux | ✅ Supported | Colima is built on Lima |
 | **Podman** | macOS, Linux | ⚠️ Mostly | Via its Docker-compatible API (`podman system service` + `DOCKER_HOST`); a few endpoints differ |
 | **Remote daemon** | any | ✅ Supported | Point `DOCKER_HOST=tcp://…` or `ssh://…` at it |
-| **containerd / nerdctl** (directly) | — | ❌ Not supported | Not the Docker Engine API — needs a Docker-API shim |
+| **containerd / nerdctl** (directly) | n/a | ❌ Not supported | Not the Docker Engine API; needs a Docker-API shim |
 
-The **Platform** column is where **Oriel itself** runs — it ships macOS and Linux
+The **Platform** column is where **Oriel itself** runs. It ships macOS and Linux
 binaries only. Several of these runtimes also run on Windows; Oriel does not. A
-Windows-hosted Docker daemon is still reachable as a **remote daemon** — point
+Windows-hosted Docker daemon is still reachable as a **remote daemon**: point
 `DOCKER_HOST` at it from a macOS or Linux machine (see below).
 
 ### Pointing Oriel at a non-Colima daemon

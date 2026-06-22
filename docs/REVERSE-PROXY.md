@@ -1,12 +1,12 @@
 # Reverse proxy & remote access
 
-Oriel binds to `127.0.0.1` and has **no authentication** — its security model is
+Oriel binds to `127.0.0.1` and has **no authentication**: its security model is
 the network boundary (see [SECURITY.md](../SECURITY.md)). To reach it from another
 machine you put a reverse proxy in front of it and tell Oriel to trust that path.
 
 All config lives in **`settings.json`** (in your OS config dir, e.g.
-`~/.config/oriel/settings.json`). You set it from the running instance — the UI,
-or the CLI over loopback — so it persists across restarts, reinstalls, and
+`~/.config/oriel/settings.json`). You set it from the running instance (the UI,
+or the CLI over loopback), so it persists across restarts, reinstalls, and
 self-updates. Two settings matter for a proxy:
 
 | settings.json key | Set it with | Purpose |
@@ -30,12 +30,12 @@ oriel config base-path /oriel            # if mounting under a sub-path (restart
 oriel doctor                             # verify Docker, base path, hosts, service
 ```
 
-`oriel doctor` will tell you exactly what's missing — e.g. a sub-path set with no
+`oriel doctor` will tell you exactly what's missing, e.g. a sub-path set with no
 allowed host, which is the most common cause of a 403 over the proxy.
 
 ### Why not just the in-app toggle?
 
-Settings → Remote access edits `allowedHosts` at runtime — but only once the UI
+Settings → Remote access edits `allowedHosts` at runtime, but only once the UI
 can talk to `/api`. Behind a proxy on a non-loopback hostname, the UI's *own* first
 API call carries that hostname and is 403'd, so the page can't load enough to fix
 itself. Run `oriel remote allow <host>` **on the box** (loopback is always trusted)
@@ -46,7 +46,7 @@ to break the deadlock; after that the in-app toggle works for further changes.
 Older versions configured this via `ORIEL_BASE_PATH` / `ORIEL_ALLOWED_HOSTS` /
 `ORIEL_PROVIDER_URL`. These are deprecated: on first start of 0.2+, any that are
 set are migrated into `settings.json` (and logged), then ignored. Remove them from
-your service unit/environment once migrated — `settings.json` is the source now.
+your service unit/environment once migrated. `settings.json` is the source now.
 
 ## nginx
 
@@ -58,7 +58,7 @@ not buffer. It tolerates the prefix being stripped or passed through, so either
 location /oriel/ {
     proxy_pass http://127.0.0.1:4321;
 
-    # Required for SSE — without these the log/stat streams hang at 0 bytes:
+    # Required for SSE; without these the log/stat streams hang at 0 bytes:
     proxy_http_version 1.1;            # default 1.0 does not stream
     proxy_set_header Connection "";
     proxy_buffering off;
