@@ -57,15 +57,25 @@ export class PullController {
     const tagMode = this.ref.includes(':') && this.source.tags && this.repoBase.length >= 2
     if (tagMode) {
       this.view = 'tags'
+      this.busy = true
       this.#debounce = setTimeout(() => this.#loadTags(this.repoBase), 250)
     } else if (this.source.search && this.repoBase.length >= 2) {
       this.view = 'search'
       this.busy = true
       this.#debounce = setTimeout(() => this.#runSearch(this.repoBase), 250)
     } else {
+      // Nothing will fire; clearTimeout above cancelled any pending request, so
+      // clear the spinner here or it sticks on after a debounced search is dropped.
       this.view = null
       this.results = []
+      this.busy = false
     }
+  }
+
+  // destroy clears the pending debounce so a dialog closed mid-type doesn't fire
+  // a wasted registry fetch (and mutate state on a detached controller).
+  destroy() {
+    clearTimeout(this.#debounce)
   }
 
   onSourceChange = () => {
@@ -75,6 +85,7 @@ export class PullController {
     this.view = null
     this.highlight = -1
     this.error = null
+    this.busy = false
     const cur = this.ref.trim()
     if (!this.source.search && (cur === '' || REGISTRY_HOSTS.includes(cur))) this.ref = this.source.host
     else if (this.source.search && REGISTRY_HOSTS.includes(cur)) this.ref = ''
@@ -166,7 +177,10 @@ export class PullController {
   }
 
   #loadTags = async (repo) => {
-    if (!this.source.tags || repo === this.#tagsRepo) return
+    if (!this.source.tags || repo === this.#tagsRepo) {
+      this.busy = false // nothing to fetch; don't leave the spinner stuck
+      return
+    }
     const id = ++this.#reqId
     this.busy = true
     try {
