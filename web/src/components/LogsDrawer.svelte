@@ -1,6 +1,7 @@
 <script>
   import { tick } from 'svelte'
   import { LogsController } from '../lib/logs.svelte.js'
+  import { logTime as fmtTs } from '../lib/format.js'
 
   let { container, onClose } = $props()
 
@@ -65,11 +66,6 @@
   }
   // Per-line markers: a wall-clock timestamp gutter + a stream-coloured left edge.
   const streamEdge = (s) => (s === 'stderr' ? 'border-warn' : s === 'error' ? 'border-danger' : 'border-transparent')
-  function fmtTs(ts) {
-    if (!ts) return ''
-    const d = new Date(ts)
-    return isNaN(d) ? '' : d.toLocaleTimeString([], { hour12: false })
-  }
 
   // Only close when a click both starts AND ends on the backdrop itself — so a
   // resize drag that releases outside the drawer never dismisses it.
