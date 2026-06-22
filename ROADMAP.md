@@ -15,6 +15,17 @@ feedback; the best way to influence them is to open an
   container, straight from the UI — built on the existing exec-streaming seam.
 - **MCP over HTTP (Streamable HTTP).** Reach Oriel's MCP server from remote clients
   and hosted-AI connectors. Gated on optional authentication landing first.
+- **Read-only & scoped MCP access.** A `--read-only` mode plus per-tool /
+  per-namespace allow-lists, so you can hand an MCP client a deliberately limited
+  surface (e.g. logs + inspect only, no lifecycle). Mirrors the proven flags from
+  the Kubernetes MCP server and layers with the destructive grant for
+  defense-in-depth. Among Docker-management MCP servers, gating like this is the
+  exception, not the norm.
+- **Audit log of AI-initiated actions.** Record who / what / when for every tool
+  call that arrives through the MCP server or assistant (human UI clicks excluded)
+  — a durable trail of what an AI did to your environment. No other
+  Docker-management MCP server offers this; it's a trust anchor for AI-driven ops
+  and a natural complement to the grant.
 
 ## Next
 
@@ -24,6 +35,12 @@ feedback; the best way to influence them is to open an
 - **MCP resources & prompts.** Expose container logs, inspect output, and Compose
   files as readable MCP **resources**, plus canned diagnostic **prompts** — so an
   AI can read a crashing container's logs as context, not just call tools.
+- **Colima as a first-class MCP target.** Today only `colima.status` is exposed
+  (read-only). Add gated lifecycle + config tools — `colima.start` / `stop` /
+  `restart`, plus profile and resource (CPU / memory / disk) management — so an AI
+  can manage the **VM**, not just the containers on it. The wedge no competitor
+  can copy: every other Docker MCP server just repoints the socket and is blind to
+  Colima.
 
 ## Later
 
