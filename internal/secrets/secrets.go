@@ -63,14 +63,25 @@ func looksSecret(v string) bool {
 			return true
 		}
 	}
+	// A URL/DSN is a secret only when it carries credentials in the userinfo
+	// (scheme://user:pass@host, e.g. DATABASE_URL / REDIS_URL); a plain URL is
+	// not. Checked before the token heuristic since URLs aren't bare tokens.
+	if i := strings.Index(v, "://"); i >= 0 {
+		rest := v[i+3:]
+		if at := strings.IndexByte(rest, '@'); at > 0 {
+			if cred := rest[:at]; strings.IndexByte(cred, ':') >= 0 && !strings.ContainsAny(cred, "/?#") {
+				return true
+			}
+		}
+		return false
+	}
 	// Best-effort: a long, whitespace-free, token-shaped run is probably a
-	// credential (hex, base64, base64url). Exclude obvious filesystem paths and
-	// URLs/DSNs — when those carry a secret they're caught by name instead
-	// (e.g. DATABASE_URL). Sensitive mode is heuristic; "all" is the safe default.
+	// credential (hex, base64, base64url). Exclude obvious filesystem paths.
+	// Sensitive mode is heuristic; "all" is the safe default.
 	if len(v) < 24 || strings.ContainsAny(v, " \t\n") {
 		return false
 	}
-	if v[0] == '/' || v[0] == '~' || strings.Contains(v, "://") {
+	if v[0] == '/' || v[0] == '~' {
 		return false
 	}
 	for _, r := range v {
@@ -116,4 +127,46 @@ func MaskEnv(env []string, mode Mode) []string {
 		}
 	}
 	return out
+}
+
+// MaskLabels masks only label values that look sensitive (by name or value
+// shape). Unlike env, label sets are mostly metadata (compose project, image
+// version), so "all" is not applied wholesale — that would gut the inspect view.
+func MaskLabels(labels map[string]string, mode Mode) map[string]string {
+	if mode == MaskOff || len(labels) == 0 {
+		return labels
+	}
+	out := make(map[string]string, len(labels))
+	for k, v := range labels {
+		if v != "" && IsSensitive(k, v) {
+			out[k] = MaskValue(v)
+		} else {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// MaskCommand masks credential-looking tokens inside a container's command line,
+// leaving the rest readable: a `--flag=value` / `KEY=value` whose name or value
+// is sensitive, or a bare token that looks like a credential (sk-…, JWT, long
+// token). A command is mostly non-secret, so only detected tokens are masked;
+// "off" disables it. Heuristic — combined forms like `-psecret` aren't caught.
+func MaskCommand(cmd string, mode Mode) string {
+	if mode == MaskOff || cmd == "" {
+		return cmd
+	}
+	fields := strings.Fields(cmd)
+	for i, f := range fields {
+		if k, v, ok := strings.Cut(f, "="); ok && v != "" {
+			if IsSensitive(strings.TrimLeft(k, "-"), v) {
+				fields[i] = k + "=" + MaskValue(v)
+			}
+			continue
+		}
+		if looksSecret(f) {
+			fields[i] = MaskValue(f)
+		}
+	}
+	return strings.Join(fields, " ")
 }

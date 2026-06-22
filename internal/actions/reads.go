@@ -13,9 +13,12 @@ import (
 // system-level status calls. None mutate state, so all are Destructive:false and
 // safe to expose to an assistant or MCP client without a grant.
 //
-// container.inspect masks env values through envMask() — the same settings knob
-// the HTTP inspect handler honours — so secrets never reach an LLM/MCP consumer
-// even though the human UI can reveal them locally.
+// container.inspect masks env, plus sensitive command/label values, through
+// envMask() — the same settings knob the HTTP inspect handler honours. A
+// non-consented caller (the NL provider / an automated agent) gets a hard floor:
+// even when the human set masking to "off" for the local UI, secrets are never
+// returned raw on that path. The dedicated `oriel mcp` process masks all (it
+// passes MaskAll); only interactive UI calls, which carry consent, honour "off".
 func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.Mode) {
 	r.Register(&tools.Tool{
 		Name: "container.list", Title: "List containers", Description: "List all containers with state and ports",
@@ -35,7 +38,15 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 			if err != nil {
 				return nil, err
 			}
-			d.Env = secrets.MaskEnv(d.Env, envMask())
+			mode := envMask()
+			// Floor: a non-consented caller (NL provider / agent) never gets raw
+			// secrets, even if the human set masking to "off" for the local UI.
+			if mode == secrets.MaskOff && !tools.HasConsent(ctx) {
+				mode = secrets.MaskSensitive
+			}
+			d.Env = secrets.MaskEnv(d.Env, mode)
+			d.Command = secrets.MaskCommand(d.Command, mode)
+			d.Labels = secrets.MaskLabels(d.Labels, mode)
 			return d, nil
 		},
 	})

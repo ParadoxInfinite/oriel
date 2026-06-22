@@ -35,6 +35,11 @@ func consented(ctx context.Context) bool {
 	return v
 }
 
+// HasConsent reports whether ctx was marked human-confirmed via WithConsent.
+// Lets handlers give non-consented (agent / NL-provider) callers a stricter
+// floor than an interactive user.
+func HasConsent(ctx context.Context) bool { return consented(ctx) }
+
 // ErrUnknownTool is returned when a tool name is not registered.
 var ErrUnknownTool = errors.New("unknown tool")
 

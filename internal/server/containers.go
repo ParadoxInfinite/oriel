@@ -42,6 +42,8 @@ func (s *Server) handleContainerInspect(w http.ResponseWriter, r *http.Request) 
 	masked := !reveal && mode != secrets.MaskOff
 	if masked {
 		d.Env = secrets.MaskEnv(d.Env, mode)
+		d.Command = secrets.MaskCommand(d.Command, mode)
+		d.Labels = secrets.MaskLabels(d.Labels, mode)
 	}
 	writeJSON(w, http.StatusOK, inspectResponse{ContainerDetail: d, EnvMasked: masked, CanReveal: canReveal})
 }
