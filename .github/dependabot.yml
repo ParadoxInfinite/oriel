@@ -4,17 +4,26 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
     commit-message:
       prefix: ci
   - package-ecosystem: gomod
     directory: /
     schedule:
       interval: weekly
+    groups:
+      gomod:
+        patterns: ["*"]
     commit-message:
       prefix: chore
   - package-ecosystem: npm
     directory: /web
     schedule:
       interval: weekly
+    groups:
+      npm:
+        patterns: ["*"]
     commit-message:
       prefix: chore
