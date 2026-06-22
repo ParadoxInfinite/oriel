@@ -33,22 +33,24 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return
 	}
-	cur := loadSettings()
 	// Only a base-path change requires a restart (it's baked into the served
 	// assets at boot); the masking settings hot-reload (read per inspect request).
+	var cur settings
 	baseChanged := false
-	if body.BasePath != nil {
-		nb := strings.TrimSpace(*body.BasePath)
-		baseChanged = nb != cur.BasePath
-		cur.BasePath = nb
-	}
-	if body.MaskEnv != nil && oneOf(*body.MaskEnv, "all", "sensitive", "off") {
-		cur.MaskEnv = *body.MaskEnv
-	}
-	if body.EnvReveal != nil && oneOf(*body.EnvReveal, "off", "local", "remote") {
-		cur.EnvReveal = *body.EnvReveal
-	}
-	if err := saveSettings(cur); err != nil {
+	if err := updateSettings(func(c *settings) {
+		if body.BasePath != nil {
+			nb := strings.TrimSpace(*body.BasePath)
+			baseChanged = nb != c.BasePath
+			c.BasePath = nb
+		}
+		if body.MaskEnv != nil && oneOf(*body.MaskEnv, "all", "sensitive", "off") {
+			c.MaskEnv = *body.MaskEnv
+		}
+		if body.EnvReveal != nil && oneOf(*body.EnvReveal, "off", "local", "remote") {
+			c.EnvReveal = *body.EnvReveal
+		}
+		cur = *c
+	}); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
 		return
 	}

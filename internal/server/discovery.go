@@ -37,9 +37,7 @@ func (s *Server) handlePutDiscovery(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return
 	}
-	cur := loadSettings()
-	cur.Discovery = c
-	if err := saveSettings(cur); err != nil {
+	if err := updateSettings(func(st *settings) { st.Discovery = c }); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
 		return
 	}

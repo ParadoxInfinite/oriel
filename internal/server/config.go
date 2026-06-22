@@ -76,6 +76,28 @@ func settingsPath() string { return dataPath("settings.json") }
 func loadSettings() settings {
 	settingsMu.Lock()
 	defer settingsMu.Unlock()
+	return loadLocked()
+}
+
+func saveSettings(c settings) error {
+	settingsMu.Lock()
+	defer settingsMu.Unlock()
+	return saveLocked(c)
+}
+
+// updateSettings performs a read-modify-write under a single hold of the lock,
+// so concurrent updates to different fields can't clobber one another (each
+// caller used to load → mutate one field → save, racing the others).
+func updateSettings(mutate func(*settings)) error {
+	settingsMu.Lock()
+	defer settingsMu.Unlock()
+	c := loadLocked()
+	mutate(&c)
+	return saveLocked(c)
+}
+
+// loadLocked / saveLocked assume settingsMu is already held.
+func loadLocked() settings {
 	var c settings
 	b, err := os.ReadFile(settingsPath())
 	if err != nil {
@@ -85,20 +107,30 @@ func loadSettings() settings {
 	return c
 }
 
-func saveSettings(c settings) error {
-	settingsMu.Lock()
-	defer settingsMu.Unlock()
+func saveLocked(c settings) error {
 	path := settingsPath()
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+	dir := filepath.Dir(path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
 	b, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return err
 	}
-	// Write+rename so a crash or concurrent read never sees a torn file.
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o600); err != nil {
+	// Unique temp + rename so a crash or a concurrent writer never sees (or
+	// collides on) a torn file. os.CreateTemp creates it 0600.
+	f, err := os.CreateTemp(dir, "settings-*.json.tmp")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	if _, err := f.Write(b); err != nil {
+		f.Close()
+		os.Remove(tmp)
+		return err
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(tmp)
 		return err
 	}
 	return os.Rename(tmp, path)

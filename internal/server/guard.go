@@ -113,12 +113,11 @@ func (s *Server) handlePutRemote(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
 		return
 	}
-	cur := loadSettings()
-	cur.AllowedHosts = normalizeHosts(body.Hosts)
-	if err := saveSettings(cur); err != nil {
+	hosts := normalizeHosts(body.Hosts)
+	if err := updateSettings(func(st *settings) { st.AllowedHosts = hosts }); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
 		return
 	}
-	s.guard.set(cur.AllowedHosts)
-	writeJSON(w, http.StatusOK, map[string]any{"hosts": cur.AllowedHosts})
+	s.guard.set(hosts)
+	writeJSON(w, http.StatusOK, map[string]any{"hosts": hosts})
 }
