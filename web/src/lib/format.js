@@ -10,6 +10,11 @@ export function shortRef(ref) {
   return `${ref.slice(0, i)}@sha256:${ref.slice(i + 8, i + 8 + 12)}`
 }
 
+// First 12 hex of a bare image id, stripping any sha256: prefix.
+export function shortId(id) {
+  return (id || '').replace(/^sha256:/, '').slice(0, 12)
+}
+
 export function bytes(n) {
   if (!n || n < 0) return '0 B'
   let i = 0
