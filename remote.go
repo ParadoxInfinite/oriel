@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 )
@@ -102,6 +103,7 @@ func applyHosts(cur, change []string, add bool) []string {
 	for h := range set {
 		out = append(out, h)
 	}
+	slices.Sort(out) // stable output across calls (map iteration is random)
 	return out
 }
 

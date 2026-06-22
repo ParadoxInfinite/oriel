@@ -62,12 +62,12 @@ func normReveal(s string) string {
 // TODO(auth): once the optional-auth tier lands, "remote" should additionally
 // require an authenticated session.
 func (s *Server) canRevealEnv(r *http.Request) bool {
-	switch loadSettings().EnvReveal {
+	switch normReveal(loadSettings().EnvReveal) {
 	case "off":
 		return false
 	case "remote":
 		return true
-	default: // "local" / unset
+	default: // "local"
 		host := r.Host
 		if h, _, err := net.SplitHostPort(host); err == nil {
 			host = h

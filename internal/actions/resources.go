@@ -7,6 +7,8 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
+// okResult is the shared success payload returned by mutating tools. It is
+// read-only: handlers return it for JSON encoding and must never mutate it.
 var okResult = map[string]any{"ok": true}
 
 func registerImages(r *tools.Registry, dc *docker.Client) {

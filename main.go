@@ -6,8 +6,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 	"os/exec"
 	"os/signal"
 	"runtime"
@@ -27,52 +29,29 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "service":
-			// `oriel service <install|uninstall|status>` manages the background service.
-			if err := service.Run(os.Args[2:]); err != nil {
-				log.Fatalf("service: %v", err)
-			}
-			return
+			runSub("service", service.Run) // install | uninstall | status
 		case "remote":
-			// `oriel remote <list|allow|deny>` manages the running instance's host
-			// allow-list over loopback.
-			if err := runRemote(os.Args[2:]); err != nil {
-				log.Fatalf("remote: %v", err)
-			}
-			return
+			runSub("remote", runRemote) // list | allow | deny — host allow-list over loopback
 		case "doctor":
-			// `oriel doctor` reports config/connectivity health and exits.
-			if err := runDoctor(os.Args[2:]); err != nil {
-				log.Fatalf("doctor: %v", err)
-			}
-			return
+			runSub("doctor", runDoctor) // config/connectivity health check
 		case "config":
-			// `oriel config base-path …` edits settings.json config over loopback.
-			if err := runConfig(os.Args[2:]); err != nil {
-				log.Fatalf("config: %v", err)
-			}
-			return
+			runSub("config", runConfig) // edit settings.json over loopback
 		case "update":
-			// `oriel update` drives the running instance's checksum-verified self-update.
-			if err := runUpdate(os.Args[2:]); err != nil {
-				log.Fatalf("update: %v", err)
-			}
-			return
+			runSub("update", runUpdate) // checksum-verified self-update
 		case "ai":
-			// `oriel ai <allow-destructive|status|lock>` manages the time-boxed
-			// window that unlocks destructive tools for MCP / the assistant.
-			if err := runAI(os.Args[2:]); err != nil {
-				log.Fatalf("ai: %v", err)
-			}
-			return
+			runSub("ai", runAI) // allow-destructive | status | lock — the grant window
 		case "mcp":
-			// `oriel mcp` serves the tool registry to an MCP client over stdio.
-			if err := runMCP(os.Args[2:]); err != nil {
-				log.Fatalf("mcp: %v", err)
-			}
-			return
+			runSub("mcp", runMCP) // serve the tool registry to an MCP client over stdio
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return
+		default:
+			// A non-flag first arg is a mistyped subcommand; flags fall through to
+			// the server below.
+			if !strings.HasPrefix(os.Args[1], "-") {
+				fmt.Fprintf(os.Stderr, "oriel: unknown command %q\nrun one of: service, remote, doctor, config, update, ai, mcp, version\n", os.Args[1])
+				os.Exit(2)
+			}
 		}
 	}
 
@@ -84,33 +63,40 @@ func main() {
 	srv := server.New(webFS(), version)
 
 	httpServer := &http.Server{
-		Addr:              addr,
 		Handler:           srv,
 		ReadHeaderTimeout: 10 * time.Second,
+	}
+
+	// Bind synchronously so a port-in-use error is reported up front, before we
+	// open a browser to a dead port or detach the serve loop.
+	ln, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("cannot listen on %s: %v", addr, err)
 	}
 
 	// Graceful shutdown on Ctrl-C / SIGTERM.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	url := fmt.Sprintf("http://%s", addr)
+	srv.LogStartup(url)
+	if !*noOpen {
+		go openBrowser(url) // the listener is already up
+	}
+
+	serveErr := make(chan error, 1)
 	go func() {
-		url := fmt.Sprintf("http://%s", addr)
-		srv.LogStartup(url)
-		if !*noOpen {
-			// Give the listener a beat to come up before opening the browser.
-			time.Sleep(300 * time.Millisecond)
-			openBrowser(url)
+		if err := httpServer.Serve(ln); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serveErr <- err
 		}
 	}()
 
-	go func() {
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("server error: %v", err)
-		}
-	}()
-
-	<-ctx.Done()
-	log.Println("shutting down...")
+	select {
+	case <-ctx.Done():
+		log.Println("shutting down...")
+	case err := <-serveErr:
+		log.Printf("server error: %v", err)
+	}
 	// Short grace period: SSE streams never close on their own, so a long
 	// timeout just stalls every restart. 2s is plenty for real in-flight calls.
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -120,6 +106,16 @@ func main() {
 	}
 	// Persist the metrics history so a restart resumes where it left off.
 	srv.Close()
+}
+
+// runSub runs a subcommand handler and exits. A -h request (flag.ErrHelp) is a
+// success — the flag package already printed usage — so it exits 0 cleanly
+// rather than re-printing the error and exiting non-zero.
+func runSub(name string, fn func([]string) error) {
+	if err := fn(os.Args[2:]); err != nil && !errors.Is(err, flag.ErrHelp) {
+		log.Fatalf("%s: %v", name, err)
+	}
+	os.Exit(0)
 }
 
 // openBrowser opens the default browser at url. Best-effort; errors are ignored.
