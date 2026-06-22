@@ -3,6 +3,8 @@
     status,
     self,
     update,
+    canSelfUpdate,
+    promptUpdate,
     openPalette,
     refreshImages,
     refreshVolumes,
@@ -33,6 +35,13 @@
     { name: 'Stacks', icon: 'layers' },
   ]
   let active = $state('Dashboard')
+
+  // The update pill opens the confirm-update modal directly when this install can
+  // self-update; otherwise it falls back to the Settings/Updates view.
+  function onUpdatePill() {
+    if (canSelfUpdate()) promptUpdate()
+    else active = 'Settings'
+  }
 
   // Lazy-load a view's data the first time it's opened.
   const loaders = {
@@ -134,7 +143,7 @@
       <span class="text-[11px] font-medium tracking-wide text-muted">Oriel</span>
       <div class="flex items-center gap-1.5">
         {#if update.available}
-          <button type="button" onclick={() => (active = 'Settings')} class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available — v{update.latest} · open updates">update</button>
+          <button type="button" onclick={onUpdatePill} class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available — v{update.latest} · {canSelfUpdate() ? 'install now' : 'open updates'}">update</button>
         {/if}
         {#if verLabel}<span class="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] font-medium text-fg/85">{verLabel}</span>{/if}
       </div>

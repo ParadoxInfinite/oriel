@@ -2,6 +2,7 @@
 // Self-update (apply + restart) is offered only for service-managed installs.
 import { apiGet, apiPost } from './api.js'
 import { self } from './self.svelte.js'
+import { confirm } from './confirm.svelte.js'
 
 export const update = $state({
   checked: false,
@@ -121,4 +122,27 @@ export async function restartService() {
     }
   }
   location.reload()
+}
+
+// canSelfUpdate is true only for a managed install not owned by a package
+// manager — Homebrew updates via `brew upgrade`, not in-app. Others should be
+// sent to the Updates panel for instructions.
+export function canSelfUpdate() {
+  return update.managed && !update.packageManager
+}
+
+// promptUpdate runs the confirm dialog + apply + optional restart. Shared by the
+// Settings button and the siderail pill so both hit the same gate.
+export async function promptUpdate() {
+  const res = await confirm({
+    title: 'Update Oriel?',
+    message: `Download v${update.latest}, verify its checksum, and replace the binary. Oriel must restart to apply.`,
+    confirmLabel: 'Update',
+    danger: false,
+    checkbox: 'Restart automatically when done',
+    checked: true,
+  })
+  if (!res || !res.ok) return
+  const ok = await applyUpdate()
+  if (ok && res.checked) await restartService()
 }
