@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
+  import { provider, toast, ProviderSettings } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
@@ -83,36 +83,10 @@
 
 
   // AI provider.
-  let urlDraft = $state('')
-  let testText = $state('')
-  let testBusy = $state(false)
-  let testErr = $state('')
-  let testResult = $state(null)
-  onMount(async () => {
-    await checkProvider()
-    urlDraft = provider.url
-  })
-  async function saveProvider() {
-    try {
-      await setProvider(urlDraft.trim())
-      toast(urlDraft.trim() ? 'Provider connected' : 'Provider disabled', 'ok')
-    } catch (e) {
-      toast(e.message, 'error')
-    }
-  }
-  async function runTest() {
-    if (!testText.trim()) return
-    testBusy = true
-    testErr = ''
-    testResult = null
-    try {
-      testResult = await resolveText(testText.trim())
-    } catch (e) {
-      testErr = e.message
-    } finally {
-      testBusy = false
-    }
-  }
+  const ps = new ProviderSettings()
+  const saveProvider = () => ps.save()
+  const runTest = () => ps.runTest()
+  onMount(() => ps.load())
 </script>
 
 <div class="mx-auto grid max-w-5xl grid-cols-1 gap-4 pb-4 md:grid-cols-2 md:items-start">
@@ -282,9 +256,9 @@
     <div class="mt-4">
       <span class="text-[13px] font-medium">Provider URL</span>
       <div class="mt-2 flex flex-wrap gap-2">
-        <input bind:value={urlDraft} placeholder="http://127.0.0.1:8899" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
+        <input bind:value={ps.urlDraft} placeholder="http://127.0.0.1:8899" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
         <button class="btn btn-primary btn-sm" onclick={saveProvider}>Save</button>
-        {#if provider.enabled}<button class="btn btn-default btn-sm" onclick={() => { urlDraft = ''; saveProvider() }}>Disable</button>{/if}
+        {#if provider.enabled}<button class="btn btn-default btn-sm" onclick={() => { ps.urlDraft = ''; saveProvider() }}>Disable</button>{/if}
       </div>
       <p class="mt-2 text-[12px] text-[var(--text-3)]">
         Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="mono">/resolve</span> contract. Or set <span class="mono">ORIEL_PROVIDER_URL</span> at launch.
@@ -295,14 +269,14 @@
       <div class="mt-5 border-t border-[var(--border)] pt-4">
         <span class="text-[13px] font-medium">Test resolver</span>
         <div class="mt-2 flex flex-wrap gap-2">
-          <input bind:value={testText} placeholder="e.g. restart postgres" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && runTest()} />
-          <button class="btn btn-default btn-sm" onclick={runTest} disabled={testBusy}>{testBusy ? 'Resolving…' : 'Run'}</button>
+          <input bind:value={ps.testText} placeholder="e.g. restart postgres" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && runTest()} />
+          <button class="btn btn-default btn-sm" onclick={runTest} disabled={ps.testBusy}>{ps.testBusy ? 'Resolving…' : 'Run'}</button>
         </div>
-        {#if testErr}<p class="mt-2 text-[12px] text-[var(--red)]">{testErr}</p>{/if}
-        {#if testResult?.call}
+        {#if ps.testErr}<p class="mt-2 text-[12px] text-[var(--red)]">{ps.testErr}</p>{/if}
+        {#if ps.testResult?.call}
           <div class="mono mt-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3 text-[12px]">
-            <div><span class="text-[var(--text-3)]">tool</span> <span class="text-[var(--accent)]">{testResult.call.tool}</span></div>
-            <div class="mt-1 break-all"><span class="text-[var(--text-3)]">args</span> {JSON.stringify(testResult.call.args)}</div>
+            <div><span class="text-[var(--text-3)]">tool</span> <span class="text-[var(--accent)]">{ps.testResult.call.tool}</span></div>
+            <div class="mt-1 break-all"><span class="text-[var(--text-3)]">args</span> {JSON.stringify(ps.testResult.call.args)}</div>
           </div>
         {/if}
       </div>

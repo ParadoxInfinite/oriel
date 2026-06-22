@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte'
   import {
-    provider, checkProvider, setProvider, resolveText, toast,
+    provider, toast, ProviderSettings,
     self, update, checkNow, restartService, promptUpdate,
     remote, loadRemote, addRemoteHost, removeRemoteHost,
     grant, loadGrant, openGrant, lockGrant, fmtRemaining,
@@ -39,16 +39,13 @@
 
 
   // AI provider.
-  let urlDraft = $state('')
-  let testText = $state('')
-  let testBusy = $state(false)
-  let testErr = $state('')
-  let testResult = $state(null)
-  onMount(async () => {
+  const ps = new ProviderSettings()
+  const saveProvider = () => ps.save()
+  const runTest = () => ps.runTest()
+  onMount(() => {
     loadRemote()
     loadGrant()
-    await checkProvider()
-    urlDraft = provider.url
+    ps.load()
   })
   async function grantFor(hours) {
     try {
@@ -63,27 +60,6 @@
     if (h) {
       addRemoteHost(h)
       hostDraft = ''
-    }
-  }
-  async function saveProvider() {
-    try {
-      await setProvider(urlDraft.trim())
-      toast(urlDraft.trim() ? 'Provider connected' : 'Provider disabled', 'ok')
-    } catch (e) {
-      toast(e.message, 'error')
-    }
-  }
-  async function runTest() {
-    if (!testText.trim()) return
-    testBusy = true
-    testErr = ''
-    testResult = null
-    try {
-      testResult = await resolveText(testText.trim())
-    } catch (e) {
-      testErr = e.message
-    } finally {
-      testBusy = false
     }
   }
 </script>
@@ -210,9 +186,9 @@
     <div class="mt-4">
       <span class="text-[13px] font-medium text-fg">Provider URL</span>
       <div class="mt-2 flex gap-2">
-        <input bind:value={urlDraft} placeholder="http://127.0.0.1:8899" class={field} onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
+        <input bind:value={ps.urlDraft} placeholder="http://127.0.0.1:8899" class={field} onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
         <button class={btnPrimary} onclick={saveProvider}>Save</button>
-        {#if provider.enabled}<button class={btn} onclick={() => { urlDraft = ''; saveProvider() }}>Disable</button>{/if}
+        {#if provider.enabled}<button class={btn} onclick={() => { ps.urlDraft = ''; saveProvider() }}>Disable</button>{/if}
       </div>
       <p class="mt-2 text-xs text-faint">
         Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="font-mono">/resolve</span> contract. Or set <span class="font-mono">ORIEL_PROVIDER_URL</span> at launch.
@@ -223,14 +199,14 @@
       <div class="mt-5 border-t border-border pt-4">
         <span class="text-[13px] font-medium text-fg">Test resolver</span>
         <div class="mt-2 flex gap-2">
-          <input bind:value={testText} placeholder="e.g. restart postgres" class={field} onkeydown={(e) => e.key === 'Enter' && runTest()} />
-          <button class={btn} onclick={runTest} disabled={testBusy}>{testBusy ? 'Resolving…' : 'Run'}</button>
+          <input bind:value={ps.testText} placeholder="e.g. restart postgres" class={field} onkeydown={(e) => e.key === 'Enter' && runTest()} />
+          <button class={btn} onclick={runTest} disabled={ps.testBusy}>{ps.testBusy ? 'Resolving…' : 'Run'}</button>
         </div>
-        {#if testErr}<p class="mt-2 text-xs text-danger">{testErr}</p>{/if}
-        {#if testResult?.call}
+        {#if ps.testErr}<p class="mt-2 text-xs text-danger">{ps.testErr}</p>{/if}
+        {#if ps.testResult?.call}
           <div class="mt-3 rounded-[--radius] border border-border bg-surface px-3 py-2 font-mono text-xs">
-            <div><span class="text-faint">tool</span> <span class="text-accent">{testResult.call.tool}</span></div>
-            <div class="mt-1 break-all"><span class="text-faint">args</span> {JSON.stringify(testResult.call.args)}</div>
+            <div><span class="text-faint">tool</span> <span class="text-accent">{ps.testResult.call.tool}</span></div>
+            <div class="mt-1 break-all"><span class="text-faint">args</span> {JSON.stringify(ps.testResult.call.args)}</div>
           </div>
         {/if}
       </div>

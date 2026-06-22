@@ -97,6 +97,9 @@ export * as fmt from '../lib/format.js'
 /** Headless image tag/used-by/remove controller, shared by both editions. */
 export { ImageActions } from '../lib/imageActions.svelte.js'
 
+/** Headless AI-provider Settings controller (resolver URL + test box). */
+export { ProviderSettings } from '../lib/providerSettings.svelte.js'
+
 /** Raw Lucide icon inner-SVG strings, keyed by name (see lib/icons.js). */
 export { icons } from '../lib/icons.js'
 
