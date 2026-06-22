@@ -1,6 +1,6 @@
 <script>
   import {
-    stacks, refreshStacks, runOp, confirm,
+    stacks, refreshStacks, stackOp, confirm,
     discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, revealLabel, revealOrCopy,
   } from '../platform/index.js'
   import { action } from '../lib/ui.js'
@@ -22,7 +22,7 @@
     editing = null
   }
 
-  async function act(stack, verb, action) {
+  async function act(stack, action) {
     if (action === 'down') {
       const ok = await confirm({
         title: 'Take stack down?',
@@ -31,7 +31,7 @@
       })
       if (!ok) return
     }
-    runOp(`${verb} ${stack.name}`, `/api/stacks/${stack.name}/${action}`, refreshStacks)
+    stackOp(stack.name, action, refreshStacks)
   }
 </script>
 
@@ -63,10 +63,10 @@
               <div class="mt-0.5 truncate font-mono text-xs text-muted">{s.workingDir}</div>
             </div>
             <div class="flex shrink-0 gap-1">
-              {#if s.running < s.total}<button class={action('ok')} onclick={() => act(s, 'Start', 'start')}>Start</button>{/if}
-              {#if s.running > 0}<button class={action('warn')} onclick={() => act(s, 'Stop', 'stop')}>Stop</button>{/if}
-              <button class={action('accent')} onclick={() => act(s, 'Restart', 'restart')}>Restart</button>
-              <button class={action('danger')} onclick={() => act(s, 'Down', 'down')}>Down</button>
+              {#if s.running < s.total}<button class={action('ok')} onclick={() => act(s, 'start')}>Start</button>{/if}
+              {#if s.running > 0}<button class={action('warn')} onclick={() => act(s, 'stop')}>Stop</button>{/if}
+              <button class={action('accent')} onclick={() => act(s, 'restart')}>Restart</button>
+              <button class={action('danger')} onclick={() => act(s, 'down')}>Down</button>
             </div>
           </div>
           <div class="grid grid-cols-1 gap-x-6 gap-y-1.5 px-4 py-3 sm:grid-cols-2">

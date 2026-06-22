@@ -4,7 +4,7 @@
     provider, checkProvider, setProvider, resolveText, toast,
     self, update, checkNow, restartService, promptUpdate,
     remote, loadRemote, addRemoteHost, removeRemoteHost,
-    grant, loadGrant, openGrant, lockGrant,
+    grant, loadGrant, openGrant, lockGrant, fmtRemaining,
     discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern,
     PathField, THEMES_DOC_URL,
   } from '../platform/index.js'
@@ -50,13 +50,6 @@
     await checkProvider()
     urlDraft = provider.url
   })
-  function fmtRemaining(s) {
-    if (s <= 0) return ''
-    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60)
-    if (d) return `${d}d ${h}h`
-    if (h) return `${h}h ${m}m`
-    return `${m}m`
-  }
   async function grantFor(hours) {
     try {
       await openGrant(hours)
