@@ -115,7 +115,7 @@ How Oriel stacks up against the common ways to manage containers on a Mac or Lin
 |---|---|---|---|---|---|
 | License | **Apache-2.0, free** | Proprietary (paid for larger orgs) | Proprietary (paid for commercial use) | MIT, free | Free (CE) |
 | Interface | Graphical web UI | Desktop app | Native app | Terminal (TUI) | Web UI (server) |
-| Footprint | **~15–30 MB RAM, ~11 MB binary** | Heavy (Electron + VM) | Light (native) | Light | Needs a container + ≥2 GB RAM |
+| Footprint | **~15–30 MB RAM, ~13 MB binary** | Heavy (Electron + VM) | Light (native) | Light | Needs a container + ≥2 GB RAM |
 | Install | **Single static binary** | Installer | Installer | Single binary | Run a container |
 | Bring-your-own engine | **Colima · Docker · OrbStack · Podman · remote** | Bundled engine | Bundled engine | Any Docker socket | Any Docker socket |
 | Runs locally, no account | **Yes** | Account/sign-in | Account | Yes | Server + auth |
@@ -162,7 +162,7 @@ No. It needs any Docker Engine–compatible runtime plus the `docker` CLI. [Coli
 lazydocker is a terminal UI. Oriel is a real graphical browser UI — dashboards, streaming logs, registry search, Compose discovery, and themeable editions.
 
 **How much memory does it use?**
-~15–30 MB. The binary is ~11 MB and there's no Electron.
+~15–30 MB. The binary is ~13 MB and there's no Electron.
 
 **Which platforms are supported?**
 macOS (Apple Silicon + Intel) and Linux (amd64 + arm64).

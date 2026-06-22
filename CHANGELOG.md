@@ -7,13 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-22
+
+The AI/MCP release: drive Docker/Colima from any MCP client through Oriel's
+validated, secret-masked tools — with destructive actions locked behind a
+time-boxed grant.
+
 ### Added
 
+- **Oriel as an MCP server.** `oriel mcp` serves the tool registry to any
+  MCP-capable client (Claude Desktop, Claude Code, Cursor, a local LLM host) over
+  stdio JSON-RPC. It resolves the same Docker/Colima connection as the GUI and
+  exposes all 19 tools through the same argument + entity validation the UI uses.
+  No model ships in the binary — your client brings the model. See
+  [docs/MCP.md](docs/MCP.md) for a sample client config.
+- **Read/query tools in the registry.** `container.list` / `inspect` / `logs`,
+  `image.list`, `volume.list`, `network.list`, `stacks.list`, `system.df`,
+  `colima.status` — so an AI can *see* state and target by description, not just
+  mutate blind. `container.inspect` masks env values like the UI does.
+- **Time-boxed destructive grant.** Destructive tools (remove / prune) are locked
+  for non-interactive callers (MCP / a future assistant) until you open a window
+  on purpose — `oriel ai allow-destructive --for 6h` (also `status` / `lock`), or
+  the new **Settings → Automation access** panel. Auto-relocks. Your own UI clicks
+  are never gated. Enforced once in the execution path, so it covers every caller.
 - **Secret masking in container inspect.** Environment-variable values are masked
   by default (`••••••••`) so API keys don't leak from screenshots or screen-shares.
   A gated "Reveal values" action unmasks them; masking is enforced server-side.
   Configurable in Settings → Secrets — mask mode (all / sensitive / off) and reveal
   policy (local / local & remote / off).
+
+### Fixed
+
+- **Siderail update pill opens the confirm-update modal directly** when the
+  install can self-update, instead of just navigating to Settings (falls back to
+  the Updates panel for Homebrew / unmanaged installs).
 
 ## [0.3.3] - 2026-06-22
 
