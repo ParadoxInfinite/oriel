@@ -56,6 +56,14 @@ feedback; the best way to influence them is to open an
 - **homebrew-core submission** — `brew install oriel` with no tap, once the
   project clears Homebrew's notability bar.
 
+### Research (not committed work)
+
+- **A small model to drive Oriel's tools.** Smallest reliable local model for our
+  ~19 tools, and whether to train a standalone or "handoff" model. Findings +
+  recommendation (TL;DR: ship MCP for existing models, add constrained decoding
+  for the local path, don't train yet) in
+  [docs/ai-model-research.md](docs/ai-model-research.md).
+
 ## Demand- or sponsor-gated
 
 These aren't planned on their own. They happen only if the gate below is met.
