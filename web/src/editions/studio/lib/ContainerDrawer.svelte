@@ -112,7 +112,17 @@
             <span class="min-w-0 flex-1 whitespace-pre-wrap break-words py-px {lineColor(l.stream)}">{l.line}</span>
           </div>
         {/each}
-        {#if !logs.lines.length}<div class="px-3 py-3 text-[var(--text-3)]">{logs.error || 'Waiting for logs…'}</div>{/if}
+        {#if !logs.lines.length}
+          <div class="flex items-center gap-2 px-3 py-3 text-[13px] text-[var(--text-3)]">
+            {#if logs.error}
+              <span class="text-[var(--red)]">{logs.error}</span>
+            {:else if !logs.connected}
+              <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span> Connecting…
+            {:else}
+              No logs yet — this container hasn't written anything to stdout/stderr.
+            {/if}
+          </div>
+        {/if}
       </div>
       {#if paused}
         <button class="shrink-0 border-t border-[var(--border)] bg-[var(--panel-2)] py-1.5 text-center text-xs text-[var(--accent)]" onclick={() => { paused = false; logs.setFollowing(true); scroller.scrollTop = scroller.scrollHeight }}>↓ Jump to latest</button>
