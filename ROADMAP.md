@@ -1,7 +1,7 @@
 # Roadmap
 
-A living view of where Oriel is headed — not a contract. Priorities shift with
-feedback; the best way to influence them is to open an
+Where Oriel's headed. Not a promise — priorities move with feedback, and the best
+way to push something up the list is to open an
 [issue](https://github.com/ParadoxInfinite/oriel/issues) or a
 [discussion](https://github.com/ParadoxInfinite/oriel/discussions).
 
