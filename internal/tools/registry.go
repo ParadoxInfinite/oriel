@@ -1,13 +1,16 @@
-// Package tools is the canonical action layer. Every mutating action — whether
-// triggered by a UI button, the command palette, or a future NL provider —
-// routes through Registry.Execute, which validates arguments and entity
-// references before running the handler. Safety lives here, in the base.
+// Package tools is the canonical action layer. Single-entity mutations — from a
+// UI button, the command palette, the MCP server, or a future NL provider —
+// route through Registry.Execute, which validates arguments and entity
+// references and gates destructive tools before running the handler. (Bulk
+// prune runs as a background job over a user-selected list; see
+// internal/server/ops.go.) Safety lives here, in the base.
 package tools
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // ErrDestructiveLocked is returned when a Destructive tool is invoked by a
@@ -79,10 +82,19 @@ func (r *Registry) SetDestructiveWindow(open func() bool) { r.windowOpen = open 
 
 func (r *Registry) windowActive() bool { return r.windowOpen != nil && r.windowOpen() }
 
-// Register adds a tool. It panics on duplicate names — a programming error.
+// Register adds a tool. It panics on a duplicate name or a malformed entity ref
+// — both programming errors caught at startup rather than at call time. The
+// handlers rely on the schema guaranteeing the entity param is a present string,
+// so enforce that invariant here.
 func (r *Registry) Register(t *Tool) {
 	if _, dup := r.tools[t.Name]; dup {
 		panic("tools: duplicate registration " + t.Name)
+	}
+	if t.Entity != nil {
+		p, ok := t.Schema.Props[t.Entity.Param]
+		if !ok || p.Type != "string" || !slices.Contains(t.Schema.Required, t.Entity.Param) {
+			panic("tools: " + t.Name + ": entity param " + t.Entity.Param + " must be a required string in the schema")
+		}
 	}
 	r.tools[t.Name] = t
 }
@@ -97,7 +109,9 @@ func (r *Registry) List() []*Tool {
 	return out
 }
 
-// Execute validates and runs a tool call. This is the single execution path.
+// Execute gates, validates, and runs a single tool call: it locks destructive
+// tools without consent or an open grant window, schema-validates args, and
+// checks entity existence before invoking the handler.
 func (r *Registry) Execute(ctx context.Context, name string, args map[string]any) (any, error) {
 	t, ok := r.tools[name]
 	if !ok {

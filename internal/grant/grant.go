@@ -78,17 +78,34 @@ func (s *Store) Open(d time.Duration) (time.Time, error) {
 // Lock closes the window immediately.
 func (s *Store) Lock() error { return s.write(state{}) }
 
+// write atomically replaces the state file. The temp file has a unique name so
+// concurrent writers (the server, the `oriel ai` CLI) never collide on it; the
+// final rename is atomic, so a reader never sees a torn file. Across processes
+// the last writer wins, which is the intended semantic for Open/Lock.
 func (s *Store) write(st state) error {
 	b, err := json.Marshal(st)
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(s.path), 0o755); err != nil {
+	dir := filepath.Dir(s.path)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err
 	}
-	tmp := s.path + ".tmp"
-	if err := os.WriteFile(tmp, b, 0o600); err != nil {
+	tmp, err := os.CreateTemp(dir, "grant-*.json")
+	if err != nil {
 		return err
 	}
-	return os.Rename(tmp, s.path)
+	defer os.Remove(tmp.Name()) // no-op once renamed away
+	if _, err := tmp.Write(b); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Chmod(0o600); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), s.path)
 }

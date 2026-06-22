@@ -25,10 +25,10 @@ import (
 const EnvURL = "ORIEL_PROVIDER_URL"
 
 // ToolCall is what a provider must return: which tool to run with what args.
+// The call is re-validated and gated by the Registry before it runs.
 type ToolCall struct {
-	Tool       string         `json:"tool"`
-	Args       map[string]any `json:"args"`
-	Confidence float64        `json:"confidence"`
+	Tool string         `json:"tool"`
+	Args map[string]any `json:"args"`
 }
 
 // Request is the body POSTed to <url>/resolve.

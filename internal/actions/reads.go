@@ -53,6 +53,9 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 			tail := 100
 			if n, ok := a["tail"].(float64); ok && n > 0 {
 				tail = int(n)
+				if tail > 10000 { // bound the in-memory buffer for an ungated read
+					tail = 10000
+				}
 			}
 			type line struct {
 				Stream string `json:"stream"`

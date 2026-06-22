@@ -6,10 +6,10 @@
 // entity-checked, with the same secret masking. No model ships in the binary;
 // the model lives in the client.
 //
-// Spike status: this maps the registry one-to-one to MCP tools and serves over
-// stdio. Destructive tools are surfaced with a destructive hint but NOT yet
-// gated behind the time-boxed grant from the roadmap — wire that before this is
-// promoted out of spike.
+// Tools map one-to-one to the registry. Destructive tools carry a destructive
+// hint and are gated by the time-boxed grant: the MCP path never sets consent,
+// so `Registry.Execute` locks remove/prune unless a grant window is open (wired
+// in mcp_cmd.go via SetDestructiveWindow).
 package mcp
 
 import (

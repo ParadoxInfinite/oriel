@@ -35,7 +35,7 @@ func runAI(args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("Destructive actions unlocked for %s — until %s.\n", *forStr, exp.Local().Format(time.RFC1123))
+		fmt.Printf("Destructive actions unlocked for %s, until %s.\n", *forStr, exp.Local().Format(time.RFC1123))
 		fmt.Println("Lock early with: oriel ai lock")
 		return nil
 
@@ -67,17 +67,21 @@ func parseFor(s string) (time.Duration, error) {
 	s = strings.TrimSpace(s)
 	if strings.HasSuffix(s, "d") {
 		days, err := strconv.ParseFloat(strings.TrimSuffix(s, "d"), 64)
-		if err != nil || days <= 0 {
-			return 0, fmt.Errorf("invalid days value %q", s)
+		if err != nil || days <= 0 || days > maxGrantDays {
+			return 0, fmt.Errorf("invalid window %q (1m to %dd)", s, maxGrantDays)
 		}
 		return time.Duration(days * 24 * float64(time.Hour)), nil
 	}
 	d, err := time.ParseDuration(s)
-	if err != nil || d <= 0 {
-		return 0, fmt.Errorf("invalid duration %q (try 6h, 90m, or 6d)", s)
+	if err != nil || d <= 0 || d > maxGrantDays*24*time.Hour {
+		return 0, fmt.Errorf("invalid window %q (try 6h, 90m, or 6d; max %dd)", s, maxGrantDays)
 	}
 	return d, nil
 }
+
+// maxGrantDays caps the destructive window. Long enough for a trusted box, short
+// enough that "forever" is a deliberate, repeated choice.
+const maxGrantDays = 30
 
 func aiUsage() error {
 	fmt.Println("usage: oriel ai <command>")
