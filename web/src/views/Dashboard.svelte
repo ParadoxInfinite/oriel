@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte'
   import {
-    status, lifecycle, containers, stacks,
+    status, refreshStatus, lifecycle, containers, stacks,
     images, volumes, networks, refreshImages, refreshVolumes, refreshNetworks,
     self, fmt, DashboardStats,
   } from '../platform/index.js'
