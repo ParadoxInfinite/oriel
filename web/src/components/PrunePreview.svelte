@@ -1,5 +1,6 @@
 <script>
   import { bytes } from '../lib/format.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
 
   // items: [{ id, primary, secondary?, size }]. onPrune receives the chosen items.
   let { title, note = '', items, onClose, onPrune } = $props()
@@ -27,12 +28,8 @@
     busy = false
     onClose()
   }
-  const onKey = (e) => {
-    if (e.key === 'Escape' && !busy) onClose()
-  }
+  $effect(() => registerEscape(() => !busy && onClose()))
 </script>
-
-<svelte:window onkeydown={onKey} />
 
 <div
   class="fixed inset-0 z-50 flex items-center justify-center bg-black/55 p-4"

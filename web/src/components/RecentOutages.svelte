@@ -1,6 +1,7 @@
 <script>
   import { outages } from '../lib/outages.svelte.js'
   import { duration, relativeTime, dateTime, timeOnly } from '../lib/format.js'
+  import { registerEscape } from '../lib/modalStack.svelte.js'
 
   let open = $state(false)
 
@@ -12,15 +13,13 @@
   const recent = $derived(sorted.slice(0, 4))
   const has = $derived(outages.list.length > 0)
 
-  const onKey = (e) => {
-    if (e.key === 'Escape') open = false
-  }
+  $effect(() => {
+    if (open) return registerEscape(() => (open = false))
+  })
   const openIfAny = () => {
     if (has) open = true
   }
 </script>
-
-<svelte:window onkeydown={onKey} />
 
 <!-- the whole section is the click target, not just the heading -->
 <div

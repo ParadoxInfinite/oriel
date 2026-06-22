@@ -1,10 +1,12 @@
 <script>
   import { tick } from 'svelte'
-  import { apiGet, fmt, LogsController } from '../../../platform/index.js'
+  import { apiGet, fmt, LogsController, registerEscape } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
   import StatusPill from './StatusPill.svelte'
 
   let { container, onClose } = $props()
+
+  $effect(() => registerEscape(onClose))
 
   let tab = $state('logs') // 'logs' | 'inspect'
 
@@ -97,7 +99,6 @@
   )
 </script>
 
-<svelte:window onkeydown={(e) => e.key === 'Escape' && onClose()} />
 
 <div class="fixed inset-0 z-[60] flex justify-end bg-black/40 backdrop-blur-[1px]" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
   <div class="flex h-full w-[760px] max-w-[95vw] flex-col border-l border-[var(--border)] bg-[var(--bg)] shadow-[var(--shadow-lg)]" role="presentation" onclick={(e) => e.stopPropagation()}>
