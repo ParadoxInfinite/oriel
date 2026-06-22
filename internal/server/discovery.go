@@ -112,7 +112,10 @@ func (s *Server) handleFsOpen(w http.ResponseWriter, r *http.Request) {
 	case "windows":
 		opener = "explorer"
 	}
-	_ = exec.Command(opener, path).Start()
+	if err := exec.Command(opener, path).Start(); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not open: " + err.Error()})
+		return
+	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 

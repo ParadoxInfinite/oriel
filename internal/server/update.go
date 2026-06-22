@@ -215,7 +215,9 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "cannot locate the running binary")
 		return
 	}
-	exe, _ = filepath.EvalSymlinks(exe)
+	if resolved, e := filepath.EvalSymlinks(exe); e == nil {
+		exe = resolved // follow a symlinked launcher to the real binary; keep exe on failure
+	}
 
 	rel, err := githubLatestRelease(r.Context())
 	if err != nil {
@@ -259,16 +261,16 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "could not set permissions: "+err.Error())
 		return
 	}
-	// Keep the old binary as <exe>.bak so a bad update can be rolled back, and so
-	// the swap stays recoverable if the second rename fails.
+	// Back up the current binary by copying it to <exe>.bak (for rollback), then
+	// atomically replace exe in a single rename. os.Rename swaps the destination
+	// in one step, so there is never a moment when exe has no binary — a kill or
+	// reboot mid-update leaves either the old or the new binary, never neither.
 	bak := exe + ".bak"
-	_ = os.Remove(bak)
-	if err := os.Rename(exe, bak); err != nil {
+	if err := copyFile(exe, bak); err != nil {
 		httpError(w, http.StatusInternalServerError, "could not back up current binary: "+err.Error())
 		return
 	}
 	if err := os.Rename(tmp, exe); err != nil {
-		_ = os.Rename(bak, exe) // roll back to the previous binary
 		httpError(w, http.StatusInternalServerError, "could not install update: "+err.Error())
 		return
 	}
@@ -347,4 +349,22 @@ func downloadFile(ctx context.Context, url, dir string) (string, string, error) 
 		return f.Name(), "", err
 	}
 	return f.Name(), hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// copyFile copies src to dst with executable permissions, for the rollback backup.
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o755)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(out, in); err != nil {
+		out.Close()
+		return err
+	}
+	return out.Close()
 }

@@ -144,7 +144,7 @@ func listProfile(ctx context.Context, name string) (*listEntry, error) {
 
 // statusDetail runs `colima status --json` for the managed profile.
 func statusDetail(ctx context.Context) (*statusEntry, error) {
-	out, err := exec.CommandContext(ctx, "colima", "status", "--json").Output()
+	out, err := exec.CommandContext(ctx, "colima", "status", "--json", "-p", Profile).Output()
 	if err != nil {
 		return nil, fmt.Errorf("colima status: %w", err)
 	}
@@ -164,5 +164,5 @@ func Stream(ctx context.Context, action string) (<-chan string, <-chan error, er
 	if !validActions[action] {
 		return nil, nil, fmt.Errorf("invalid action %q", action)
 	}
-	return execstream.Run(ctx, "colima", action)
+	return execstream.Run(ctx, "colima", action, "-p", Profile)
 }

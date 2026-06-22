@@ -218,12 +218,12 @@ func (r *recorder) appendLocked(p HistoryPoint) {
 	}
 }
 
-// latestSnapshot returns the most recent per-container stats (copy-safe: the
-// slice is replaced wholesale each tick, never mutated in place).
+// latestSnapshot returns a copy of the most recent per-container stats, so the
+// caller can marshal it without racing the next tick's write to r.latest.
 func (r *recorder) latestSnapshot() []docker.Stat {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.latest
+	return append([]docker.Stat(nil), r.latest...)
 }
 
 // latestPoint returns the most recent aggregate sample, ok=false if none yet.
