@@ -2,6 +2,14 @@
   import { palette, closePalette } from '../lib/palette.svelte.js'
   import { registerEscape } from '../lib/modalStack.svelte.js'
   import { containers, refreshContainers } from '../lib/containers.svelte.js'
+  import {
+    images,
+    volumes,
+    networks,
+    refreshImages,
+    refreshVolumes,
+    refreshNetworks,
+  } from '../lib/resources.svelte.js'
   import { fuzzyScore } from '../lib/fuzzy.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
@@ -17,20 +25,25 @@
     if (palette.open) return registerEscape(closePalette)
   })
 
-  // Per-container actions, gated by state so the palette only offers what's
-  // valid. Each maps to a {tool, args} call — the same shape a provider emits.
-  function actionsFor(c) {
+  // The palette is a thin client over the tool registry: each entry maps to a
+  // {tool, args} call — the same shape /api/invoke runs for UI buttons and a
+  // provider emits. We enumerate live entities × the actions valid for them, so
+  // the palette only ever offers something that can actually run. Reads (logs,
+  // inspect, df) are deliberately absent — those navigate to a view, not here.
+  const DEFAULT_NETWORKS = new Set(['bridge', 'host', 'none'])
+  const shortId = (id) => (id || '').replace(/^sha256:/, '').slice(0, 12)
+  const imageName = (img) => {
+    const tag = img.tags?.[0]
+    return tag && !tag.includes('<none>') ? tag : shortId(img.id)
+  }
+
+  function containerActions(c) {
     const running = c.state === 'running'
     const acts = []
     if (!running) acts.push({ verb: 'Start', tool: 'container.start', args: { id: c.id } })
     if (running) acts.push({ verb: 'Stop', tool: 'container.stop', args: { id: c.id } })
     if (running) acts.push({ verb: 'Restart', tool: 'container.restart', args: { id: c.id } })
-    acts.push({
-      verb: 'Remove',
-      tool: 'container.remove',
-      args: { id: c.id, force: running },
-      danger: true,
-    })
+    acts.push({ verb: 'Remove', tool: 'container.remove', args: { id: c.id, force: running }, danger: true })
     return acts.map((a) => ({
       ...a,
       label: `${a.verb} container`,
@@ -39,11 +52,72 @@
     }))
   }
 
-  const items = $derived(containers.list.flatMap(actionsFor))
+  function imageActions(img) {
+    return [
+      {
+        verb: 'Remove',
+        label: 'Remove image',
+        target: imageName(img),
+        tool: 'image.remove',
+        args: { id: img.id, force: img.containers > 0 },
+        danger: true,
+        key: `image.remove:${img.id}`,
+      },
+    ]
+  }
+
+  function volumeActions(v) {
+    return [
+      {
+        verb: 'Remove',
+        label: 'Remove volume',
+        target: v.name,
+        tool: 'volume.remove',
+        args: { name: v.name, force: false },
+        danger: true,
+        key: `volume.remove:${v.name}`,
+      },
+    ]
+  }
+
+  function networkActions(n) {
+    // The predefined bridge/host/none networks can't be removed — don't offer it.
+    if (DEFAULT_NETWORKS.has(n.name)) return []
+    return [
+      {
+        verb: 'Remove',
+        label: 'Remove network',
+        target: n.name,
+        tool: 'network.remove',
+        args: { id: n.id },
+        danger: true,
+        key: `network.remove:${n.id}`,
+      },
+    ]
+  }
+
+  // Entity-free maintenance actions, always available.
+  const globalActions = [
+    { verb: 'Prune', label: 'Prune unused images', target: 'dangling images', tool: 'image.prune', args: {}, danger: true, key: 'image.prune' },
+    { verb: 'Prune', label: 'Prune unused volumes', target: 'unused volumes', tool: 'volume.prune', args: {}, danger: true, key: 'volume.prune' },
+  ]
+
+  const items = $derived([
+    ...containers.list.flatMap(containerActions),
+    ...images.list.flatMap(imageActions),
+    ...volumes.list.flatMap(volumeActions),
+    ...networks.list.flatMap(networkActions),
+    ...globalActions,
+  ])
 
   const filtered = $derived.by(() => {
+    const q = query.trim()
+    // Nothing shows until the user types — the palette opens as an empty prompt
+    // rather than dumping every action for every entity.
+    if (!q) return []
+
     const scored = items
-      .map((it) => ({ it, score: fuzzyScore(query, `${it.verb} ${it.target}`) }))
+      .map((it) => ({ it, score: fuzzyScore(q, `${it.label} ${it.target}`) }))
       .filter((x) => x.score >= 0)
       .sort((a, b) => b.score - a.score || a.it.target.localeCompare(b.it.target))
       .slice(0, 50)
@@ -51,8 +125,8 @@
 
     // With a provider configured, offer free-text interpretation of the query
     // as the first option — the same execution path, just an NL resolver.
-    if (provider.enabled && query.trim()) {
-      return [{ ai: true, key: '__ai__', label: 'Interpret', target: query.trim() }, ...scored]
+    if (provider.enabled) {
+      return [{ ai: true, key: '__ai__', label: 'Interpret', target: q }, ...scored]
     }
     return scored
   })
@@ -61,7 +135,12 @@
     if (palette.open) {
       query = ''
       selected = 0
+      // Refresh the entity lists the catalog draws from. Suggestions only appear
+      // once the user types, so these have time to land before they're needed.
       refreshContainers()
+      refreshImages()
+      refreshVolumes()
+      refreshNetworks()
       queueMicrotask(() => inputEl?.focus())
     }
   })
@@ -70,6 +149,20 @@
     // Keep selection in range as the filtered list changes.
     if (selected >= filtered.length) selected = Math.max(0, filtered.length - 1)
   })
+
+  function confirmMessage(it) {
+    if (it.tool === 'image.prune') return 'All dangling images will be permanently removed.'
+    if (it.tool === 'volume.prune') return 'All unused volumes will be permanently removed.'
+    return `“${it.target}” will be permanently removed.`
+  }
+
+  function refreshAfter(tool) {
+    const ns = tool.split('.')[0]
+    if (ns === 'container') refreshContainers()
+    else if (ns === 'image') refreshImages()
+    else if (ns === 'volume') refreshVolumes()
+    else if (ns === 'network') refreshNetworks()
+  }
 
   async function run(it) {
     closePalette()
@@ -89,14 +182,14 @@
     }
     if (it.danger) {
       const ok = await confirm({
-        title: `${it.verb} container?`,
-        message: `“${it.target}” will be permanently removed.`,
+        title: `${it.label}?`,
+        message: confirmMessage(it),
         confirmLabel: it.verb,
       })
       if (!ok) return
     }
     await invoke(it.tool, it.args, { success: `${it.verb} · ${it.target}` })
-    refreshContainers()
+    refreshAfter(it.tool)
   }
 
   function onKeydown(e) {
@@ -132,7 +225,11 @@
         class="w-full bg-transparent px-4 py-3.5 text-sm outline-none placeholder:text-muted"
       />
       <div class="max-h-80 overflow-auto border-t border-border">
-        {#if filtered.length === 0}
+        {#if !query.trim()}
+          <div class="px-4 py-6 text-center text-sm text-muted">
+            Type to search actions across containers, images, volumes &amp; networks
+          </div>
+        {:else if filtered.length === 0}
           <div class="px-4 py-6 text-center text-sm text-muted">No matching actions</div>
         {:else}
           {#each filtered as it, i (it.key)}
