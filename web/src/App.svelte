@@ -59,7 +59,7 @@
   <CommandPalette />
   <ConfirmDialog />
   <Toasts />
-  {#if import.meta.env.VITE_DEMO}
+  {#if __ORIEL_DEMO__}
     <DemoBanner />
   {/if}
 </div>

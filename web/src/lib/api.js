@@ -1,10 +1,11 @@
 // Thin fetch wrappers + an SSE-over-POST reader. One place for all backend I/O.
 
 // In the GitHub Pages demo build, every call is served by an in-memory mock
-// instead of the network. VITE_DEMO is a static literal, so when it's unset the
-// branches below fold away and the demo module tree-shakes out of the real build.
+// instead of the network. __ORIEL_DEMO__ is a build-time boolean literal (see
+// vite.config.js define), so in prod it's `false` — the branches below fold away
+// and Rollup drops this import, keeping the demo entirely out of the real binary.
 import * as demo from './demo/index.js'
-const DEMO = import.meta.env.VITE_DEMO
+const DEMO = __ORIEL_DEMO__
 
 // Prefix backend paths with the SPA base so one build works at the host root or
 // behind a reverse-proxy subpath. Vite bakes a sentinel base into the bundle;
