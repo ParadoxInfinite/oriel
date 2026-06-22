@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-22
+
+A hardening and cleanup release: reliability and safety fixes from a full code
+review, plus an internal refactor that makes the two editions presentation-only.
+No new features; recommended for everyone on 0.4.0.
+
+### Fixed
+
+- **External responses are size-capped.** Registry/provider JSON and self-update
+  binary downloads are now bounded, so a malformed or hostile endpoint can't
+  exhaust memory or fill the disk.
+- **Self-update is atomic.** The new binary is swapped into place in one step, so
+  an interrupted update can't leave a half-written executable behind.
+- **Live stream is sturdier.** Dropped SSE connections surface in the UI, the
+  stream is idempotent across reconnects, and container inspect resets when you
+  switch containers (no stale data carrying over).
+- **Background jobs and timers clean up.** Finished prune/op jobs are reaped, the
+  operation auto-dismiss timer is cleared, and a pending confirm dialog is
+  cancelled rather than leaked.
+- **Smaller UI correctness fixes.** Enter on a focused **Cancel** cancels,
+  bulk **Start** only targets stopped containers, log and tag lists key stably,
+  and external theme imports are guarded.
+- **Explicit Colima profile** is threaded through, and some internal errors (e.g.
+  filesystem listing) are surfaced instead of swallowed.
+
+### Security
+
+- **Stronger guardrails.** The destructive-grant window is clamped to a maximum
+  duration, grant writes are atomic, secret masking covers more key names and
+  value shapes, and tool entity references are validated at registration.
+
+### Changed
+
+- **Editions are presentation-only.** Behavior shared between the Studio and
+  Classic UIs (lifecycle/stack ops, image tag/used-by, log formatting, Settings
+  forms, dashboard telemetry) moved into shared headless controllers behind the
+  platform SDK. No user-visible change.
+- **CLI polish.** Cleaner subcommand help and exit codes, synchronous bind with a
+  clean shutdown path.
+- **Docs.** Trimmed repeated content across the README, MCP, and editions guides.
+
 ## [0.4.0] - 2026-06-22
 
 The AI/MCP release: drive Docker/Colima from any MCP client through Oriel's

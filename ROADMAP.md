@@ -56,7 +56,9 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: **MCP server (`oriel mcp`) + read
-tools, secret masking in inspect, and the time-boxed destructive grant** (v0.4.0);
+See the [CHANGELOG](CHANGELOG.md). Highlights: **reliability + safety hardening**
+(size-capped external fetches, atomic self-update, stronger secret masking,
+clamped grant window) (v0.4.1); the **MCP server (`oriel mcp`) + read tools,
+secret masking in inspect, and the time-boxed destructive grant** (v0.4.0);
 themeable swappable editions, Compose discovery & deploy, CLI self-update +
 `doctor`, reverse-proxy hosting, and Homebrew install (macOS).
