@@ -57,6 +57,13 @@ func main() {
 				log.Fatalf("update: %v", err)
 			}
 			return
+		case "ai":
+			// `oriel ai <allow-destructive|status|lock>` manages the time-boxed
+			// window that unlocks destructive tools for MCP / the assistant.
+			if err := runAI(os.Args[2:]); err != nil {
+				log.Fatalf("ai: %v", err)
+			}
+			return
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return

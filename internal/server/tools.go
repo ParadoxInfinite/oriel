@@ -28,7 +28,10 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.tools.Execute(r.Context(), req.Tool, req.Args)
+	// /api/invoke is the interactive surface (UI buttons + command palette, both
+	// behind their own confirm dialogs), so it carries consent — destructive
+	// tools run without needing a grant window. Agent paths (provider, MCP) don't.
+	result, err := s.tools.Execute(tools.WithConsent(r.Context()), req.Tool, req.Args)
 	if err != nil {
 		status := http.StatusUnprocessableEntity
 		if errors.Is(err, tools.ErrUnknownTool) {
