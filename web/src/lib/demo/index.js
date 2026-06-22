@@ -21,6 +21,7 @@ const db = {
   discovery: clone(seed.discovery),
   maskEnv: 'all', // inspect env masking mode (Settings → Secrets)
   envReveal: 'local',
+  grantExpiresMs: 0, // destructive-grant window expiry (epoch ms); 0 = locked
 }
 
 let seq = 0
@@ -67,6 +68,7 @@ export async function demoGet(path) {
     case '/api/system/df': return seed.makeDf(db.containers, db.images, db.volumes)
     case '/api/colima/status': return clone(db.colima)
     case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, envReveal: db.envReveal }
+    case '/api/grant': return grantStatus()
     case '/api/update': return clone(seed.update)
     case '/api/provider': return clone(db.provider)
     case '/api/remote': return { hosts: clone(db.remoteHosts) }
@@ -172,6 +174,11 @@ export async function demoPost(path, body) {
   const q = new URLSearchParams(qs || '')
 
   if (p === '/api/invoke') return { result: invokeTool(body?.tool, body?.args || {}) }
+  if (p === '/api/grant') {
+    const hours = Number(body?.hours) || 0
+    db.grantExpiresMs = hours > 0 ? Date.now() + hours * 3600_000 : 0
+    return grantStatus()
+  }
   if (p === '/api/provider') {
     db.provider = { enabled: !!body?.url, url: body?.url || '' }
     return clone(db.provider)
@@ -224,6 +231,22 @@ export async function demoPut(path, body) {
     return { maskEnv: db.maskEnv, envReveal: db.envReveal, restarting: false }
   }
   return null
+}
+
+// ── DELETE ──────────────────────────────────────────────────────────────────
+export async function demoDelete(path) {
+  await delay()
+  if (path === '/api/grant') { db.grantExpiresMs = 0; return grantStatus() }
+  return null
+}
+
+function grantStatus() {
+  const active = db.grantExpiresMs > Date.now()
+  return {
+    active,
+    expiresAt: active ? new Date(db.grantExpiresMs).toISOString() : '',
+    remainingSeconds: active ? Math.round((db.grantExpiresMs - Date.now()) / 1000) : 0,
+  }
 }
 
 // ── streamPost (request-tied SSE-over-POST) ─────────────────────────────────

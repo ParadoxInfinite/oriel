@@ -52,6 +52,13 @@ export async function apiPut(path, body) {
   return res.json().catch(() => null)
 }
 
+export async function apiDelete(path) {
+  if (DEMO) return demo.demoDelete(path)
+  const res = await fetch(url(path), { method: 'DELETE' })
+  if (!res.ok) throw new Error(await parseError(res))
+  return res.json().catch(() => null)
+}
+
 // streamPost parses a text/event-stream POST response, one onEvent(name, data)
 // per frame. POST (not EventSource) because the action mutates state.
 export async function streamPost(path, { onEvent, signal } = {}) {
