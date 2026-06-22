@@ -32,9 +32,8 @@ const isDangling = (i) => !(i.tags || []).length || i.tags[0] === '<none>'
 // store mutations can push refresh-events and status changes back to the UI.
 let eventsCb = null
 let liveCb = null
-// Continue the seeded history's clock so dashboard points stay contiguous
-// regardless of the visitor's wall clock.
-let clock = 1782059999000
+// Real wall clock — live points must fall in the chart's Date.now()-30min window.
+let clock = Date.now()
 
 const emit = (type) => eventsCb && eventsCb('event', { type })
 const emitStatus = () => liveCb && liveCb('status', { ok: true, status: clone(db.colima) })
@@ -47,10 +46,9 @@ const statsList = () =>
     cpu: db.colima.running ? +rnd(0.3, 22).toFixed(2) : 0,
     mem: Math.round(rnd(20, 420)) * 1024 * 1024,
   }))
-const aggregate = () => {
-  const ss = statsList()
-  return { cpu: +ss.reduce((a, s) => a + s.cpu, 0).toFixed(2), mem: ss.reduce((a, s) => a + s.mem, 0) }
-}
+// One system-level sample on the same scale as makeHistory, so the chart's live
+// edge is continuous with the seeded history (not a per-container sum that spikes).
+const sysSample = () => ({ cpu: +rnd(6, 20).toFixed(1), mem: Math.round(rnd(2.0, 2.4) * GiB) })
 
 // ── GET ─────────────────────────────────────────────────────────────────────
 export async function demoGet(path) {
@@ -284,19 +282,22 @@ export function demoSse(path, _events, onEvent) {
     es._timer = setInterval(() => {
       if (es._closed) return
       clock += 1000
-      const a = aggregate()
-      onEvent('point', { t: clock, cpu: db.colima.running ? a.cpu : 0, mem: db.colima.running ? a.mem : 0, down: !db.colima.running })
+      const a = db.colima.running ? sysSample() : { cpu: 0, mem: 0 }
+      onEvent('point', { t: clock, cpu: a.cpu, mem: a.mem, down: !db.colima.running })
       onEvent('stats', statsList())
     }, 1000)
   } else if (p.endsWith('/logs')) {
-    driveLogs(es, onEvent)
+    // Exited containers stay quiet, so the UI's "no logs" empty state is reachable.
+    const c = db.containers.find((x) => x.id === p.split('/')[3])
+    driveLogs(es, onEvent, !c || c.state !== 'running')
   } else if (p.includes('/ops/') && p.endsWith('/stream')) {
     driveJob(p.split('/')[3], es, onEvent)
   }
   return es
 }
 
-function driveLogs(es, onEvent) {
+function driveLogs(es, onEvent, quiet) {
+  if (quiet) return // connected but no lines → the empty-state message shows
   let i = 0
   const tick = () => {
     if (es._closed) return
