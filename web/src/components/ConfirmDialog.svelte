@@ -13,6 +13,9 @@
       e.preventDefault()
       resolveConfirm(false)
     } else if (e.key === 'Enter') {
+      // If a button is focused, let its native activation handle Enter — so Enter
+      // on a focused Cancel cancels, instead of always confirming.
+      if (document.activeElement?.tagName === 'BUTTON') return
       e.preventDefault()
       resolveConfirm(true)
     }

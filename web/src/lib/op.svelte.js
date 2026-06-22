@@ -61,7 +61,7 @@ function finishEntry(o, ok, error) {
   }
   const last = o.lines[o.lines.length - 1]
   if (last && o.kind?.includes('prune')) toast(last, 'ok')
-  setTimeout(() => dismissOp(o.id), AUTO_DISMISS_MS)
+  o._dismissTimer = setTimeout(() => dismissOp(o.id), AUTO_DISMISS_MS)
 }
 
 const AUTO_DISMISS_MS = 4000
@@ -151,6 +151,8 @@ export function minimizeOp() {
 
 // dismissOp removes a finished operation from the tracker (and its modal/tray row).
 export function dismissOp(id) {
+  const o = ops.list.find((x) => x.id === id)
+  if (o?._dismissTimer) clearTimeout(o._dismissTimer)
   closeStream(id)
   drop(id)
 }
