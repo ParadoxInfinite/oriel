@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -103,7 +104,8 @@ func (p *Provider) Resolve(ctx context.Context, req Request) (ToolCall, error) {
 		return ToolCall{}, fmt.Errorf("provider returned %s", resp.Status)
 	}
 	var tc ToolCall
-	if err := json.NewDecoder(resp.Body).Decode(&tc); err != nil {
+	// Bound the response so a misbehaving resolver can't exhaust memory.
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 8<<20)).Decode(&tc); err != nil {
 		return ToolCall{}, fmt.Errorf("decode provider response: %w", err)
 	}
 	if tc.Tool == "" {

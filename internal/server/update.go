@@ -146,7 +146,7 @@ func githubLatestRelease(ctx context.Context) (*ghRelease, error) {
 		return nil, fmt.Errorf("GitHub returned %d", resp.StatusCode)
 	}
 	var rel ghRelease
-	if err := json.NewDecoder(resp.Body).Decode(&rel); err != nil {
+	if err := decodeCapped(resp.Body, &rel); err != nil {
 		return nil, fmt.Errorf("unexpected response from GitHub")
 	}
 	return &rel, nil
@@ -341,7 +341,9 @@ func downloadFile(ctx context.Context, url, dir string) (string, string, error) 
 		return "", "", err
 	}
 	h := sha256.New()
-	if _, err := io.Copy(io.MultiWriter(f, h), resp.Body); err != nil {
+	// Cap the download so a compromised/redirected host can't fill the disk; a
+	// truncated binary just fails the checksum check below.
+	if _, err := io.Copy(io.MultiWriter(f, h), io.LimitReader(resp.Body, maxBinaryBytes)); err != nil {
 		f.Close()
 		return f.Name(), "", err
 	}
@@ -349,6 +351,18 @@ func downloadFile(ctx context.Context, url, dir string) (string, string, error) 
 		return f.Name(), "", err
 	}
 	return f.Name(), hex.EncodeToString(h.Sum(nil)), nil
+}
+
+// Caps on external responses so a malicious or compromised endpoint can't
+// exhaust memory (JSON) or disk (the downloaded binary).
+const (
+	maxJSONBytes   = 8 << 20   // 8 MiB
+	maxBinaryBytes = 256 << 20 // 256 MiB
+)
+
+// decodeCapped JSON-decodes a response body bounded to maxJSONBytes.
+func decodeCapped(body io.Reader, v any) error {
+	return json.NewDecoder(io.LimitReader(body, maxJSONBytes)).Decode(v)
 }
 
 // copyFile copies src to dst with executable permissions, for the rollback backup.

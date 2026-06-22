@@ -44,7 +44,7 @@ func searchQuay(ctx context.Context, term string, limit int) ([]docker.SearchRes
 			} `json:"namespace"`
 		} `json:"results"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+	if err := decodeCapped(resp.Body, &body); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func searchECR(ctx context.Context, term string, limit int) ([]docker.SearchResu
 			Verified       bool   `json:"registryVerified"`
 		} `json:"repositoryCatalogSearchResultList"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&b); err != nil {
+	if err := decodeCapped(resp.Body, &b); err != nil {
 		return nil, err
 	}
 
@@ -181,7 +181,7 @@ func getJSON(ctx context.Context, url string, v any) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("registry returned %s", resp.Status)
 	}
-	return json.NewDecoder(resp.Body).Decode(v)
+	return decodeCapped(resp.Body, v)
 }
 
 var htmlTag = regexp.MustCompile(`<[^>]*>`)
