@@ -4,6 +4,7 @@
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
+  import { grant, loadGrant, openGrant, lockGrant } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -43,6 +44,22 @@
 
   let hostDraft = $state('')
   onMount(loadRemote)
+  onMount(loadGrant)
+  // Round a seconds count to a friendly "5h 12m" / "3d 4h" string.
+  function fmtRemaining(s) {
+    if (s <= 0) return ''
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60)
+    if (d) return `${d}d ${h}h`
+    if (h) return `${h}h ${m}m`
+    return `${m}m`
+  }
+  async function grantFor(hours) {
+    try {
+      await openGrant(hours)
+    } catch (e) {
+      toast(e?.message || 'Could not open window', 'error')
+    }
+  }
   function addHost() {
     const h = hostDraft.trim()
     if (h) {
@@ -326,6 +343,30 @@
     </div>
     <p class="mt-2 text-[12px] text-[var(--text-3)]">
       Reveal is gated server-side: <span class="mono">Local only</span> unmasks just on <span class="mono">127.0.0.1</span>; <span class="mono">Local &amp; remote</span> also allows it from allowed hosts; <span class="mono">Never</span> is a kill-switch.
+    </p>
+  </section>
+
+  <!-- Automation access (destructive grant) -->
+  <section class="rise card p-5" style="animation-delay:95ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Automation access</h2>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">
+      The MCP server (<span class="mono">oriel mcp</span>) and command-palette AI can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window — your own clicks here in the UI are never affected.
+    </p>
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      {#if grant.active}
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-tint-2)] px-2.5 py-1 text-[12px] font-medium text-[var(--accent)]">
+          Unlocked · {fmtRemaining(grant.remainingSeconds)} left
+        </span>
+        <button class="btn btn-sm btn-default" onclick={() => grantFor(6)} disabled={grant.busy}>Extend 6h</button>
+        <button class="btn btn-sm btn-default" onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
+      {:else}
+        <span class="text-[13px] text-[var(--text-3)]">Destructive actions are <span class="font-medium text-[var(--text-2)]">locked</span> for automation.</span>
+        <button class="btn btn-sm btn-primary" onclick={() => grantFor(6)} disabled={grant.busy}>Allow 6h</button>
+        <button class="btn btn-sm btn-default" onclick={() => grantFor(24 * 6)} disabled={grant.busy}>Allow 6d</button>
+      {/if}
+    </div>
+    <p class="mt-2 text-[12px] text-[var(--text-3)]">
+      Same window the <span class="mono">oriel ai allow-destructive</span> CLI opens. It auto-relocks when it lapses.
     </p>
   </section>
 

@@ -4,6 +4,7 @@
     provider, checkProvider, setProvider, resolveText, toast,
     self, update, checkNow, restartService, promptUpdate,
     remote, loadRemote, addRemoteHost, removeRemoteHost,
+    grant, loadGrant, openGrant, lockGrant,
     discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern,
     PathField, THEMES_DOC_URL,
   } from '../platform/index.js'
@@ -45,9 +46,24 @@
   let testResult = $state(null)
   onMount(async () => {
     loadRemote()
+    loadGrant()
     await checkProvider()
     urlDraft = provider.url
   })
+  function fmtRemaining(s) {
+    if (s <= 0) return ''
+    const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60)
+    if (d) return `${d}d ${h}h`
+    if (h) return `${h}h ${m}m`
+    return `${m}m`
+  }
+  async function grantFor(hours) {
+    try {
+      await openGrant(hours)
+    } catch (e) {
+      toast(e?.message || 'Could not open window', 'error')
+    }
+  }
   let hostDraft = $state('')
   function addHost() {
     const h = hostDraft.trim()
@@ -226,6 +242,26 @@
         {/if}
       </div>
     {/if}
+  </section>
+
+  <!-- Automation access (destructive grant) -->
+  <section class="card rounded-[--radius] p-5">
+    <h2 class="display text-sm font-semibold tracking-tight">Automation access</h2>
+    <p class="mt-1 text-sm text-muted">
+      The MCP server (<span class="mono">oriel mcp</span>) and palette AI can run read actions any time. Destructive ones (remove, prune) stay locked until you open a time-boxed window — your own UI clicks are never affected.
+    </p>
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      {#if grant.active}
+        <span class="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent">Unlocked · {fmtRemaining(grant.remainingSeconds)} left</span>
+        <button class={btn} onclick={() => grantFor(6)} disabled={grant.busy}>Extend 6h</button>
+        <button class={btn} onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
+      {:else}
+        <span class="text-sm text-faint">Destructive actions are <span class="font-medium text-fg">locked</span> for automation.</span>
+        <button class={btnPrimary} onclick={() => grantFor(6)} disabled={grant.busy}>Allow 6h</button>
+        <button class={btn} onclick={() => grantFor(24 * 6)} disabled={grant.busy}>Allow 6d</button>
+      {/if}
+    </div>
+    <p class="mt-2 text-xs text-faint">Same window the <span class="mono">oriel ai allow-destructive</span> CLI opens. Auto-relocks when it lapses.</p>
   </section>
 
   <!-- Updates -->
