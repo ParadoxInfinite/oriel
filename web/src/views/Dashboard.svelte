@@ -1,9 +1,9 @@
 <script>
   import { onMount } from 'svelte'
   import {
-    status, lifecycle, containers, stats, history, stacks,
+    status, lifecycle, containers, stacks,
     images, volumes, networks, refreshImages, refreshVolumes, refreshNetworks,
-    self, fmt,
+    self, fmt, DashboardStats,
   } from '../platform/index.js'
   import { action } from '../lib/ui.js'
   import Icon from '../components/Icon.svelte'
@@ -13,26 +13,17 @@
 
   let { navigate } = $props()
 
-  const s = $derived(status.data)
-  const isDocker = $derived(s?.engine === 'docker')
-  const running = $derived(containers.list.filter((c) => c.state === 'running'))
-  const samples = $derived(running.map((c) => stats.byId[c.id]).filter(Boolean))
-  const totalCpu = $derived(samples.reduce((a, x) => a + x.cpu, 0))
-  const usedMem = $derived(samples.reduce((a, x) => a + x.mem, 0))
-  const memLimit = $derived(samples.find((x) => x.memLimit)?.memLimit || s?.memory || 0)
-  const cpuCap = $derived((s?.cpu || 1) * 100)
-  const cpuPct = $derived(Math.min(100, (totalCpu / cpuCap) * 100))
-  // History as utilization % of total capacity — matches the headline number.
-  const pulse = $derived(
-    history.points.map((p) => ({
-      t: p.t,
-      cpu: cpuCap ? Math.min(100, (p.cpu / cpuCap) * 100) : 0,
-      down: p.down,
-    }))
-  )
-  const memPct = $derived(memLimit ? Math.min(100, (usedMem / memLimit) * 100) : 0)
-
-  const servicesUp = $derived(stacks.list.reduce((a, x) => a + x.running, 0))
+  // Shared telemetry (CPU/mem utilisation, sparkline); cards below are Classic's.
+  const d = new DashboardStats()
+  const s = $derived(d.sys)
+  const isDocker = $derived(d.isDocker)
+  const running = $derived(d.running)
+  const usedMem = $derived(d.usedMem)
+  const memLimit = $derived(d.memLimit)
+  const cpuPct = $derived(d.cpuPct)
+  const memPct = $derived(d.memPct)
+  const pulse = $derived(d.pulse)
+  const servicesUp = $derived(d.servicesUp)
   // Lead each card with its most meaningful active count; context sits at the foot.
   const inventory = $derived([
     { label: 'Containers', count: running.length, foot: `of ${containers.list.length} total`, icon: 'box', to: 'Containers' },
