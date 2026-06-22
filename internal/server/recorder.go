@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ParadoxInfinite/oriel/internal/docker"
+	"github.com/ParadoxInfinite/oriel/internal/userdata"
 )
 
 const (
@@ -77,17 +78,9 @@ func newRecorder(dc *docker.Client) *recorder {
 	return r
 }
 
-// dataPath returns a stable per-user file, falling back through cache then temp
-// so a missing config dir never breaks recording.
-func dataPath(name string) string {
-	dir, err := os.UserConfigDir()
-	if err != nil || dir == "" {
-		if dir, err = os.UserCacheDir(); err != nil || dir == "" {
-			dir = os.TempDir()
-		}
-	}
-	return filepath.Join(dir, "oriel", name)
-}
+// dataPath returns a stable per-user file. Thin alias over userdata.Path, kept
+// for the many existing call sites in this package.
+func dataPath(name string) string { return userdata.Path(name) }
 
 // retentionWindow is how long outages are kept, configurable via
 // ORIEL_OUTAGE_RETENTION_DAYS (default 30 days).

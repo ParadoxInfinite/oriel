@@ -10,6 +10,27 @@ import (
 	"fmt"
 )
 
+// ErrDestructiveLocked is returned when a Destructive tool is invoked by a
+// non-interactive caller (no consent) while no grant window is open. The message
+// tells an MCP client / assistant how to unlock.
+var ErrDestructiveLocked = errors.New("destructive action locked: open a grant window (`oriel ai allow-destructive --for 6h`) or run it from the Oriel UI")
+
+// consentKey marks a context as a trusted, human-initiated call (e.g. a UI/
+// palette action behind a confirm dialog). Such calls bypass the grant window;
+// agent callers (MCP, provider) never set it.
+type consentKey struct{}
+
+// WithConsent marks ctx as a human-confirmed call, allowing Destructive tools
+// without a grant window. Set it only on genuinely interactive surfaces.
+func WithConsent(ctx context.Context) context.Context {
+	return context.WithValue(ctx, consentKey{}, true)
+}
+
+func consented(ctx context.Context) bool {
+	v, _ := ctx.Value(consentKey{}).(bool)
+	return v
+}
+
 // ErrUnknownTool is returned when a tool name is not registered.
 var ErrUnknownTool = errors.New("unknown tool")
 
@@ -43,11 +64,20 @@ type EntityResolver interface {
 type Registry struct {
 	tools    map[string]*Tool
 	resolver EntityResolver
+	// windowOpen reports whether a destructive grant window is currently open.
+	// nil means "never open" — destructive calls then require consent.
+	windowOpen func() bool
 }
 
 func NewRegistry(resolver EntityResolver) *Registry {
 	return &Registry{tools: map[string]*Tool{}, resolver: resolver}
 }
+
+// SetDestructiveWindow injects the grant-window check used to authorize
+// Destructive tools for non-interactive callers.
+func (r *Registry) SetDestructiveWindow(open func() bool) { r.windowOpen = open }
+
+func (r *Registry) windowActive() bool { return r.windowOpen != nil && r.windowOpen() }
 
 // Register adds a tool. It panics on duplicate names — a programming error.
 func (r *Registry) Register(t *Tool) {
@@ -72,6 +102,9 @@ func (r *Registry) Execute(ctx context.Context, name string, args map[string]any
 	t, ok := r.tools[name]
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownTool, name)
+	}
+	if t.Destructive && !consented(ctx) && !r.windowActive() {
+		return nil, ErrDestructiveLocked
 	}
 	if args == nil {
 		args = map[string]any{}
