@@ -172,12 +172,9 @@ Run it locally, or reach it remotely over a **private network only** (Tailscale,
 ZeroTier, WireGuard, …). **Never put it on the public internet.** Full trust model:
 [SECURITY.md](SECURITY.md).
 
-## More
+## Develop
 
-- **Reverse-proxy subpath:** `oriel config base-path /oriel`. One build serves root or a subpath.
-- **AI / natural-language control:** point any MCP client at `oriel mcp` (see [AI control](#ai-control-mcp)), or wire the in-app command palette to your own resolver URL (Settings → AI). Either way the base binary links no ML code.
-- **Develop:** `make dev` + `make dev-web` (Vite hot reload), `make test`. See [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Roadmap:** actively developed. Optional auth, read-only & audited MCP access, Colima-native AI control, in-browser shell, and more in [ROADMAP.md](ROADMAP.md).
+`make dev` + `make dev-web` (Vite hot reload), `make test`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## FAQ
 
@@ -205,19 +202,8 @@ macOS (Apple Silicon + Intel) and Linux (amd64 + arm64).
 **Is it safe to run?**
 Oriel has **no authentication** and driving Docker is root-equivalent on the host. Run it on `127.0.0.1`, or reach it over a private network only. Never the public internet. See [SECURITY.md](SECURITY.md).
 
-## Where it's headed
-
-Actively developed. Next up:
-
-- **Optional auth**: opt-in, your auth, not a login to anyone's server.
-- **Read-only & audited MCP access**: scope what an AI can do, and keep a trail of what it did.
-- **Colima-native AI control**: start/stop the VM and manage profiles, not just the containers on it.
-- **In-browser container shell** and **MCP over HTTP** for remote clients.
-
-See the [full roadmap](ROADMAP.md). If there's something you want, open an
-[issue](https://github.com/ParadoxInfinite/oriel/issues) or a
-[discussion](https://github.com/ParadoxInfinite/oriel/discussions). No promises,
-but good ideas get taken seriously.
+**Where is it headed?**
+Actively developed. Optional auth, read-only & audited MCP access, Colima-native VM control, an in-browser shell, and MCP over HTTP are next. The [roadmap](ROADMAP.md) has the full list, and the best way to move something up it is to open an [issue](https://github.com/ParadoxInfinite/oriel/issues) or [discussion](https://github.com/ParadoxInfinite/oriel/discussions).
 
 ## License
 

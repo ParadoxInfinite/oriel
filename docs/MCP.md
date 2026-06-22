@@ -114,19 +114,13 @@ or length is leaked.
 ## How it's built
 
 Built on the official [`modelcontextprotocol/go-sdk`](https://github.com/modelcontextprotocol/go-sdk).
-`oriel mcp` maps each registry tool to an MCP tool one-to-one: the SDK's
-`Server.AddTool` with our JSON Schema, and a thin handler over `Registry.Execute`.
-The validation and masking are reused, not reimplemented. It adds about 2 MB
-to the binary.
-
-Destructive tools (`container.remove`, `*.prune`, …) carry a `destructiveHint`
-and are locked in `Registry.Execute` until a grant window is open; the MCP path
-never sets consent, so a locked call returns the "open a window" error. Env
-values are always masked on this path.
+`oriel mcp` maps each registry tool to an MCP tool one-to-one via the SDK's
+`Server.AddTool` (our JSON Schema in, a thin handler over `Registry.Execute`
+out). Validation, the destructive-grant gate, and secret masking are reused from
+that one path, not reimplemented; the adapter adds about 2 MB to the binary.
 
 ## Non-goals
 
 Oriel exposes Docker and Colima over MCP. It is not an MCP *client* (it doesn't
-consume other servers), and it bundles no model — the client brings that.
-
-Planned work (resources/prompts, MCP over HTTP) is on the [roadmap](../ROADMAP.md).
+consume other servers). Planned work (resources/prompts, MCP over HTTP) is on the
+[roadmap](../ROADMAP.md).
