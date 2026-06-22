@@ -2,6 +2,7 @@ package docker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/docker/docker/api/types"
@@ -122,48 +123,71 @@ func (c *Client) SystemPrune(ctx context.Context, opts PruneOptions, emit func(s
 		return PruneResult{}, err
 	}
 	var res PruneResult
+	var errs []error
+	// fail records a step error and surfaces it on the progress stream. Steps are
+	// best-effort across categories, so a later step still runs — unless the
+	// context was cancelled (the per-step ctx.Err() guards below stop the run).
+	fail := func(what string, err error) {
+		errs = append(errs, fmt.Errorf("%s: %w", what, err))
+		emit(fmt.Sprintf("  failed: %v", err))
+	}
 
-	if opts.Containers {
+	if opts.Containers && ctx.Err() == nil {
 		emit("Removing stopped containers…")
-		if rep, err := cli.ContainersPrune(ctx, filters.NewArgs()); err == nil {
+		if rep, err := cli.ContainersPrune(ctx, filters.NewArgs()); err != nil {
+			fail("containers", err)
+		} else {
 			res.Containers = len(rep.ContainersDeleted)
 			res.Reclaimed += int64(rep.SpaceReclaimed)
 			emit(fmt.Sprintf("  %d removed (%s)", res.Containers, humanBytes(int64(rep.SpaceReclaimed))))
 		}
 	}
-	if opts.Networks {
+	if opts.Networks && ctx.Err() == nil {
 		emit("Removing unused networks…")
-		if rep, err := cli.NetworksPrune(ctx, filters.NewArgs()); err == nil {
+		if rep, err := cli.NetworksPrune(ctx, filters.NewArgs()); err != nil {
+			fail("networks", err)
+		} else {
 			res.Networks = len(rep.NetworksDeleted)
 			emit(fmt.Sprintf("  %d removed", res.Networks))
 		}
 	}
-	if opts.Images {
+	if opts.Images && ctx.Err() == nil {
 		emit("Removing dangling images…")
-		if rep, err := cli.ImagesPrune(ctx, filters.NewArgs(filters.Arg("dangling", "true"))); err == nil {
+		if rep, err := cli.ImagesPrune(ctx, filters.NewArgs(filters.Arg("dangling", "true"))); err != nil {
+			fail("images", err)
+		} else {
 			res.Images = len(rep.ImagesDeleted)
 			res.Reclaimed += int64(rep.SpaceReclaimed)
 			emit(fmt.Sprintf("  %d removed (%s)", res.Images, humanBytes(int64(rep.SpaceReclaimed))))
 		}
 	}
-	if opts.BuildCache {
+	if opts.BuildCache && ctx.Err() == nil {
 		if opts.BuildCacheAll {
 			emit("Pruning all build cache…")
 		} else {
 			emit("Pruning dangling build cache…")
 		}
-		if rep, err := cli.BuildCachePrune(ctx, build.CachePruneOptions{All: opts.BuildCacheAll}); err == nil {
+		if rep, err := cli.BuildCachePrune(ctx, build.CachePruneOptions{All: opts.BuildCacheAll}); err != nil {
+			fail("build cache", err)
+		} else {
 			res.Reclaimed += int64(rep.SpaceReclaimed)
 			emit(fmt.Sprintf("  reclaimed %s", humanBytes(int64(rep.SpaceReclaimed))))
 		}
 	}
-	if opts.Volumes {
+	if opts.Volumes && ctx.Err() == nil {
 		emit("Removing unused volumes…")
-		if rep, err := cli.VolumesPrune(ctx, filters.NewArgs()); err == nil {
+		if rep, err := cli.VolumesPrune(ctx, filters.NewArgs()); err != nil {
+			fail("volumes", err)
+		} else {
 			res.Volumes = len(rep.VolumesDeleted)
 			res.Reclaimed += int64(rep.SpaceReclaimed)
 			emit(fmt.Sprintf("  %d removed (%s)", res.Volumes, humanBytes(int64(rep.SpaceReclaimed))))
 		}
+	}
+
+	if err := errors.Join(errs...); err != nil {
+		emit("Done with errors — some steps failed")
+		return res, err
 	}
 	emit(fmt.Sprintf("Done — reclaimed %s total", humanBytes(res.Reclaimed)))
 	return res, nil
