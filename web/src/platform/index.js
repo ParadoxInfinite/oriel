@@ -100,7 +100,11 @@ export { icons } from '../lib/icons.js'
 /** Low-level fetch helpers for endpoints without a dedicated store: apiGet/apiPost
  *  (e.g. /api/volumes/prune/preview) and streamPost for SSE-over-POST actions
  *  (e.g. /api/images/pull). Prefer the typed stores where they exist. */
-export { apiGet, apiPost, apiPut, streamPost, sse } from '../lib/api.js'
+export { apiGet, apiPost, apiPut, apiDelete, streamPost, sse } from '../lib/api.js'
+
+/** Destructive-grant window for MCP/assistant: `grant` state + `loadGrant()`,
+ *  `openGrant(hours)`, `lockGrant()`. */
+export { grant, loadGrant, openGrant, lockGrant } from '../lib/grant.svelte.js'
 
 /** Public-registry helpers for the pull dialog: the source list plus search and
  *  tag-listing proxies (Docker Hub, Quay, AWS ECR Public). */
