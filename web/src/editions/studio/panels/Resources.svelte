@@ -15,9 +15,8 @@
     sortRows,
     startImagePrune,
     startVolumePrune,
-    containersForImage,
     isPinnedImage,
-    suggestTag,
+    ImageActions,
   } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import SortHeader from '../lib/SortHeader.svelte'
@@ -27,6 +26,11 @@
   import ContainerDrawer from '../lib/ContainerDrawer.svelte'
 
   let { kind } = $props()
+
+  // Image tag / used-by / remove behaviour lives in the shared controller.
+  const ia = new ImageActions()
+  const openTag = (img) => ia.openTag(img)
+  const applyTag = () => ia.applyTag()
 
   const BUILTIN_NET = new Set(['bridge', 'host', 'none'])
   const shortId = (id) => (id || '').replace(/^sha256:/, '').slice(0, 12)
@@ -47,28 +51,8 @@
         { label: 'Created', key: 'created', get: (i) => i.created, right: true, w: '140px', render: (i) => fmt.relativeTime(i.created) },
       ],
       removable: () => true,
-      remove: async (i) => {
-        const inUse = i.containers > 0
-        const ok = await confirm({
-          title: 'Remove image?',
-          message: `${i.tags.length > 1 ? `All ${i.tags.length} tags` : `“${i.tags[0]}”`} will be deleted.${inUse ? ` Used by ${i.containers} container(s); it will be force-removed.` : ''}`,
-          confirmLabel: 'Remove',
-        })
-        if (!ok) return
-        await invoke('image.remove', { id: i.id, force: inUse }, { success: `Removed ${i.tags[0]}` })
-        refreshImages()
-      },
-      untag: async (img, tag) => {
-        const last = img.tags.length <= 1
-        const ok = await confirm({
-          title: 'Remove this tag?',
-          message: `“${tag}” will be removed.${last ? ' It is the only tag, so the image itself will be deleted.' : ' The image and its other tags stay.'}`,
-          confirmLabel: 'Remove tag',
-        })
-        if (!ok) return
-        await invoke('image.remove', { id: tag, force: false }, { success: `Removed ${tag}` })
-        refreshImages()
-      },
+      remove: (i) => ia.removeImage(i),
+      untag: (img, tag) => ia.untag(img, tag),
       prune: {
         label: 'Prune dangling',
         title: 'Prune dangling images',
@@ -149,27 +133,8 @@
 
   let pullRef = $state(null) // null = closed; string = open with that initial ref
   let pruneItems = $state(null) // null = closed
-  let usedByImage = $state(null) // image whose "used by" list is open
   let drawerContainer = $state(null) // container shown in the drawer
-  const usingContainers = $derived(usedByImage ? containersForImage(usedByImage.id) : [])
 
-  let tagImage = $state(null) // pinned image being tagged
-  let tagRef = $state('')
-  let tagging = $state(false)
-  function openTag(img) {
-    tagImage = img
-    tagRef = suggestTag(img)
-  }
-  async function applyTag() {
-    if (!tagRef.trim() || tagging) return
-    tagging = true
-    const ok = await invoke('image.tag', { id: tagImage.id, ref: tagRef.trim() }, { success: `Tagged ${tagRef.trim()}` })
-    tagging = false
-    if (ok) {
-      tagImage = null
-      refreshImages()
-    }
-  }
   async function openPrune() {
     try {
       const items = await c.prune.collect()
@@ -236,7 +201,7 @@
                       {/each}
                     </div>
                   {:else if col.key === 'inuse' && item.containers > 0}
-                    <button class="mono tnum text-[12.5px] font-medium text-[var(--accent)] hover:underline" title="See which containers use this image" onclick={() => (usedByImage = item)}>{item.containers} →</button>
+                    <button class="mono tnum text-[12.5px] font-medium text-[var(--accent)] hover:underline" title="See which containers use this image" onclick={() => (ia.usedByImage = item)}>{item.containers} →</button>
                   {:else}
                     <span class="{col.mono ? 'mono' : ''} {col.right ? 'tnum' : ''} {col.strong ? 'text-[13px] font-medium text-[var(--text)]' : 'text-[12.5px] text-[var(--text-2)]'} {col.grow ? 'block truncate' : ''}">{col.render ? col.render(item) : col.get(item)}</span>
                     {#if col.badge?.(item)}<span class="chip ml-2">{col.badge(item)}</span>{/if}
@@ -274,21 +239,21 @@
 <svelte:window
   onkeydown={(e) => {
     if (e.key !== 'Escape') return
-    if (tagImage) tagImage = null
-    else if (usedByImage) usedByImage = null
+    if (ia.tagImage) ia.tagImage = null
+    else if (ia.usedByImage) ia.usedByImage = null
   }}
 />
 
-{#if usedByImage}
-  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (usedByImage = null)}>
+{#if ia.usedByImage}
+  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (ia.usedByImage = null)}>
     <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
       <div class="border-b border-[var(--border)] px-5 py-3.5">
-        <h2 class="text-[14px] font-semibold tracking-tight">Used by {usingContainers.length} container{usingContainers.length === 1 ? '' : 's'}</h2>
-        <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]">{usedByImage.tags?.[0] && usedByImage.tags[0] !== '<none>' ? usedByImage.tags[0] : shortId(usedByImage.id)}</p>
+        <h2 class="text-[14px] font-semibold tracking-tight">Used by {ia.usingContainers.length} container{ia.usingContainers.length === 1 ? '' : 's'}</h2>
+        <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]">{ia.usedByImage.tags?.[0] && ia.usedByImage.tags[0] !== '<none>' ? ia.usedByImage.tags[0] : shortId(ia.usedByImage.id)}</p>
       </div>
       <div class="min-h-0 flex-1 overflow-auto">
-        {#each usingContainers as ct (ct.id)}
-          <button class="flex w-full items-center gap-3 border-b border-[var(--border)] px-5 py-3 text-left transition-colors last:border-0 hover:bg-[var(--panel-2)]" onclick={() => { drawerContainer = ct; usedByImage = null }}>
+        {#each ia.usingContainers as ct (ct.id)}
+          <button class="flex w-full items-center gap-3 border-b border-[var(--border)] px-5 py-3 text-left transition-colors last:border-0 hover:bg-[var(--panel-2)]" onclick={() => { drawerContainer = ct; ia.usedByImage = null }}>
             <StatusPill state={ct.state} />
             <span class="min-w-0 flex-1">
               <span class="block truncate text-[13px] font-medium text-[var(--text)]">{ct.name}</span>
@@ -308,19 +273,19 @@
   <ContainerDrawer container={drawerContainer} onClose={() => (drawerContainer = null)} />
 {/if}
 
-{#if tagImage}
-  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (tagImage = null)}>
+{#if ia.tagImage}
+  <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (ia.tagImage = null)}>
     <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
       <div class="border-b border-[var(--border)] px-5 py-3.5">
         <h2 class="text-[14px] font-semibold tracking-tight">Tag image</h2>
-        <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]" title={tagImage.tags?.[0]}>{shortId(tagImage.id)}</p>
+        <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]" title={ia.tagImage.tags?.[0]}>{shortId(ia.tagImage.id)}</p>
       </div>
       <div class="p-5">
         <p class="mb-2 text-[12px] text-[var(--text-2)]">This image is pinned by digest, so it shows no name. Give it a <span class="mono">repository:tag</span> to label it locally.</p>
         <!-- svelte-ignore a11y_autofocus -->
         <input
           class="mono w-full rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[13px] text-[var(--text)] outline-none focus:border-[var(--accent)]"
-          bind:value={tagRef}
+          bind:value={ia.tagRef}
           autofocus
           spellcheck="false"
           placeholder="repo/name:tag"
@@ -328,8 +293,8 @@
         />
       </div>
       <div class="flex justify-end gap-2 border-t border-[var(--border)] px-5 py-3">
-        <button class="btn btn-default btn-sm" onclick={() => (tagImage = null)}>Cancel</button>
-        <button class="btn btn-primary btn-sm" onclick={applyTag} disabled={!tagRef.trim() || tagging}>{tagging ? 'Tagging…' : 'Tag'}</button>
+        <button class="btn btn-default btn-sm" onclick={() => (ia.tagImage = null)}>Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick={applyTag} disabled={!ia.tagRef.trim() || ia.tagging}>{ia.tagging ? 'Tagging…' : 'Tag'}</button>
       </div>
     </div>
   </div>

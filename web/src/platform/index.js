@@ -94,6 +94,9 @@ export { provider, checkProvider, setProvider, resolveText } from '../lib/provid
 /** Formatting helpers: bytes, duration, timeOnly, dateTime, relativeTime. */
 export * as fmt from '../lib/format.js'
 
+/** Headless image tag/used-by/remove controller, shared by both editions. */
+export { ImageActions } from '../lib/imageActions.svelte.js'
+
 /** Raw Lucide icon inner-SVG strings, keyed by name (see lib/icons.js). */
 export { icons } from '../lib/icons.js'
 
