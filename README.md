@@ -102,6 +102,7 @@ Podman, and remote daemons also work — see [docs/DAEMONS.md](docs/DAEMONS.md).
 - **Reclaim space** — selectable prune as cancelable background jobs that survive a refresh.
 - **Dashboard** — CPU history, memory, disk, and uptime/outage tracking.
 - **Command palette** (`⌘K`) — fuzzy-run any action; optional natural-language mode.
+- **MCP server** — `oriel mcp` exposes Docker/Colima to any MCP client (Claude Desktop, Claude Code, Cursor, a local LLM) through the same validated, secret-masked tools the UI uses; destructive actions stay locked until you grant a window.
 - **Editions & themes** — swap the whole UI (Studio / Classic), light/dark/system, custom accents.
 - **Live** — everything streams over one SSE connection; the UI never polls.
 - **Self-update** — service installs update in-app via checksum-verified downloads.
