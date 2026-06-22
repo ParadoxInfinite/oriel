@@ -1,12 +1,12 @@
 <script>
   import { onMount } from 'svelte'
   import {
-    provider, toast, ProviderSettings,
+    provider, ProviderSettings,
     self, update, checkNow, restartService, promptUpdate,
-    remote, loadRemote, addRemoteHost, removeRemoteHost,
-    grant, loadGrant, openGrant, lockGrant, fmtRemaining,
-    discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern,
-    PathField, THEMES_DOC_URL,
+    remote, loadRemote, removeRemoteHost, RemoteHostForm,
+    grant, loadGrant, requestGrant, lockGrant, fmtRemaining,
+    discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm,
+    THEMES_DOC_URL,
   } from '../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../editions/registry.svelte.js'
   import { btn, btnPrimary } from '../lib/ui.js'
@@ -14,31 +14,8 @@
   import PathInput from '../components/PathInput.svelte'
 
   ensureDiscovery()
-  const pf = new PathField()
-  function addDir() {
-    if (pf.value.trim()) {
-      addRoot(pf.value)
-      pf.reset()
-    }
-  }
-  let newPattern = $state('')
-  function addPat() {
-    addPattern(newPattern)
-    newPattern = ''
-  }
-  const FILTER_MODES = [
-    ['off', 'Off'],
-    ['allow', 'Allow-list'],
-    ['deny', 'Deny-list'],
-  ]
-
-  const field =
-    'w-full rounded-[--radius] border border-border bg-bg px-3 py-1.5 text-sm outline-none placeholder:text-muted focus:border-accent/50'
-
-  const verLabel = $derived(self.version || '—')
-
-
-  // AI provider.
+  const df = new DiscoveryForm()
+  const hostForm = new RemoteHostForm()
   const ps = new ProviderSettings()
   const saveProvider = () => ps.save()
   const runTest = () => ps.runTest()
@@ -47,21 +24,11 @@
     loadGrant()
     ps.load()
   })
-  async function grantFor(hours) {
-    try {
-      await openGrant(hours)
-    } catch (e) {
-      toast(e?.message || 'Could not open window', 'error')
-    }
-  }
-  let hostDraft = $state('')
-  function addHost() {
-    const h = hostDraft.trim()
-    if (h) {
-      addRemoteHost(h)
-      hostDraft = ''
-    }
-  }
+
+  const field =
+    'w-full rounded-[--radius] border border-border bg-bg px-3 py-1.5 text-sm outline-none placeholder:text-muted focus:border-accent/50'
+
+  const verLabel = $derived(self.version || '—')
 </script>
 
 <div class="mx-auto grid max-w-5xl grid-cols-1 gap-5 pb-4 lg:grid-cols-2 lg:items-start">
@@ -142,8 +109,8 @@
     {/if}
 
     <div class="mt-3 flex gap-2">
-      <PathInput field={pf} onEnter={addDir} placeholder="Add a directory…  /Users/you/projects" />
-      <button class={btn} onclick={addDir} disabled={!pf.value.trim()}>Add</button>
+      <PathInput field={df.pathField} onEnter={() => df.addDir()} placeholder="Add a directory…  /Users/you/projects" />
+      <button class={btn} onclick={() => df.addDir()} disabled={!df.pathField.value.trim()}>Add</button>
     </div>
     <p class="mt-1.5 text-[11px] text-faint">Turn on <span class="font-medium text-muted">Traverse</span> to scan subdirectories; off treats the directory itself as one project.</p>
 
@@ -163,8 +130,8 @@
           {/each}
         </div>
         <div class="mt-2 flex gap-2">
-          <input bind:value={newPattern} placeholder="web-*  ·  My App  ·  ~/lab/**" class="{field} font-mono" onkeydown={(e) => e.key === 'Enter' && addPat()} />
-          <button class={btn} onclick={addPat} disabled={!newPattern.trim()}>Add</button>
+          <input bind:value={df.pattern} placeholder="web-*  ·  My App  ·  ~/lab/**" class="{field} font-mono" onkeydown={(e) => e.key === 'Enter' && df.addPattern()} />
+          <button class={btn} onclick={() => df.addPattern()} disabled={!df.pattern.trim()}>Add</button>
         </div>
         <p class="mt-1.5 text-[11px] text-faint">Matches a project name, its Oriel name, or a directory path (globs &amp; <span class="font-mono">**</span> allowed). Running stacks are never hidden.</p>
       {/if}
@@ -222,12 +189,12 @@
     <div class="mt-4 flex flex-wrap items-center gap-2">
       {#if grant.active}
         <span class="rounded-full bg-accent/15 px-2.5 py-1 text-xs font-medium text-accent">Unlocked · {fmtRemaining(grant.remainingSeconds)} left</span>
-        <button class={btn} onclick={() => grantFor(6)} disabled={grant.busy}>Extend 6h</button>
+        <button class={btn} onclick={() => requestGrant(6)} disabled={grant.busy}>Extend 6h</button>
         <button class={btn} onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
       {:else}
         <span class="text-sm text-faint">Destructive actions are <span class="font-medium text-fg">locked</span> for automation.</span>
-        <button class={btnPrimary} onclick={() => grantFor(6)} disabled={grant.busy}>Allow 6h</button>
-        <button class={btn} onclick={() => grantFor(24 * 6)} disabled={grant.busy}>Allow 6d</button>
+        <button class={btnPrimary} onclick={() => requestGrant(6)} disabled={grant.busy}>Allow 6h</button>
+        <button class={btn} onclick={() => requestGrant(24 * 6)} disabled={grant.busy}>Allow 6d</button>
       {/if}
     </div>
     <p class="mt-2 text-xs text-faint">Same window the <span class="mono">oriel ai allow-destructive</span> CLI opens. Auto-relocks when it lapses.</p>
@@ -285,8 +252,8 @@
       </div>
     {/if}
     <div class="mt-3 flex gap-2">
-      <input bind:value={hostDraft} placeholder="oriel.example.com" class={field} onkeydown={(e) => e.key === 'Enter' && addHost()} />
-      <button class={btn} onclick={addHost} disabled={!hostDraft.trim() || remote.saving}>Add</button>
+      <input bind:value={hostForm.draft} placeholder="oriel.example.com" class={field} onkeydown={(e) => e.key === 'Enter' && hostForm.add()} />
+      <button class={btn} onclick={() => hostForm.add()} disabled={!hostForm.draft.trim() || remote.saving}>Add</button>
     </div>
     {#if remote.error}<p class="mt-2 text-xs text-danger">{remote.error}</p>{/if}
   </section>

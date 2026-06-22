@@ -29,3 +29,16 @@ async function save(hosts) {
 
 export const addRemoteHost = (h) => save([...remote.hosts, h])
 export const removeRemoteHost = (h) => save(remote.hosts.filter((x) => x !== h))
+
+// The "add a host" input both editions render: a draft plus the trim-and-clear
+// submit. Editions supply only the markup bound to `draft` and `add`.
+export class RemoteHostForm {
+  draft = $state('')
+  add() {
+    const h = this.draft.trim()
+    if (h) {
+      addRemoteHost(h)
+      this.draft = ''
+    }
+  }
+}
