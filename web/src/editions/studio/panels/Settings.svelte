@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { provider, checkProvider, setProvider, resolveText, toast } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, addRoot, updateRoot, removeRoot, rootResult, setFilter, addPattern, removePattern, PathField, THEMES_DOC_URL } from '../../../platform/index.js'
-  import { self, update, checkNow, applyUpdate, restartService, confirm } from '../../../platform/index.js'
+  import { self, update, checkNow, applyUpdate, restartService, confirm, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, addRemoteHost, removeRemoteHost } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
@@ -11,6 +11,19 @@
 
   ensureDiscovery()
   const pf = new PathField()
+  // Secret-masking + reveal policy (Settings → Secrets), saved via /api/config.
+  async function saveSecret(patch) {
+    const prev = { maskEnv: self.maskEnv, envReveal: self.envReveal }
+    Object.assign(self, patch) // optimistic
+    try {
+      const d = await apiPut('/api/config', patch)
+      if (d?.maskEnv) self.maskEnv = d.maskEnv
+      if (d?.envReveal) self.envReveal = d.envReveal
+    } catch (e) {
+      Object.assign(self, prev)
+      toast(e?.message || 'Could not save', 'error')
+    }
+  }
   function addDir() {
     if (pf.value.trim()) {
       addRoot(pf.value)
@@ -298,6 +311,35 @@
         {/if}
       </div>
     {/if}
+  </section>
+
+  <!-- Secrets -->
+  <section class="rise card p-5" style="animation-delay:90ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Secrets</h2>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">
+      Mask environment-variable values in the container inspect panel so API keys don't leak from screenshots or screen-shares. Masking is enforced server-side.
+    </p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <label class="block">
+        <span class="text-[13px] font-medium">Mask env values</span>
+        <select class="input mt-2 w-full" value={self.maskEnv} onchange={(e) => saveSecret({ maskEnv: e.currentTarget.value })}>
+          <option value="all">All values</option>
+          <option value="sensitive">Sensitive only</option>
+          <option value="off">Off</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="text-[13px] font-medium">Allow “Reveal values”</span>
+        <select class="input mt-2 w-full" value={self.envReveal} onchange={(e) => saveSecret({ envReveal: e.currentTarget.value })}>
+          <option value="local">Local only</option>
+          <option value="remote">Local &amp; remote</option>
+          <option value="off">Never (locked)</option>
+        </select>
+      </label>
+    </div>
+    <p class="mt-2 text-[12px] text-[var(--text-3)]">
+      Reveal is gated server-side: <span class="mono">Local only</span> unmasks just on <span class="mono">127.0.0.1</span>; <span class="mono">Local &amp; remote</span> also allows it from allowed hosts; <span class="mono">Never</span> is a kill-switch.
+    </p>
   </section>
 
   <!-- Updates -->

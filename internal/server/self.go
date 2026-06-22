@@ -8,17 +8,21 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+
+	"github.com/ParadoxInfinite/oriel/internal/secrets"
 )
 
 // selfStats reports this GUI's own resource footprint, so the dashboard can show
 // what the tool itself costs.
 type selfStats struct {
-	Version    string `json:"version"`  // build version ("dev" for local builds)
-	BasePath   string `json:"basePath"` // configured reverse-proxy base, "/" at root
-	OS         string `json:"os"`       // server GOOS — clients label host actions by it
-	RSS        int64  `json:"rss"`      // resident set size, bytes
+	Version    string `json:"version"`   // build version ("dev" for local builds)
+	BasePath   string `json:"basePath"`  // configured reverse-proxy base, "/" at root
+	OS         string `json:"os"`        // server GOOS — clients label host actions by it
+	RSS        int64  `json:"rss"`       // resident set size, bytes
 	Goroutines int    `json:"goroutines"`
-	HeapAlloc  int64  `json:"heapAlloc"` // Go heap in use, bytes
+	HeapAlloc  int64  `json:"heapAlloc"`  // Go heap in use, bytes
+	MaskEnv    string `json:"maskEnv"`    // inspect env masking: "all" | "sensitive" | "off"
+	EnvReveal  string `json:"envReveal"`  // reveal policy: "off" | "local" | "remote"
 }
 
 // currentSelf samples this process's footprint. Shared by the REST handler and
@@ -26,6 +30,7 @@ type selfStats struct {
 func (s *Server) currentSelf(ctx context.Context) selfStats {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
+	cfg := loadSettings()
 	return selfStats{
 		Version:    s.version,
 		BasePath:   s.base,
@@ -33,6 +38,8 @@ func (s *Server) currentSelf(ctx context.Context) selfStats {
 		RSS:        processRSS(ctx),
 		Goroutines: runtime.NumGoroutine(),
 		HeapAlloc:  int64(m.HeapAlloc),
+		MaskEnv:    string(secrets.ParseMode(cfg.MaskEnv)),
+		EnvReveal:  normReveal(cfg.EnvReveal),
 	}
 }
 

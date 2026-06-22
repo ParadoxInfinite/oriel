@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Secret masking in container inspect.** Environment-variable values are masked
+  by default (`••••••••`) so API keys don't leak from screenshots or screen-shares.
+  A gated "Reveal values" action unmasks them; masking is enforced server-side.
+  Configurable in Settings → Secrets — mask mode (all / sensitive / off) and reveal
+  policy (local / local & remote / off).
+
 ## [0.3.3] - 2026-06-22
 
 ### Fixed

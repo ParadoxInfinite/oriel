@@ -49,6 +49,8 @@
   // ── Inspect (fetched on first open) ────────────────────────────────────────
   let detail = $state(null)
   let inspectErr = $state('')
+  let revealed = $state(false) // env values unmasked (re-fetched with ?reveal=1)
+  let revealing = $state(false)
   let loaded = false
   $effect(() => {
     if (tab === 'inspect' && !loaded) {
@@ -58,6 +60,21 @@
         .catch((e) => (inspectErr = e.message))
     }
   })
+  // Masking is enforced server-side; revealing re-fetches the raw payload (only
+  // succeeds when the envReveal policy allows this viewer).
+  async function toggleReveal() {
+    if (revealing) return
+    revealing = true
+    const next = !revealed
+    try {
+      detail = await apiGet(`/api/containers/${container.id}/inspect${next ? '?reveal=1' : ''}`)
+      revealed = next
+    } catch (e) {
+      inspectErr = e.message
+    } finally {
+      revealing = false
+    }
+  }
 
   const rows = $derived(
     detail
@@ -169,7 +186,15 @@
           {/if}
 
           {#if detail.env?.length}
-            <div class="mt-4"><span class="eyebrow">Environment · {detail.env.length}</span>
+            <div class="mt-4">
+              <div class="flex items-center justify-between">
+                <span class="eyebrow">Environment · {detail.env.length}</span>
+                {#if detail.canReveal && (detail.envMasked || revealed)}
+                  <button class="text-[11px] font-medium text-[var(--accent)] hover:underline disabled:opacity-50" onclick={toggleReveal} disabled={revealing}>{revealing ? '…' : revealed ? 'Hide values' : 'Reveal values'}</button>
+                {:else if detail.envMasked}
+                  <span class="text-[11px] text-[var(--text-3)]" title="Revealing secret values is limited to local access by policy">masked · local only</span>
+                {/if}
+              </div>
               <div class="mono mt-2 max-h-56 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3 text-[11.5px] leading-relaxed">
                 {#each detail.env as e}<div class="break-all text-[var(--text-2)]">{e}</div>{/each}
               </div>
