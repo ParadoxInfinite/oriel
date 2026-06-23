@@ -53,13 +53,17 @@
   }
 
   function imageActions(img) {
+    const tag = img.tags?.[0]
+    const tagged = tag && !tag.includes('<none>')
+    // Remove the exact tag shown (untags it, and deletes the image when it's the
+    // last tag). Removing by bare id errors on a multi-tagged image.
     return [
       {
         verb: 'Remove',
         label: 'Remove image',
         target: imageName(img),
         tool: 'image.remove',
-        args: { id: img.id, force: img.containers > 0 },
+        args: { id: tagged ? tag : img.id, force: img.containers > 0 },
         danger: true,
         key: `image.remove:${img.id}`,
       },
@@ -153,6 +157,9 @@
   function confirmMessage(it) {
     if (it.tool === 'image.prune') return 'All dangling images will be permanently removed.'
     if (it.tool === 'volume.prune') return 'All unused volumes will be permanently removed.'
+    if (it.tool === 'container.remove' && it.args.force) {
+      return `“${it.target}” is running. It will be force-stopped, then permanently removed.`
+    }
     return `“${it.target}” will be permanently removed.`
   }
 
@@ -195,7 +202,7 @@
   function onKeydown(e) {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      selected = Math.min(selected + 1, filtered.length - 1)
+      selected = Math.max(0, Math.min(selected + 1, filtered.length - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       selected = Math.max(selected - 1, 0)
