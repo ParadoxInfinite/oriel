@@ -82,8 +82,7 @@ unchanged) — handy for an agent to organize stacks for the user.
 
 Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
 `network.list`, `stacks.list`, `system.df`, `colima.status`. These let an AI see
-the current state and target things by description, instead of acting blind. The
-in-app assistant uses the same set.
+the current state and target things by description, instead of acting blind.
 
 > Logs and inspect may also show up as MCP **resources** later (so a client can
 > attach "this container's logs" as context). That's additive; they stay tools
@@ -96,7 +95,7 @@ in-app assistant uses the same set.
 - **Grant:** `oriel ai allow-destructive --for 6h` (or a Settings toggle). Stored
   with an `ExpiresAt`; **auto-relocks** when the window lapses.
 - **Enforced once** on `tool.Destructive` inside the execution path, so it covers
-  the MCP server and the in-app assistant identically. Even a headless AI can
+  the MCP server and any non-interactive caller identically. Even a headless AI can
   only do damage inside a window the user opened on purpose.
 - A locked call returns a structured error explaining how to grant, which an MCP
   client surfaces to the user.
