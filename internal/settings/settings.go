@@ -26,6 +26,7 @@ type Settings struct {
 	AllowedHosts []string         `json:"allowedHosts"` // non-loopback Hosts allowed to reach /api
 	MaskEnv      string           `json:"maskEnv"`      // inspect env masking: "all" (default) | "sensitive" | "off"
 	EnvReveal    string           `json:"envReveal"`    // where "reveal values" works: "local" (default) | "remote" | "off"
+	AuthToken    string           `json:"authToken"`    // opt-in bearer token required for non-loopback /api ("" = off)
 }
 
 var mu sync.Mutex
