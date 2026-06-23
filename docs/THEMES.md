@@ -95,6 +95,10 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
   filter, deploy) and the headless path-typeahead controller. Both built-in
   editions' Settings + Stacks views render the same store; another model for
   behavior-in-SDK, look-in-edition.
+- `AliasEditor`: headless "rename in Oriel" controller. An alias is a display-only
+  label keyed by the real compose project name, so one instance drives renaming on
+  any stack — running or discovered. `display(name)`, `start/save/cancel`,
+  `editing`, `draft`.
 
 ## Navigation
 
