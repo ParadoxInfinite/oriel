@@ -114,6 +114,10 @@ export * as fmt from '../lib/format.js'
 /** Headless image tag/used-by/remove controller, shared by both editions. */
 export { ImageActions } from '../lib/imageActions.svelte.js'
 
+/** Headless "rename in Oriel" controller: a display-only alias keyed by the real
+ *  compose project name. `display(name)`, `start/save/cancel`, `editing`, `draft`. */
+export { AliasEditor } from '../lib/aliasEditor.svelte.js'
+
 /** Headless AI-provider Settings controller (resolver URL + test box). */
 export { ProviderSettings } from '../lib/providerSettings.svelte.js'
 
