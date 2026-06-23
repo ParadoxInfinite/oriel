@@ -76,6 +76,11 @@ oriel ai status                       # check what's open
 oriel ai lock                         # close it now
 ```
 
+`--for` accepts a Go duration — `30s`, `90m`, `6h`, `1h30m`, `1.5h` (units `s` /
+`m` / `h`, combinable) — or a days form like `2d` / `0.5d`. Anything from a few
+seconds up to a **30-day** max; the days form doesn't combine with hours (use
+`36h`, not `1d12h`).
+
 Env values in `container.inspect` are always masked on this path, so secrets never
 reach the model.
 
