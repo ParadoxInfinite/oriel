@@ -6,9 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
+	"github.com/ParadoxInfinite/oriel/internal/colima"
 	"github.com/ParadoxInfinite/oriel/internal/docker"
 	"github.com/ParadoxInfinite/oriel/internal/service"
 )
@@ -42,6 +44,24 @@ func runDoctor(args []string) error {
 	} else {
 		doctorLine("✗", "Docker", "unreachable — is the daemon (or colima) running?")
 		problems++
+	}
+
+	// --- Docker socket discovery (colima trips up tools that assume the default
+	// /var/run/docker.sock: Testcontainers, some SDK clients). Advisory, not a
+	// hard failure — `docker context use colima` is a valid alternative. ---
+	if socket, err := colima.DockerSocketPath(ctx); err == nil && socket != "" {
+		host := "unix://" + socket
+		switch env := os.Getenv("DOCKER_HOST"); {
+		case env == host:
+			doctorLine("✓", "Docker socket", "DOCKER_HOST points at colima")
+		case env != "":
+			doctorLine("⚠", "Docker socket", fmt.Sprintf("DOCKER_HOST=%s doesn't match colima's %s", env, host))
+		case defaultSocketIsColima(socket):
+			doctorLine("✓", "Docker socket", "/var/run/docker.sock points at colima")
+		default:
+			doctorLine("⚠", "Docker socket", "DOCKER_HOST unset and /var/run/docker.sock isn't colima's — Testcontainers / docker SDKs will miss it")
+			fmt.Println(`      fix: eval "$(oriel env)"   (or: docker context use colima)`)
+		}
 	}
 
 	// --- Running instance + its live config ---
@@ -91,6 +111,13 @@ func runDoctor(args []string) error {
 
 func doctorLine(glyph, label, detail string) {
 	fmt.Printf("  %s  %-14s %s\n", glyph, label, detail)
+}
+
+// defaultSocketIsColima reports whether /var/run/docker.sock is a symlink to
+// colima's socket (so tools hitting the default path actually reach colima).
+func defaultSocketIsColima(colimaSocket string) bool {
+	target, err := os.Readlink("/var/run/docker.sock")
+	return err == nil && target == colimaSocket
 }
 
 func fetchSelf(port int) (selfInfo, error) {

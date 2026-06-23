@@ -42,6 +42,8 @@ func main() {
 			runSub("ai", runAI) // allow-destructive | status | lock — the grant window
 		case "mcp":
 			runSub("mcp", runMCP) // serve the tool registry to an MCP client over stdio
+		case "env":
+			runSub("env", runEnv) // print DOCKER_HOST for colima's socket (eval "$(oriel env)")
 		case "version", "--version", "-v":
 			fmt.Println("oriel", version)
 			return
@@ -49,7 +51,7 @@ func main() {
 			// A non-flag first arg is a mistyped subcommand; flags fall through to
 			// the server below.
 			if !strings.HasPrefix(os.Args[1], "-") {
-				fmt.Fprintf(os.Stderr, "oriel: unknown command %q\nrun one of: service, remote, doctor, config, update, ai, mcp, version\n", os.Args[1])
+				fmt.Fprintf(os.Stderr, "oriel: unknown command %q\nrun one of: service, remote, doctor, config, update, ai, mcp, env, version\n", os.Args[1])
 				os.Exit(2)
 			}
 		}

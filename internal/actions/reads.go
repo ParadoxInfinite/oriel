@@ -120,4 +120,22 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 			return colima.GetStatus(ctx)
 		},
 	})
+	r.Register(&tools.Tool{
+		Name: "docker.env", Title: "Docker connection env", Description: "DOCKER_HOST + Testcontainers socket override for this machine's docker socket — fixes tools that default to /var/run/docker.sock and miss colima",
+		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
+			socket, err := colima.DockerSocketPath(ctx)
+			if err != nil {
+				return nil, err
+			}
+			host := "unix://" + socket
+			return map[string]any{
+				"dockerHost": host,
+				"socket":     socket,
+				"env": map[string]string{
+					"DOCKER_HOST":                           host,
+					"TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE": socket,
+				},
+			}, nil
+		},
+	})
 }
