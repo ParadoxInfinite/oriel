@@ -22,16 +22,21 @@ import (
 )
 
 // Serve runs the MCP server over stdio until the client disconnects (EOF) or
-// ctx is cancelled. It registers one MCP tool per registry tool.
-func Serve(ctx context.Context, reg *tools.Registry, version string) error {
-	return newServer(reg, version).Run(ctx, &mcp.StdioTransport{})
+// ctx is cancelled. It registers one MCP tool per registry tool that `include`
+// admits (a nil include exposes everything) — that's how `oriel mcp --read-only`
+// and the allow/deny lists scope the surface handed to a client.
+func Serve(ctx context.Context, reg *tools.Registry, version string, include func(*tools.Tool) bool) error {
+	return newServer(reg, version, include).Run(ctx, &mcp.StdioTransport{})
 }
 
-// newServer builds the MCP server with one tool per registry tool. Split out so
-// tests can drive it over an in-memory transport instead of stdio.
-func newServer(reg *tools.Registry, version string) *mcp.Server {
+// newServer builds the MCP server with one tool per admitted registry tool.
+// Split out so tests can drive it over an in-memory transport instead of stdio.
+func newServer(reg *tools.Registry, version string, include func(*tools.Tool) bool) *mcp.Server {
 	s := mcp.NewServer(&mcp.Implementation{Name: "oriel", Version: version}, nil)
 	for _, t := range reg.List() {
+		if include != nil && !include(t) {
+			continue
+		}
 		s.AddTool(toolFor(t), handlerFor(reg, t.Name))
 	}
 	return s
@@ -51,7 +56,7 @@ func toolFor(t *tools.Tool) *mcp.Tool {
 		Description: desc,
 		InputSchema: inputSchema(t.Schema),
 		Annotations: &mcp.ToolAnnotations{
-			ReadOnlyHint:    !destructive,
+			ReadOnlyHint:    t.ReadOnly,
 			DestructiveHint: &destructive,
 		},
 	}
