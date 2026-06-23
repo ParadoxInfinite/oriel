@@ -103,9 +103,26 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 		},
 	})
 	r.Register(&tools.Tool{
-		Name: "stacks.list", Title: "List compose stacks", Description: "List Docker Compose projects and their containers",
+		Name: "stacks.list", Title: "List compose stacks", Description: "List Docker Compose projects with their running/total counts",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
-			return dc.ListStacks(ctx)
+			list, err := dc.ListStacks(ctx)
+			if err != nil {
+				return nil, err
+			}
+			// Lean projection for agents: identity + counts + dir, without the full
+			// per-container detail (an agent that needs it uses container.list). Keeps
+			// the MCP payload small; the UI uses /api/stacks for the full shape.
+			type stack struct {
+				Name       string `json:"name"`
+				Running    int    `json:"running"`
+				Total      int    `json:"total"`
+				WorkingDir string `json:"workingDir"`
+			}
+			out := make([]stack, len(list))
+			for i, s := range list {
+				out[i] = stack{s.Name, s.Running, s.Total, s.WorkingDir}
+			}
+			return out, nil
 		},
 	})
 	r.Register(&tools.Tool{
