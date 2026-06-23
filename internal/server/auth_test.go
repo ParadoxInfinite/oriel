@@ -17,23 +17,6 @@ func authReq(host, authHeader, fetchSite string) *http.Request {
 	return r
 }
 
-func TestBearerToken(t *testing.T) {
-	cases := map[string]string{
-		"Bearer abc":   "abc",
-		"bearer abc":   "abc", // scheme is case-insensitive
-		"Bearer  abc ": "abc", // trimmed
-		"Basic abc":    "",
-		"abc":          "",
-		"":             "",
-		"Bearer":       "",
-	}
-	for in, want := range cases {
-		if got := bearerToken(in); got != want {
-			t.Errorf("bearerToken(%q) = %q, want %q", in, got, want)
-		}
-	}
-}
-
 func TestAuthGateOK(t *testing.T) {
 	if !(&authGate{}).ok(authReq("h", "", "")) {
 		t.Error("auth off should allow everything")

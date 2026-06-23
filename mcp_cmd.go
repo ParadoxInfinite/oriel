@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,6 +17,7 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/grant"
 	"github.com/ParadoxInfinite/oriel/internal/mcp"
 	"github.com/ParadoxInfinite/oriel/internal/secrets"
+	"github.com/ParadoxInfinite/oriel/internal/settings"
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
@@ -32,6 +35,7 @@ func runMCP(args []string) error {
 	readOnly := fs.Bool("read-only", false, "expose only read-only tools (no start/stop/remove/prune/...)")
 	allow := fs.String("allow-tools", "", "expose only these tools (comma-separated names)")
 	deny := fs.String("deny-tools", "", "exclude these tools (comma-separated names)")
+	httpAddr := fs.String("http", "", "serve over Streamable HTTP at this address (e.g. 127.0.0.1:8080) instead of stdio")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -41,12 +45,39 @@ func runMCP(args []string) error {
 
 	reg := actions.New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
 	reg.SetDestructiveWindow(grant.New().Active)
-
 	include := toolFilter(*readOnly, *allow, *deny)
+
+	if *httpAddr != "" {
+		token := settings.Load().AuthToken
+		// Never expose MCP beyond loopback without a token — that's an open door
+		// to the user's Docker. Force them to set one first.
+		if exposedAddr(*httpAddr) && token == "" {
+			return fmt.Errorf("refusing to serve MCP over HTTP on a non-loopback address (%s) without auth — set a token first:\n  oriel config auth-token --generate", *httpAddr)
+		}
+		return mcp.ServeHTTP(ctx, *httpAddr, reg, version, include, token)
+	}
+
 	if err := mcp.Serve(ctx, reg, version, include); err != nil && !cleanShutdown(err) {
 		return err
 	}
 	return nil
+}
+
+// exposedAddr reports whether addr binds beyond loopback (so it needs a token).
+// A wildcard bind (":8080", "0.0.0.0", "::") or any non-loopback IP/host counts;
+// 127.0.0.1 / ::1 / localhost do not.
+func exposedAddr(addr string) bool {
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		host = addr
+	}
+	if host == "" || host == "0.0.0.0" || host == "::" {
+		return true
+	}
+	if ip := net.ParseIP(host); ip != nil {
+		return !ip.IsLoopback()
+	}
+	return !strings.EqualFold(host, "localhost")
 }
 
 // toolFilter builds the predicate that scopes which tools the MCP server exposes:

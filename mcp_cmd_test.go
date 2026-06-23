@@ -6,6 +6,22 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
+func TestExposedAddr(t *testing.T) {
+	for addr, exposed := range map[string]bool{
+		"127.0.0.1:8080":   false,
+		"localhost:8080":   false,
+		"[::1]:8080":       false,
+		":8080":            true,
+		"0.0.0.0:8080":     true,
+		"192.168.1.5:8080": true,
+		"example.com:8080": true,
+	} {
+		if got := exposedAddr(addr); got != exposed {
+			t.Errorf("exposedAddr(%q) = %v, want %v", addr, got, exposed)
+		}
+	}
+}
+
 func TestToolFilter(t *testing.T) {
 	read := &tools.Tool{Name: "container.list", ReadOnly: true}
 	mut := &tools.Tool{Name: "container.stop"}
