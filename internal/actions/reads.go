@@ -20,13 +20,17 @@ import (
 // returned raw on that path. The dedicated `oriel mcp` process masks all (it
 // passes MaskAll); only interactive UI calls, which carry consent, honour "off".
 func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.Mode) {
-	r.Register(&tools.Tool{
+	// Every tool here is a pure read — mark it ReadOnly so `oriel mcp --read-only`
+	// and the MCP read-only hint are accurate (Destructive:false isn't enough,
+	// since start/stop mutate without being destructive).
+	ro := func(t *tools.Tool) { t.ReadOnly = true; r.Register(t) }
+	ro(&tools.Tool{
 		Name: "container.list", Title: "List containers", Description: "List all containers with state and ports",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			return dc.ListContainers(ctx)
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "container.inspect", Title: "Inspect container", Description: "Full container detail; env values are masked",
 		Schema: tools.Schema{
 			Required: []string{"id"},
@@ -50,7 +54,7 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 			return d, nil
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "container.logs", Title: "Read container logs", Description: "Return the most recent log lines (no follow)",
 		Schema: tools.Schema{
 			Required: []string{"id"},
@@ -84,25 +88,25 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 		},
 	})
 
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "image.list", Title: "List images", Description: "List images with repo tags, size and age",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			return dc.ListImages(ctx)
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "volume.list", Title: "List volumes", Description: "List volumes with driver and mountpoint",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			return dc.ListVolumes(ctx)
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "network.list", Title: "List networks", Description: "List networks with driver and scope",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			return dc.ListNetworks(ctx)
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "stacks.list", Title: "List compose stacks", Description: "List Docker Compose projects with their running/total counts",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			list, err := dc.ListStacks(ctx)
@@ -125,19 +129,19 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 			return out, nil
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "system.df", Title: "Disk usage", Description: "Docker disk usage across images, containers and volumes",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			return dc.SystemUsage(ctx)
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "colima.status", Title: "Colima status", Description: "Colima VM status: runtime, resources and docker socket",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			return colima.GetStatus(ctx)
 		},
 	})
-	r.Register(&tools.Tool{
+	ro(&tools.Tool{
 		Name: "docker.env", Title: "Docker connection env", Description: "DOCKER_HOST + Testcontainers socket override for this machine's docker socket — fixes tools that default to /var/run/docker.sock and miss colima",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			socket, err := colima.DockerSocketPath(ctx)

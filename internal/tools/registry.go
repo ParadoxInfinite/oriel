@@ -61,6 +61,7 @@ type Tool struct {
 	Schema      Schema     `json:"schema"`
 	Entity      *EntityRef `json:"-"`
 	Destructive bool       `json:"destructive"`
+	ReadOnly    bool       `json:"readOnly"` // pure read, no state change (start/stop mutate but aren't destructive)
 	Handler     Handler    `json:"-"`
 }
 

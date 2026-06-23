@@ -23,7 +23,7 @@ func connect(t *testing.T, reg *tools.Registry) *mcpsdk.ClientSession {
 	ctx := context.Background()
 	clientT, serverT := mcpsdk.NewInMemoryTransports()
 
-	if _, err := newServer(reg, "test").Connect(ctx, serverT, nil); err != nil {
+	if _, err := newServer(reg, "test", nil).Connect(ctx, serverT, nil); err != nil {
 		t.Fatalf("server connect: %v", err)
 	}
 	cs, err := mcpsdk.NewClient(&mcpsdk.Implementation{Name: "test", Version: "test"}, nil).
@@ -38,7 +38,7 @@ func connect(t *testing.T, reg *tools.Registry) *mcpsdk.ClientSession {
 func TestListToolsMapsRegistry(t *testing.T) {
 	reg := tools.NewRegistry(stubResolver{})
 	reg.Register(&tools.Tool{
-		Name: "fake.read", Title: "Read", Description: "read something",
+		Name: "fake.read", Title: "Read", Description: "read something", ReadOnly: true,
 		Handler: func(context.Context, map[string]any) (any, error) { return map[string]any{"ok": true}, nil },
 	})
 	reg.Register(&tools.Tool{
