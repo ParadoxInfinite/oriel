@@ -117,6 +117,41 @@ func (c *Client) StreamCompose(ctx context.Context, project, action string) (<-c
 	return execstream.Run(ctx, "docker", args...)
 }
 
+// RunCompose runs a compose action and blocks until it finishes, returning the
+// collected output lines. It's the synchronous wrapper over StreamCompose for
+// callers without a live stream (the tool registry → MCP); the UI uses the
+// streaming form so it can show progress.
+func (c *Client) RunCompose(ctx context.Context, project, action string) ([]string, error) {
+	lines, errc, err := c.StreamCompose(ctx, project, action)
+	if err != nil {
+		return nil, err
+	}
+	out := []string{}
+	for l := range lines {
+		out = append(out, l)
+	}
+	if err := <-errc; err != nil {
+		return out, err
+	}
+	return out, nil
+}
+
+// StackExists reports whether a compose project is currently known (it has
+// containers, so ListStacks sees it). A not-yet-deployed project isn't "known"
+// here — that's the discovery/deploy path, not a stack action.
+func (c *Client) StackExists(ctx context.Context, name string) (bool, error) {
+	stacks, err := c.ListStacks(ctx)
+	if err != nil {
+		return false, err
+	}
+	for i := range stacks {
+		if stacks[i].Name == name {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 // ComposeUpFile deploys a discovered compose project by file path — it has no
 // containers yet, so it can't be found by label. --project-directory is set so
 // an adjacent .env and relative paths resolve; -p is passed only when the file
