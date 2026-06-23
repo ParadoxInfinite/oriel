@@ -2,13 +2,14 @@ package server
 
 import (
 	"crypto/rand"
-	"crypto/subtle"
 	"encoding/hex"
 	"encoding/json"
 	"net"
 	"net/http"
 	"strings"
 	"sync"
+
+	settingspkg "github.com/ParadoxInfinite/oriel/internal/settings"
 )
 
 // authGate is the opt-in access-control layer for NON-loopback requests. The host
@@ -42,19 +43,7 @@ func (a *authGate) ok(r *http.Request) bool {
 	a.mu.RLock()
 	token := a.token
 	a.mu.RUnlock()
-	if token == "" {
-		return true
-	}
-	got := bearerToken(r.Header.Get("Authorization"))
-	return got != "" && subtle.ConstantTimeCompare([]byte(got), []byte(token)) == 1
-}
-
-func bearerToken(h string) string {
-	const p = "Bearer "
-	if len(h) > len(p) && strings.EqualFold(h[:len(p)], p) {
-		return strings.TrimSpace(h[len(p):])
-	}
-	return ""
+	return settingspkg.TokenOK(settingspkg.Bearer(r.Header.Get("Authorization")), token)
 }
 
 func randomToken() string {

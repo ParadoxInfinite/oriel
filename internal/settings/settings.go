@@ -6,6 +6,7 @@
 package settings
 
 import (
+	"crypto/subtle"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -58,6 +59,27 @@ func Update(mutate func(*Settings)) error {
 	c := loadLocked()
 	mutate(&c)
 	return saveLocked(c)
+}
+
+// Bearer extracts the token from an "Authorization: Bearer <token>" header value.
+// The scheme is case-insensitive; the token is trimmed. Returns "" if absent.
+func Bearer(header string) string {
+	const p = "Bearer "
+	if len(header) > len(p) && strings.EqualFold(header[:len(p)], p) {
+		return strings.TrimSpace(header[len(p):])
+	}
+	return ""
+}
+
+// TokenOK reports whether the provided bearer token matches the configured one,
+// in constant time so a wrong token can't be guessed byte-by-byte via timing. An
+// empty configured token means auth is off (always OK). The single source of the
+// security-critical compare, shared by the GUI gate and the MCP-over-HTTP gate.
+func TokenOK(provided, configured string) bool {
+	if configured == "" {
+		return true
+	}
+	return provided != "" && subtle.ConstantTimeCompare([]byte(provided), []byte(configured)) == 1
 }
 
 // SetAlias sets (or, with an empty alias, clears) the Oriel display alias for a
