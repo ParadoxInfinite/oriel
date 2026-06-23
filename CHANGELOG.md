@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-23
+
+Compose stacks are now drivable from ⌘K and from an agent, and renaming a stack in
+Oriel works everywhere.
+
+### Added
+
+- **Stack actions from the palette and MCP.** `stack.start`, `stop`, `restart`,
+  and `down`. ⌘K runs them through the op tray with live progress and a cancel
+  button, the same as the Stacks view; they're MCP tools too, so an agent can
+  manage compose projects (`stack.down` is destructive).
+- **`stack.alias`** lets an agent rename a stack in Oriel. The alias is a display
+  label over the real compose name — it changes what you see, not the project.
+- **Rename works on running stacks**, not just discovered ones. The rename flow
+  moved into a shared `AliasEditor` SDK controller, so any theme gets it.
+
+### Fixed
+
+- **The demo "Stacks" view stopped crashing** — the try-it-live mock returned the
+  wrong shape for discovered projects.
+
 ## [0.5.0] - 2026-06-23
 
 The run-command palette grows up, and the in-app natural-language resolver starts
