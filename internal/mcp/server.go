@@ -39,6 +39,7 @@ func newServer(reg *tools.Registry, version string, include func(*tools.Tool) bo
 		}
 		s.AddTool(toolFor(t), handlerFor(reg, t.Name))
 	}
+	addContext(s, reg, include)
 	return s
 }
 
