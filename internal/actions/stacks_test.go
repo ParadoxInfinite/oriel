@@ -18,6 +18,7 @@ func TestStackToolsRegistered(t *testing.T) {
 		"stack.stop":    false,
 		"stack.restart": false,
 		"stack.down":    true,
+		"stack.alias":   false,
 	}
 	got := map[string]bool{}
 	for _, tl := range r.List() {

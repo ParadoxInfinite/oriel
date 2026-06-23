@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ParadoxInfinite/oriel/internal/docker"
+	"github.com/ParadoxInfinite/oriel/internal/settings"
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
@@ -52,5 +53,26 @@ func registerStacks(r *tools.Registry, dc *docker.Client) {
 		Destructive: true,
 		Schema:      nameArg, Entity: ref(),
 		Handler: run("down"),
+	})
+
+	// stack.alias is a display-only label write, not a Docker action: it sets the
+	// Oriel name shown for a project; the real compose name is unchanged. No Entity
+	// check — an alias can target a discovered (not-yet-running) project too.
+	r.Register(&tools.Tool{
+		Name: "stack.alias", Title: "Rename stack in Oriel", Description: "Set or clear the Oriel display alias for a compose project (display only; the real project name is unchanged)",
+		Schema: tools.Schema{
+			Required: []string{"name"},
+			Props: map[string]tools.Prop{
+				"name":  {Type: "string", Description: "real compose project name"},
+				"alias": {Type: "string", Description: "display alias; empty clears it"},
+			},
+		},
+		Handler: func(_ context.Context, a map[string]any) (any, error) {
+			alias, _ := a["alias"].(string)
+			if err := settings.SetAlias(a["name"].(string), alias); err != nil {
+				return nil, err
+			}
+			return okResult, nil
+		},
 	})
 }
