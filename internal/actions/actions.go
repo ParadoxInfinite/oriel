@@ -21,6 +21,7 @@ func New(dc *docker.Client, envMask func() secrets.Mode) *tools.Registry {
 	registerImages(r, dc)
 	registerVolumes(r, dc)
 	registerNetworks(r, dc)
+	registerStacks(r, dc)
 	registerReads(r, dc, envMask)
 	return r
 }
@@ -38,6 +39,8 @@ func (r resolver) Exists(ctx context.Context, kind, idOrName string) (bool, erro
 		return r.dc.VolumeExists(ctx, idOrName)
 	case "network":
 		return r.dc.NetworkExists(ctx, idOrName)
+	case "stack":
+		return r.dc.StackExists(ctx, idOrName)
 	default:
 		return false, fmt.Errorf("unknown entity kind %q", kind)
 	}

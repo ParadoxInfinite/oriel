@@ -11,6 +11,8 @@
     refreshNetworks,
   } from '../lib/resources.svelte.js'
   import { navigate, VIEWS } from '../lib/nav.svelte.js'
+  import { stacks, refreshStacks } from '../lib/stacks.svelte.js'
+  import { stackOp } from '../platform/index.js'
   import { fuzzyScore } from '../lib/fuzzy.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
@@ -101,6 +103,22 @@
     ]
   }
 
+  // Compose stacks run through the op tray (stackOp), not invoke — so ⌘K gets the
+  // same live progress + cancel as the Stacks view buttons. Marked with `op`.
+  function stackActions(s) {
+    const acts = []
+    if (s.running < s.total) acts.push({ verb: 'Start', op: 'start' })
+    if (s.running > 0) acts.push({ verb: 'Stop', op: 'stop' })
+    acts.push({ verb: 'Restart', op: 'restart' })
+    acts.push({ verb: 'Down', op: 'down', danger: true })
+    return acts.map((a) => ({
+      ...a,
+      label: `${a.verb} stack`,
+      target: s.name,
+      key: `stack.${a.op}:${s.name}`,
+    }))
+  }
+
   // Entity-free maintenance actions, always available.
   const globalActions = [
     { verb: 'Prune', label: 'Prune unused images', target: 'dangling images', tool: 'image.prune', args: {}, danger: true, key: 'image.prune' },
@@ -132,6 +150,7 @@
     ...images.list.flatMap(imageActions),
     ...volumes.list.flatMap(volumeActions),
     ...networks.list.flatMap(networkActions),
+    ...stacks.list.flatMap(stackActions),
     ...globalActions,
     ...viewJumps,
     ...readJumps,
@@ -168,6 +187,7 @@
       refreshImages()
       refreshVolumes()
       refreshNetworks()
+      refreshStacks()
       queueMicrotask(() => inputEl?.focus())
     }
   })
@@ -180,6 +200,7 @@
   function confirmMessage(it) {
     if (it.tool === 'image.prune') return 'All dangling images will be permanently removed.'
     if (it.tool === 'volume.prune') return 'All unused volumes will be permanently removed.'
+    if (it.op === 'down') return `All containers in “${it.target}” will be stopped and removed.`
     if (it.tool === 'container.remove' && it.args.force) {
       return `“${it.target}” is running. It will be force-stopped, then permanently removed.`
     }
@@ -198,6 +219,15 @@
     closePalette()
     if (it.nav) {
       navigate(it.nav.view, it.nav.target ?? null)
+      return
+    }
+    if (it.op) {
+      if (it.danger) {
+        const ok = await confirm({ title: `${it.verb} stack?`, message: confirmMessage(it), confirmLabel: it.verb })
+        if (!ok) return
+      }
+      // Streams in the op tray (cancellable), same as the Stacks view buttons.
+      stackOp(it.target, it.op, refreshStacks)
       return
     }
     if (it.ai) {

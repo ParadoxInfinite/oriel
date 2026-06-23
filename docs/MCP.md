@@ -73,7 +73,10 @@ server does and serves MCP over stdio.
 ## Tools
 
 Mutations: `container.start` / `stop` / `restart` / `remove`, `image.remove` /
-`tag` / `prune`, `volume.remove` / `prune`, `network.remove`.
+`tag` / `prune`, `volume.remove` / `prune`, `network.remove`,
+`stack.start` / `stop` / `restart` / `down`. Stack actions run compose
+synchronously and return the collected output (the UI streams the same actions
+for live progress); `stack.down` is destructive.
 
 Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
 `network.list`, `stacks.list`, `system.df`, `colima.status`. These let an AI see
