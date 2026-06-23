@@ -10,6 +10,7 @@
     refreshVolumes,
     refreshNetworks,
   } from '../lib/resources.svelte.js'
+  import { navigate, VIEWS } from '../lib/nav.svelte.js'
   import { fuzzyScore } from '../lib/fuzzy.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
@@ -106,12 +107,34 @@
     { verb: 'Prune', label: 'Prune unused volumes', target: 'unused volumes', tool: 'volume.prune', args: {}, danger: true, key: 'volume.prune' },
   ]
 
+  // Navigation entries carry a `nav` payload instead of a tool: they move the
+  // active view rather than invoke anything. Reads with no good toast form (logs,
+  // disk usage, colima status) route to the view that already shows them.
+  function containerLogNav(c) {
+    return [
+      {
+        nav: { view: 'Containers', target: { kind: 'container', container: c, open: 'logs' } },
+        label: 'View logs',
+        target: c.name,
+        key: `logs:${c.id}`,
+      },
+    ]
+  }
+  const viewJumps = VIEWS.map((v) => ({ nav: { view: v }, label: `Go to ${v}`, target: '', key: `nav:${v}` }))
+  const readJumps = [
+    { nav: { view: 'Dashboard' }, label: 'Disk usage', target: 'dashboard', key: 'nav:disk' },
+    { nav: { view: 'Dashboard' }, label: 'Colima status', target: 'dashboard', key: 'nav:colima' },
+  ]
+
   const items = $derived([
     ...containers.list.flatMap(containerActions),
+    ...containers.list.flatMap(containerLogNav),
     ...images.list.flatMap(imageActions),
     ...volumes.list.flatMap(volumeActions),
     ...networks.list.flatMap(networkActions),
     ...globalActions,
+    ...viewJumps,
+    ...readJumps,
   ])
 
   const filtered = $derived.by(() => {
@@ -173,6 +196,10 @@
 
   async function run(it) {
     closePalette()
+    if (it.nav) {
+      navigate(it.nav.view, it.nav.target ?? null)
+      return
+    }
     if (it.ai) {
       try {
         const res = await resolveText(it.target)

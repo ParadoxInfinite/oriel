@@ -93,11 +93,19 @@ export { registerEscape } from '../lib/modalStack.svelte.js'
 /** Command-palette controls, shared across editions. */
 export { openPalette, togglePalette } from '../lib/palette.svelte.js'
 
+/** Navigation seam, shared across editions. `nav` → { view, target }. An edition
+ *  MUST source its view switch from `nav.view` and drive its nav controls through
+ *  navigate(view) to participate; it MAY claim a deep-link intent via
+ *  takeTarget(view) to open an entity (e.g. a container's logs). VIEWS is the
+ *  canonical view-id list. See docs/THEMES.md → Navigation. */
+export { nav, navigate, takeTarget, VIEWS } from '../lib/nav.svelte.js'
+
 /** Column-sort state + helpers for tables: createSort, toggleSort, sortRows. */
 export { createSort, toggleSort, sortRows } from '../lib/sort.svelte.js'
 
-/** Natural-language provider (the AI seam): state + runtime config + resolver.
- *  provider → { enabled, url }. setProvider(url) swaps + persists the endpoint. */
+/** @deprecated Deprecated v0.5.0, removed v0.6.0. Superseded by the MCP server;
+ *  see docs/DEPRECATIONS.md. Natural-language provider (the AI seam): state + runtime
+ *  config + resolver. provider → { enabled, url }. setProvider(url) swaps + persists. */
 export { provider, checkProvider, setProvider, resolveText } from '../lib/provider.svelte.js'
 
 /** Formatting helpers: bytes, duration, timeOnly, dateTime, relativeTime. */
@@ -166,7 +174,7 @@ export {
 export { PathField, baseName } from '../lib/pathfield.svelte.js'
 
 /** Canonical external links (repo, theme-authoring guide). */
-export { REPO_URL, THEMES_DOC_URL } from '../lib/links.js'
+export { REPO_URL, THEMES_DOC_URL, DEPRECATIONS_DOC_URL } from '../lib/links.js'
 
 // ── Lifecycle convenience ────────────────────────────────────────────────────
 // The start/stop/restart control every edition needs, wired to the shared op

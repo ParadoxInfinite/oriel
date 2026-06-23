@@ -25,9 +25,10 @@ way to push something up the list is to open an
 
 ## Next
 
-- **In-app natural-language assistant.** A built-in command-palette mode that
-  drives the same validated registry, for users who'd rather not wire up an
-  external MCP client. Provider-agnostic: the base bundles no model.
+- ~~**In-app natural-language assistant.**~~ **Dropped.** Driving the registry with
+  a model is the MCP server's job (local or hosted); a single-shot in-app resolver
+  just duplicates it with less capability. The existing provider seam is deprecated
+  and on its way out. See [DEPRECATIONS.md](docs/DEPRECATIONS.md).
 - **MCP resources & prompts.** Expose container logs, inspect output, and Compose
   files as readable MCP **resources**, plus canned diagnostic **prompts**, so an
   AI can read a crashing container's logs as context, not just call tools.

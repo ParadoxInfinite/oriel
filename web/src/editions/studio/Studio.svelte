@@ -7,6 +7,8 @@
     stats,
     fmt,
     openPalette,
+    nav,
+    navigate,
     refreshImages,
     refreshVolumes,
     refreshNetworks,
@@ -26,7 +28,7 @@
   // where the user updates via `brew upgrade`).
   function onUpdatePill() {
     if (canSelfUpdate()) promptUpdate()
-    else active = 'Settings'
+    else navigate('Settings')
   }
 
   import { appearance, systemPref, initAppearance } from './theme.svelte.js'
@@ -62,7 +64,9 @@
     Stacks: 'Docker Compose projects',
     Settings: 'Appearance, themes and AI',
   }
-  let active = $state('Dashboard')
+  // Active view comes from the shared nav seam so the palette can move it; the
+  // sidebar buttons drive it through navigate().
+  const active = $derived(nav.view)
 
   const loaders = { Images: refreshImages, Volumes: refreshVolumes, Networks: refreshNetworks, Stacks: refreshStacks }
   const loaded = new Set()
@@ -94,13 +98,13 @@
 
     <nav class="flex flex-1 flex-col gap-0.5 px-3 py-2">
       {#each NAV as item}
-        <button class="nav {active === item.name ? 'on' : ''}" onclick={() => (active = item.name)}>
+        <button class="nav {active === item.name ? 'on' : ''}" onclick={() => navigate(item.name)}>
           <Icon name={item.icon} size={17} class="nav-i" />
           {item.name}
         </button>
       {/each}
       <div class="my-1.5 mx-2 border-t border-[var(--border)]"></div>
-      <button class="nav {active === 'Settings' ? 'on' : ''}" onclick={() => (active = 'Settings')}>
+      <button class="nav {active === 'Settings' ? 'on' : ''}" onclick={() => navigate('Settings')}>
         <Icon name="settings" size={17} class="nav-i" />
         Settings
       </button>
@@ -151,7 +155,7 @@
 
     <main class="min-h-0 flex-1 overflow-auto p-6">
       {#if active === 'Dashboard'}
-        <Dashboard navigate={(v) => (active = v)} />
+        <Dashboard {navigate} />
       {:else if active === 'Containers'}
         <Containers />
       {:else if active === 'Images'}
@@ -161,7 +165,7 @@
       {:else if active === 'Networks'}
         <Resources kind="networks" />
       {:else if active === 'Stacks'}
-        <Stacks navigate={(v) => (active = v)} />
+        <Stacks {navigate} />
       {:else if active === 'Settings'}
         <Settings />
       {/if}

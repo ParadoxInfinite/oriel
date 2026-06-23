@@ -6,6 +6,8 @@
     canSelfUpdate,
     promptUpdate,
     openPalette,
+    nav,
+    navigate,
     refreshImages,
     refreshVolumes,
     refreshNetworks,
@@ -26,7 +28,7 @@
   // Classic's own @theme tokens already style the global overlays — no override.
   $effect(() => setOverlayTheme('classic'))
 
-  const nav = [
+  const navItems = [
     { name: 'Dashboard', icon: 'dashboard' },
     { name: 'Containers', icon: 'box' },
     { name: 'Images', icon: 'harddrive' },
@@ -34,13 +36,15 @@
     { name: 'Networks', icon: 'network' },
     { name: 'Stacks', icon: 'layers' },
   ]
-  let active = $state('Dashboard')
+  // The active view comes from the shared nav seam so the command palette can move
+  // it; the sidebar buttons drive it through navigate().
+  const active = $derived(nav.view)
 
   // The update pill opens the confirm-update modal directly when this install can
   // self-update; otherwise it falls back to the Settings/Updates view.
   function onUpdatePill() {
     if (canSelfUpdate()) promptUpdate()
-    else active = 'Settings'
+    else navigate('Settings')
   }
 
   // Lazy-load a view's data the first time it's opened.
@@ -105,12 +109,12 @@
       </div>
     </div>
     <nav class="flex flex-1 flex-col gap-0.5 px-3 py-3">
-      {#each nav as item}
+      {#each navItems as item}
         {@const on = active === item.name}
         <button
           class="navx group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm
             {on ? 'bg-surface-2 text-fg' : 'text-muted hover:bg-surface-2/50 hover:text-fg'}"
-          onclick={() => (active = item.name)}
+          onclick={() => navigate(item.name)}
         >
           <span
             class="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-full bg-accent transition-all duration-300
@@ -126,7 +130,7 @@
       <button
         class="navx group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm
           {active === 'Settings' ? 'bg-surface-2 text-fg' : 'text-muted hover:bg-surface-2/50 hover:text-fg'}"
-        onclick={() => (active = 'Settings')}
+        onclick={() => navigate('Settings')}
       >
         <span
           class="absolute left-0 top-1/2 h-4 w-[2.5px] -translate-y-1/2 rounded-full bg-accent transition-all duration-300
@@ -167,7 +171,7 @@
 
     <main class="min-h-0 flex-1 overflow-auto p-6">
       {#if active === 'Dashboard'}
-        <Dashboard navigate={(v) => (active = v)} />
+        <Dashboard {navigate} />
       {:else if active === 'Containers'}
         <Containers />
       {:else if active === 'Images'}
@@ -177,7 +181,7 @@
       {:else if active === 'Networks'}
         <Networks />
       {:else if active === 'Stacks'}
-        <Stacks navigate={(v) => (active = v)} />
+        <Stacks {navigate} />
       {:else if active === 'Settings'}
         <Settings />
       {/if}

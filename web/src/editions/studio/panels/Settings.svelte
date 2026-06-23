@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { provider, toast, ProviderSettings } from '../../../platform/index.js'
+  import { provider, toast, ProviderSettings, DEPRECATIONS_DOC_URL } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
@@ -216,9 +216,14 @@
   <section class="rise card p-5" style="animation-delay:80ms">
     <div class="flex items-center gap-2.5">
       <h2 class="text-[14px] font-semibold tracking-tight">AI · natural language</h2>
+      <span class="rounded-full px-2 py-0.5 text-[11px] font-medium" style="background:color-mix(in srgb, var(--amber) 15%, transparent); color:var(--amber)">Deprecated</span>
       <span class="pill {provider.enabled ? 'on' : 'off'}"><span class="dot"></span>{provider.enabled ? 'Connected' : 'Not configured'}</span>
     </div>
-    <p class="mt-1 text-[13px] text-[var(--text-2)]">
+    <div class="mt-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px] text-[var(--text-2)]">
+      <span class="font-medium" style="color:var(--amber)">Deprecated in v0.5.0, removed in v0.6.0.</span> Use the <span class="mono">oriel mcp</span> server instead; this still works until then.
+      <a href={DEPRECATIONS_DOC_URL} target="_blank" rel="noopener" class="underline">Why &amp; what to use instead →</a>
+    </div>
+    <p class="mt-2 text-[13px] text-[var(--text-2)]">
       The base ships no model. Point at an external resolver and the command palette (⌘K) gains a free-text mode — every suggestion still runs through the same validated tool path.
     </p>
 

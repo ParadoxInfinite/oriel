@@ -1,6 +1,6 @@
 <script>
   import {
-    containers, refreshContainers, stats, invoke, confirm, createSort, sortRows, fmt,
+    containers, refreshContainers, stats, invoke, confirm, createSort, sortRows, fmt, takeTarget,
   } from '../platform/index.js'
   import { stackColor } from '../lib/stackColor.js'
   import { action } from '../lib/ui.js'
@@ -14,6 +14,12 @@
   let selected = $state(null)
   let groupByStack = $state(true)
   let collapsed = $state({})
+
+  // Open the logs drawer when the palette deep-links to a container here.
+  $effect(() => {
+    const t = takeTarget('Containers')
+    if (t?.open === 'logs') selected = t.container
+  })
 
   const groupKey = (name) => name || '__standalone__'
   function toggleGroup(name) {

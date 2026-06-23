@@ -8,6 +8,11 @@ Oriel's tool layer, exposed over the
 Desktop, Claude Code, Cursor, a local Ollama host) can inspect and manage
 Docker/Colima, and every call goes through the same checks the UI does.
 
+> The in-app natural-language resolver (Settings → AI) is **deprecated in v0.5.0
+> and removed in v0.6.0**. Use this MCP server instead; see
+> [DEPRECATIONS.md](./DEPRECATIONS.md). MCP is the supported way to drive Oriel
+> with a model, local or hosted.
+
 ## Use it
 
 Run `oriel mcp` as the server command in your client's MCP config. Example

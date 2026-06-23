@@ -108,7 +108,7 @@ Podman, and remote daemons also work. See [docs/DAEMONS.md](docs/DAEMONS.md).
 - **Compose**: manage running stacks, plus discover & deploy projects from disk.
 - **Reclaim space**: selectable prune as cancelable background jobs that survive a refresh.
 - **Dashboard**: CPU history, memory, disk, and uptime/outage tracking.
-- **Command palette** (`⌘K`): fuzzy-run any action, with an optional natural-language mode.
+- **Command palette** (`⌘K`): fuzzy-run any action or jump to any view. (An optional natural-language mode is [deprecated in v0.5.0, removed in v0.6.0](docs/DEPRECATIONS.md); use the MCP server.)
 - **Editions & themes**: swap the whole UI (Studio / Classic), light/dark/system, custom accents.
 - **Live**: everything streams over one SSE connection; the UI never polls.
 - **Self-update**: service installs update in-app via checksum-verified downloads.

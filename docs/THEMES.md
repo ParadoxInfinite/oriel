@@ -53,7 +53,8 @@ markup and it updates as the backend does. Don't reassign; mutate via the action
 | `self` | `{ rss, goroutines, heapAlloc }` |
 | `outages` | `{ list: [{ start, end, kind }] }`: `kind` ∈ `down` \| `offline` |
 | `ops` | `{ list, focused }`: operation tracker driving the progress modal (`focused`) and the sidebar tray (the rest); items can be cancelled/resumed |
-| `provider` | `{ enabled, url }`: the NL/AI seam |
+| `provider` | `{ enabled, url }`: the NL/AI seam. **Deprecated v0.5.0, removed v0.6.0** — see [DEPRECATIONS.md](./DEPRECATIONS.md); don't build new editions on it. |
+| `nav` | `{ view, target }`: the active view id + an optional deep-link intent. Bind your view switch to `nav.view`. See [Navigation](#navigation). |
 
 Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 `refreshNetworks`, `refreshStacks`, `refreshStatus`.
@@ -71,7 +72,9 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 | `confirm({ title, message, confirmLabel })` | → `Promise<boolean>`. |
 | `toast(message, 'ok'\|'error'\|'info')` | transient notice. |
 | `openPalette()` / `togglePalette()` | command palette. |
-| `setProvider(url)` / `resolveText(text)` | configure / use the NL seam. |
+| `navigate(view, target?)` | switch the active view; pass a `target` to deep-open an entity at the destination. See [Navigation](#navigation). |
+| `takeTarget(view)` | claim + clear a pending intent addressed to `view` (e.g. open a container's logs). |
+| `setProvider(url)` / `resolveText(text)` | configure / use the NL seam. **Deprecated v0.5.0, removed v0.6.0** — see [DEPRECATIONS.md](./DEPRECATIONS.md). |
 | `setOverlayTheme(scheme, accent)` | tell the host how to theme the global overlays for your edition: `'classic'` (no override), or `'light'`/`'dark'` + an accent. |
 
 ### Helpers
@@ -92,6 +95,41 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
   filter, deploy) and the headless path-typeahead controller. Both built-in
   editions' Settings + Stacks views render the same store; another model for
   behavior-in-SDK, look-in-edition.
+
+## Navigation
+
+The active view is shared state, not an edition's private flag — because the
+command palette (a host overlay) and any deep-link have to move *whatever* edition
+is mounted. Participating is one binding:
+
+- **MUST** — render your view switch from `nav.view`, and point your nav controls
+  at `navigate(view)`:
+
+  ```svelte
+  import { nav, navigate, VIEWS } from '../../platform/index.js'
+
+  {#each VIEWS as v}
+    <button class:on={nav.view === v} onclick={() => navigate(v)}>{v}</button>
+  {/each}
+
+  {#if nav.view === 'Containers'} <Containers /> {:else if …}
+  ```
+
+  With this alone, `⌘K → "stop postgres"` and `⌘K → "go to images"` move your
+  edition for free. `VIEWS` is the canonical id list.
+
+- **SHOULD** — to honour a deep-link (e.g. "view logs of postgres"), have the
+  destination view claim the pending intent and act on it:
+
+  ```svelte
+  $effect(() => {
+    const t = takeTarget('Containers')
+    if (t?.open === 'logs') selected = t.container // open your own logs drawer
+  })
+  ```
+
+  An edition that skips this still lands on the right view — deep opens are
+  graceful, never required. Targets are `{ kind, ...payload, open? }` by convention.
 
 ## Add a built-in edition
 
@@ -147,6 +185,10 @@ capability, model it on `src/editions/studio/theme.svelte.js`.
   host-provided. Call `setOverlayTheme(scheme, accent)` from your edition (e.g. in
   an `$effect`) and the host restyles them to match. Studio does this for its
   light/dark + accent.
+- The active view is shared state (`nav`), so the palette and deep-links can move
+  whichever edition is mounted. Bind your view switch to `nav.view` — see
+  [Navigation](#navigation). It's the one piece of cross-cutting wiring an edition
+  must adopt.
 - Keep editions thin: business logic belongs behind the platform SDK so every
   edition benefits. If you find yourself reimplementing backend behavior, that's a
   signal it should be lifted into the SDK instead.
