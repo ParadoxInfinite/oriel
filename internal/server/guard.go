@@ -67,9 +67,14 @@ func (s *Server) allowAPI(r *http.Request) bool {
 		host = h
 	}
 	if isLoopbackHost(host) {
-		return true
+		return true // loopback is trusted; no token needed for the local UI
 	}
-	return s.guard.allows(host)
+	// Non-loopback: must be an allowed Host (anti-rebinding) AND, when a token is
+	// configured, carry it (real access control for remote / proxied access).
+	if !s.guard.allows(host) {
+		return false
+	}
+	return s.auth.ok(r)
 }
 
 func isLoopbackHost(h string) bool {

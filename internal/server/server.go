@@ -29,6 +29,7 @@ type Server struct {
 	recorder *recorder
 	jobs     *jobManager
 	guard    *hostGuard
+	auth     *authGate
 	grant    *grant.Store
 	cancel   context.CancelFunc
 }
@@ -52,6 +53,7 @@ func New(web fs.FS, version string) *Server {
 		recorder: newRecorder(dc),
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),
+		auth:     newAuthGate(),
 		grant:    grant.New(),
 	}
 	// Destructive tools are locked for non-interactive callers (MCP, provider)
@@ -115,6 +117,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/self", s.handleSelf)
 	s.mux.HandleFunc("GET /api/remote", s.handleGetRemote)
 	s.mux.HandleFunc("PUT /api/remote", s.handlePutRemote)
+	s.mux.HandleFunc("GET /api/auth", s.handleGetAuth)
+	s.mux.HandleFunc("PUT /api/auth", s.handlePutAuth)
 	s.mux.HandleFunc("PUT /api/config", s.handlePutConfig)
 	s.mux.HandleFunc("GET /api/themes", s.handleListThemes)
 	s.mux.HandleFunc("GET /api/themes/{file}", s.handleServeTheme)
