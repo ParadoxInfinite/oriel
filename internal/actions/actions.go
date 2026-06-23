@@ -22,6 +22,7 @@ func New(dc *docker.Client, envMask func() secrets.Mode) *tools.Registry {
 	registerVolumes(r, dc)
 	registerNetworks(r, dc)
 	registerStacks(r, dc)
+	registerColima(r)
 	registerReads(r, dc, envMask)
 	return r
 }

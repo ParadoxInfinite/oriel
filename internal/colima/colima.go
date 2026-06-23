@@ -166,3 +166,21 @@ func Stream(ctx context.Context, action string) (<-chan string, <-chan error, er
 	}
 	return execstream.Run(ctx, "colima", action, "-p", Profile)
 }
+
+// Run executes a lifecycle action and blocks until it finishes, returning the
+// collected output. It's the synchronous form for the tool registry (MCP); the
+// UI uses Stream for live progress.
+func Run(ctx context.Context, action string) ([]string, error) {
+	lines, errc, err := Stream(ctx, action)
+	if err != nil {
+		return nil, err
+	}
+	out := []string{}
+	for l := range lines {
+		out = append(out, l)
+	}
+	if err := <-errc; err != nil {
+		return out, err
+	}
+	return out, nil
+}
