@@ -74,9 +74,11 @@ server does and serves MCP over stdio.
 
 Mutations: `container.start` / `stop` / `restart` / `remove`, `image.remove` /
 `tag` / `prune`, `volume.remove` / `prune`, `network.remove`,
-`stack.start` / `stop` / `restart` / `down`. Stack actions run compose
-synchronously and return the collected output (the UI streams the same actions
-for live progress); `stack.down` is destructive.
+`stack.start` / `stop` / `restart` / `down`, `stack.alias`. Stack actions run
+compose synchronously and return the collected output (the UI streams the same
+actions for live progress); `stack.down` is destructive. `stack.alias` is a
+display-only rename (sets the Oriel label for a project; the real compose name is
+unchanged) — handy for an agent to organize stacks for the user.
 
 Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
 `network.list`, `stacks.list`, `system.df`, `colima.status`. These let an AI see
