@@ -126,8 +126,8 @@ function inspectFor(id, reveal) {
 function scanResult() {
   return {
     stacks: [
-      { name: 'analytics', alias: '', dir: '/Users/dev/projects/analytics', composeFile: 'docker-compose.yml', services: ['clickhouse', 'ingest', 'dashboard'] },
-      { name: 'mail-dev', alias: '', dir: '/Users/dev/projects/mail-dev', composeFile: 'compose.yaml', services: ['mailpit'] },
+      { name: 'analytics', alias: '', dir: '/Users/dev/projects/analytics', file: '/Users/dev/projects/analytics/docker-compose.yml', services: 3 },
+      { name: 'mail-dev', alias: '', dir: '/Users/dev/projects/mail-dev', file: '/Users/dev/projects/mail-dev/compose.yaml', services: 1 },
     ],
     roots: [{ id: 'r-demo', path: '/Users/dev/projects', found: 4, error: '' }],
     hidden: 0,
