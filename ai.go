@@ -23,7 +23,7 @@ func runAI(args []string) error {
 	switch args[0] {
 	case "allow-destructive":
 		fs := flag.NewFlagSet("allow-destructive", flag.ContinueOnError)
-		forStr := fs.String("for", "6h", "window length, e.g. 6h, 90m, 6d")
+		forStr := fs.String("for", "6h", "window length: a Go duration (30s, 90m, 6h, 1h30m) or days (2d); max 30d")
 		if err := fs.Parse(args[1:]); err != nil {
 			return err
 		}
@@ -86,6 +86,7 @@ const maxGrantDays = 30
 func aiUsage() error {
 	fmt.Println("usage: oriel ai <command>")
 	fmt.Println("  allow-destructive [--for 6h]  open the destructive-grant window (MCP / assistant)")
+	fmt.Println("                                --for: 30s, 90m, 6h, 1h30m, or 2d (max 30d)")
 	fmt.Println("  status                        show whether destructive actions are unlocked")
 	fmt.Println("  lock                          close the window now")
 	return nil

@@ -13,10 +13,46 @@ Docker/Colima, and every call goes through the same checks the UI does.
 > [DEPRECATIONS.md](./DEPRECATIONS.md). MCP is the supported way to drive Oriel
 > with a model, local or hosted.
 
-## Use it
+## Set it up
 
-Run `oriel mcp` as the server command in your client's MCP config. Example
-(Claude Desktop / Claude Code `mcpServers` block):
+The server is the `oriel mcp` subcommand: it speaks JSON-RPC over stdio, talks to
+the same Docker/Colima the GUI does, and exposes every tool. Point any MCP client
+at it.
+
+**Before you start:** make sure `oriel` is on your `PATH` (`which oriel` should
+print a path) and Colima/Docker is running. If `oriel` isn't on your `PATH`, use
+its full path (e.g. `~/.local/bin/oriel`) wherever the steps below say `oriel`.
+
+### Claude Code
+
+One command, no files to edit:
+
+```bash
+claude mcp add oriel -- oriel mcp
+```
+
+That adds it for the current project. To use it in every project instead, add
+`--scope user`:
+
+```bash
+claude mcp add oriel --scope user -- oriel mcp
+```
+
+Check it connected, then restart Claude Code (or open a new session) so it loads
+the tools:
+
+```bash
+claude mcp get oriel      # look for: Status: ✔ Connected
+```
+
+Now ask it something like *"list my running containers"* — it'll call
+`container.list`. To remove it later: `claude mcp remove oriel` (add `-s user` if
+you used user scope).
+
+### Claude Desktop, Cursor, and other clients
+
+Add this to the client's MCP config (its `mcpServers` block), then restart the
+client:
 
 ```json
 {
@@ -26,12 +62,27 @@ Run `oriel mcp` as the server command in your client's MCP config. Example
 }
 ```
 
-It speaks JSON-RPC over stdio, resolves the same Docker/Colima connection the
-GUI uses, and exposes every registry tool. Read tools work immediately;
-destructive ones (`*.remove`, `*.prune`) return a "locked" error until you open
-a window with `oriel ai allow-destructive --for 6h` (`oriel ai status` / `oriel
-ai lock` to check / close). Env values in `container.inspect` are always masked
-on this path.
+Use the full path to `oriel` for `"command"` if it isn't on the client's `PATH`.
+
+### Destructive actions need a grant
+
+Read tools (`*.list`, `logs`, `inspect`, `status`) and reversible ones (`start` /
+`stop` / `restart`) work right away. Destructive tools (`*.remove`, `*.prune`,
+`stack.down`) return a "locked" error until you open a time-boxed window:
+
+```bash
+oriel ai allow-destructive --for 6h   # open the window
+oriel ai status                       # check what's open
+oriel ai lock                         # close it now
+```
+
+`--for` accepts a Go duration — `30s`, `90m`, `6h`, `1h30m`, `1.5h` (units `s` /
+`m` / `h`, combinable) — or a days form like `2d` / `0.5d`. Anything from a few
+seconds up to a **30-day** max; the days form doesn't combine with hours (use
+`36h`, not `1d12h`).
+
+Env values in `container.inspect` are always masked on this path, so secrets never
+reach the model.
 
 ## Principles
 
