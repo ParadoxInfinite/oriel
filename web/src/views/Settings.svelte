@@ -6,7 +6,7 @@
     remote, loadRemote, removeRemoteHost, RemoteHostForm,
     grant, loadGrant, requestGrant, lockGrant, fmtRemaining,
     discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm,
-    THEMES_DOC_URL,
+    THEMES_DOC_URL, DEPRECATIONS_DOC_URL,
   } from '../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../editions/registry.svelte.js'
   import { btn, btnPrimary } from '../lib/ui.js'
@@ -144,9 +144,14 @@
   <section class="card rounded-[--radius] p-5">
     <div class="flex items-center gap-2.5">
       <h2 class="display text-sm font-semibold tracking-tight">AI · natural language</h2>
+      <span class="rounded-full bg-warn/15 px-2 py-0.5 text-[11px] text-warn">Deprecated</span>
       <span class="rounded-full px-2 py-0.5 text-[11px] {provider.enabled ? 'bg-ok/15 text-ok' : 'bg-surface-2 text-muted'}">{provider.enabled ? 'Connected' : 'Not configured'}</span>
     </div>
-    <p class="mt-1 text-xs text-muted">
+    <div class="mt-3 rounded-[--radius] border border-warn/30 bg-warn/10 px-3 py-2 text-xs text-warn">
+      Deprecated in v0.5.0, removed in v0.6.0. Use the <span class="font-mono">oriel mcp</span> server instead; this still works until then.
+      <a href={DEPRECATIONS_DOC_URL} target="_blank" rel="noopener" class="font-medium underline">Why &amp; what to use instead →</a>
+    </div>
+    <p class="mt-2 text-xs text-muted">
       The base ships no model. Point at an external resolver and the command palette (⌘K) gains a free-text mode — every suggestion still runs through the same validated tool path.
     </p>
 

@@ -1,4 +1,10 @@
 // Package provider is the dormant extension seam for natural-language actions.
+//
+// DEPRECATED in v0.5.0, removed in v0.6.0: superseded by the MCP server
+// (oriel mcp); see docs/DEPRECATIONS.md. It stays functional until removal.
+// Driving the registry with a model is the MCP server's job; this single-shot
+// resolver only duplicates it with less capability.
+//
 // The base ships NO model. When a provider URL is configured (Settings → AI /
 // settings.json), the base POSTs the user's text plus the available tools and
 // live entities to that URL, and the provider (a separate process — rules,

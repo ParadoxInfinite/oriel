@@ -1,11 +1,17 @@
 <script>
-  import { containers, refreshContainers, stats, invoke, confirm, fmt, createSort, sortRows } from '../../../platform/index.js'
+  import { containers, refreshContainers, stats, invoke, confirm, fmt, createSort, sortRows, takeTarget } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import StatusPill from '../lib/StatusPill.svelte'
   import SortHeader from '../lib/SortHeader.svelte'
   import ContainerDrawer from '../lib/ContainerDrawer.svelte'
 
   let selected = $state(null)
+
+  // Open the container drawer when the palette deep-links to a container here.
+  $effect(() => {
+    const t = takeTarget('Containers')
+    if (t?.open === 'logs') selected = t.container
+  })
 
   let filter = $state('')
   let groupByStack = $state(true)
