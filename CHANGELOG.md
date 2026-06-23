@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-06-23
+
+The run-command palette grows up, and the in-app natural-language resolver starts
+its way out.
+
+### Added
+
+- **The palette covers everything now.** ⌘K opens empty and suggests as you type
+  instead of dumping every action up front, and it spans containers, images,
+  volumes, networks, and prune — not just containers. Type "stop postgres" and it
+  lists each matching container so you pick the exact one.
+- **Jump anywhere from ⌘K.** New entries to go to any view, or open a container's
+  logs straight from the palette.
+- **Navigation is part of the theme SDK.** A shared `nav` seam (`navigate` /
+  `takeTarget`) lets the palette and deep-links move whichever edition is mounted.
+  Both built-in editions use it, and it's documented for theme authors in
+  [docs/THEMES.md](docs/THEMES.md).
+
+### Deprecated
+
+- **In-app natural-language resolver (Settings → AI).** The single-shot text→tool
+  resolver and the palette's "Interpret" mode are deprecated. Driving Oriel with a
+  model is the MCP server's job (local or hosted), and it does more. This still
+  works in 0.5.x and will be removed in 0.6.0 — see
+  [docs/DEPRECATIONS.md](docs/DEPRECATIONS.md), including how to keep using it or
+  ask for it to stay.
+
 ## [0.4.2] - 2026-06-23
 
 A second hardening pass from a full adversarial code review: every fix below was

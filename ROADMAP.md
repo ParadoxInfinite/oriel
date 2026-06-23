@@ -57,9 +57,11 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: a **second review-driven hardening
-pass** (atomic settings writes, masked connection-string/command secrets, prune
-failures surfaced, modal-Escape fixes) (v0.4.2); **reliability + safety hardening**
+See the [CHANGELOG](CHANGELOG.md). Highlights: the **run-command palette across all
+resources + ⌘K navigation, a shared nav seam in the theme SDK, and deprecation of
+the in-app NL resolver** (v0.5.0); a **second review-driven hardening pass** (atomic
+settings writes, masked connection-string/command secrets, prune failures surfaced,
+modal-Escape fixes) (v0.4.2); **reliability + safety hardening**
 (size-capped external fetches, atomic self-update, stronger secret masking,
 clamped grant window) (v0.4.1); the **MCP server (`oriel mcp`) + read tools,
 secret masking in inspect, and the time-boxed destructive grant** (v0.4.0);
