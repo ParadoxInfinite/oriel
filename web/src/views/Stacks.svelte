@@ -1,7 +1,7 @@
 <script>
   import {
     stacks, refreshStacks, stackOp, confirm,
-    discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, revealLabel, revealOrCopy,
+    discovery, ensureDiscovery, rescan, deployStack, confirmHide, revealLabel, revealOrCopy, AliasEditor,
   } from '../platform/index.js'
   import { action } from '../lib/ui.js'
   import StateBadge from '../components/StateBadge.svelte'
@@ -11,16 +11,7 @@
   ensureDiscovery()
   const sorted = $derived([...stacks.list].sort((a, b) => a.name.localeCompare(b.name)))
   const hasRoots = $derived(discovery.config.roots.some((r) => r.enabled))
-  let editing = $state(null)
-  let aliasDraft = $state('')
-  function startRename(d) {
-    editing = d.name
-    aliasDraft = d.alias || ''
-  }
-  function saveRename() {
-    setAlias(editing, aliasDraft)
-    editing = null
-  }
+  const aliases = new AliasEditor()
 
   async function act(stack, action) {
     if (action === 'down') {
@@ -55,10 +46,20 @@
           <div class="flex items-center justify-between border-b border-border px-4 py-3">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-mono text-sm">{s.name}</span>
-                <span class="rounded-full px-2 py-0.5 text-[11px] {allRunning ? 'bg-ok/15 text-ok' : s.running === 0 ? 'bg-surface-2 text-muted' : 'bg-warn/15 text-warn'}">
-                  {s.running}/{s.total} running
-                </span>
+                {#if aliases.editing === s.name}
+                  <input bind:value={aliases.draft} placeholder={s.name} class="rounded-[--radius] border border-border bg-bg px-2 py-0.5 font-mono text-sm outline-none focus:border-accent/50" onkeydown={(e) => { if (e.key === 'Enter') aliases.save(); if (e.key === 'Escape') aliases.cancel() }} />
+                  <button class={action('accent')} onclick={() => aliases.save()}>Save</button>
+                  <button class="text-xs text-muted hover:text-fg" onclick={() => aliases.cancel()}>Cancel</button>
+                {:else}
+                  <span class="font-mono text-sm">{aliases.display(s.name)}</span>
+                  {#if aliases.display(s.name) !== s.name}<span class="font-mono text-[11px] text-faint">({s.name})</span>{/if}
+                  <button class="text-faint hover:text-accent" title="Rename in Oriel" aria-label="Rename" onclick={() => aliases.start(s.name)}>
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                  </button>
+                  <span class="rounded-full px-2 py-0.5 text-[11px] {allRunning ? 'bg-ok/15 text-ok' : s.running === 0 ? 'bg-surface-2 text-muted' : 'bg-warn/15 text-warn'}">
+                    {s.running}/{s.total} running
+                  </span>
+                {/if}
               </div>
               <div class="mt-0.5 truncate font-mono text-xs text-muted">{s.workingDir}</div>
             </div>
@@ -103,17 +104,17 @@
       {#each discovery.stacks as d (d.file)}
         <div class="lift flex flex-wrap items-center gap-3 rounded-[--radius] border border-border bg-surface px-4 py-3">
           <div class="min-w-0 flex-1">
-            {#if editing === d.name}
+            {#if aliases.editing === d.name}
               <div class="flex items-center gap-2">
-                <input bind:value={aliasDraft} placeholder={d.name} class="rounded-[--radius] border border-border bg-bg px-2 py-1 text-sm outline-none focus:border-accent/50" onkeydown={(e) => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') (editing = null) }} />
-                <button class={action('accent')} onclick={saveRename}>Save</button>
-                <button class="text-xs text-muted hover:text-fg" onclick={() => (editing = null)}>Cancel</button>
+                <input bind:value={aliases.draft} placeholder={d.name} class="rounded-[--radius] border border-border bg-bg px-2 py-1 text-sm outline-none focus:border-accent/50" onkeydown={(e) => { if (e.key === 'Enter') aliases.save(); if (e.key === 'Escape') aliases.cancel() }} />
+                <button class={action('accent')} onclick={() => aliases.save()}>Save</button>
+                <button class="text-xs text-muted hover:text-fg" onclick={() => aliases.cancel()}>Cancel</button>
               </div>
             {:else}
               <div class="flex items-center gap-1.5">
-                <span class="font-mono text-sm text-fg">{d.alias || d.name}</span>
-                {#if d.alias}<span class="font-mono text-[11px] text-faint">({d.name})</span>{/if}
-                <button class="text-faint hover:text-accent" title="Rename in Oriel" aria-label="Rename" onclick={() => startRename(d)}>
+                <span class="font-mono text-sm text-fg">{aliases.display(d.name)}</span>
+                {#if aliases.display(d.name) !== d.name}<span class="font-mono text-[11px] text-faint">({d.name})</span>{/if}
+                <button class="text-faint hover:text-accent" title="Rename in Oriel" aria-label="Rename" onclick={() => aliases.start(d.name)}>
                   <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
                 </button>
               </div>

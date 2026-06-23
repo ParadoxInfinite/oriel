@@ -1,6 +1,6 @@
 <script>
   import { stacks, refreshStacks, stackOp, confirm } from '../../../platform/index.js'
-  import { discovery, ensureDiscovery, rescan, deployStack, confirmHide, setAlias, revealLabel, revealOrCopy } from '../../../platform/index.js'
+  import { discovery, ensureDiscovery, rescan, deployStack, confirmHide, AliasEditor, revealLabel, revealOrCopy } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import StatusPill from '../lib/StatusPill.svelte'
 
@@ -35,16 +35,7 @@
     stackOp(stack.name, action, refreshStacks)
   }
 
-  let editing = $state(null)
-  let aliasDraft = $state('')
-  function startRename(d) {
-    editing = d.name
-    aliasDraft = d.alias || ''
-  }
-  function saveRename() {
-    setAlias(editing, aliasDraft)
-    editing = null
-  }
+  const aliases = new AliasEditor()
 </script>
 
 <div class="mx-auto flex max-w-4xl flex-col gap-4">
@@ -71,12 +62,24 @@
             <Icon name="chevron" size={16} class="shrink-0 text-[var(--text-3)] transition-transform {isOpen ? '' : '-rotate-90'}" />
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <span class="text-[14px] font-semibold tracking-tight">{s.name}</span>
+                <span class="text-[14px] font-semibold tracking-tight">{aliases.display(s.name)}</span>
+                {#if aliases.display(s.name) !== s.name}<span class="mono text-[11px] text-[var(--text-3)]">({s.name})</span>{/if}
                 <span class="pill {allUp ? 'on' : someUp ? 'warn' : 'off'}"><span class="dot"></span>{s.running}/{s.total} up</span>
               </div>
               <div class="mono mt-0.5 truncate text-xs text-[var(--text-3)]">{s.workingDir}</div>
             </div>
           </button>
+          {#if aliases.editing === s.name}
+            <div class="flex items-center gap-1.5">
+              <input bind:value={aliases.draft} placeholder={s.name} class="input py-1 text-[13px]" onkeydown={(e) => { if (e.key === 'Enter') aliases.save(); if (e.key === 'Escape') aliases.cancel() }} />
+              <button class="btn btn-primary btn-sm" onclick={() => aliases.save()}>Save</button>
+              <button class="btn btn-ghost btn-sm" onclick={() => aliases.cancel()}>Cancel</button>
+            </div>
+          {:else}
+            <button class="text-[var(--text-3)] hover:text-[var(--accent)]" title="Rename in Oriel" aria-label="Rename" onclick={() => aliases.start(s.name)}>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+            </button>
+          {/if}
           <div class="ml-auto flex gap-1.5">
             {#if s.running < s.total}<button class="btn btn-default btn-sm" onclick={() => act(s, 'start')}><Icon name="play" size={13} /> Start</button>{/if}
             {#if someUp}<button class="btn btn-default btn-sm" onclick={() => act(s, 'stop')}><Icon name="stop" size={13} /> Stop</button>{/if}
@@ -126,17 +129,17 @@
     {#each discovered as d (d.file)}
       <div class="card flex flex-wrap items-center gap-3 px-5 py-3.5">
         <div class="min-w-0 flex-1">
-          {#if editing === d.name}
+          {#if aliases.editing === d.name}
             <div class="flex items-center gap-2">
-              <input bind:value={aliasDraft} placeholder={d.name} class="input py-1 text-[13px]" onkeydown={(e) => { if (e.key === 'Enter') saveRename(); if (e.key === 'Escape') (editing = null) }} />
-              <button class="btn btn-default btn-sm" onclick={saveRename}>Save</button>
-              <button class="btn btn-ghost btn-sm" onclick={() => (editing = null)}>Cancel</button>
+              <input bind:value={aliases.draft} placeholder={d.name} class="input py-1 text-[13px]" onkeydown={(e) => { if (e.key === 'Enter') aliases.save(); if (e.key === 'Escape') aliases.cancel() }} />
+              <button class="btn btn-default btn-sm" onclick={() => aliases.save()}>Save</button>
+              <button class="btn btn-ghost btn-sm" onclick={() => aliases.cancel()}>Cancel</button>
             </div>
           {:else}
             <div class="flex items-center gap-1.5">
-              <span class="text-[14px] font-semibold tracking-tight">{d.alias || d.name}</span>
-              {#if d.alias}<span class="mono text-[11px] text-[var(--text-3)]">({d.name})</span>{/if}
-              <button class="text-[var(--text-3)] hover:text-[var(--accent)]" title="Rename in Oriel" aria-label="Rename" onclick={() => startRename(d)}>
+              <span class="text-[14px] font-semibold tracking-tight">{aliases.display(d.name)}</span>
+              {#if aliases.display(d.name) !== d.name}<span class="mono text-[11px] text-[var(--text-3)]">({d.name})</span>{/if}
+              <button class="text-[var(--text-3)] hover:text-[var(--accent)]" title="Rename in Oriel" aria-label="Rename" onclick={() => aliases.start(d.name)}>
                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
               </button>
             </div>
