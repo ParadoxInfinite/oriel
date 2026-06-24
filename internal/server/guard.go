@@ -66,15 +66,32 @@ func (s *Server) allowAPI(r *http.Request) bool {
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h
 	}
-	if isLoopbackHost(host) {
-		return true // loopback is trusted; no token needed for the local UI
+	// A loopback Host is the local UI — trusted, no token. But ONLY when the
+	// request reached us directly: behind a reverse proxy the Host is whatever the
+	// remote client sent, so a `Host: 127.0.0.1` would otherwise wave a remote
+	// caller straight past the allow-list and the token. A proxied request always
+	// carries a forwarding header the client can't strip, so we deny it the
+	// loopback shortcut and make it clear the allow-list + token like anyone else.
+	if isLoopbackHost(host) && !forwarded(r) {
+		return true
 	}
-	// Non-loopback: must be an allowed Host (anti-rebinding) AND, when a token is
-	// configured, carry it (real access control for remote / proxied access).
+	// Non-loopback (or proxied): must be an allowed Host (anti-rebinding) AND, when
+	// a token is configured, carry it (real access control for remote access).
 	if !s.guard.allows(host) {
 		return false
 	}
 	return s.auth.ok(r)
+}
+
+// forwarded reports whether the request arrived through a reverse proxy, by the
+// presence of a standard forwarding header the proxy adds on the hop to us. A
+// remote client can send these, but it can't prevent the proxy from setting them,
+// and a direct local request never has them — so this reliably distinguishes "the
+// local UI" from "a remote caller wearing a forged loopback Host."
+func forwarded(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-For") != "" ||
+		r.Header.Get("X-Forwarded-Host") != "" ||
+		r.Header.Get("Forwarded") != ""
 }
 
 func isLoopbackHost(h string) bool {
