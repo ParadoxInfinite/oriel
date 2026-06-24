@@ -9,6 +9,7 @@
 Manage containers, images, volumes, networks, and Compose from a clean browser UI — or hand the job to any MCP client (Claude, Cursor, a local LLM), through the same secret-masking and destructive-action grant the UI uses. Works with **any Docker engine — Colima, Docker Engine, OrbStack, Podman, remote — on macOS and Linux**. A free, open-source Docker Desktop alternative: one ~13 MB binary, ~15–30 MB RAM, no Electron, no account, Apache-2.0.
 
 [![CI](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml/badge.svg)](https://github.com/ParadoxInfinite/oriel/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ParadoxInfinite/oriel)](https://goreportcard.com/report/github.com/ParadoxInfinite/oriel)
 [![Release](https://img.shields.io/github/v/release/ParadoxInfinite/oriel?sort=semver)](https://github.com/ParadoxInfinite/oriel/releases)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
