@@ -1,6 +1,6 @@
 // Package settings owns the user's persisted configuration (settings.json):
-// base path, allowed hosts, AI provider URL, masking policy, and compose-
-// discovery config. It lives in its own package so both the server and the
+// base path, allowed hosts, auth token, masking policy, and compose-discovery
+// config. It lives in its own package so both the server and the
 // standalone `oriel mcp` process can read and atomically write it — the server
 // is the usual writer, but MCP needs to set a stack alias.
 package settings
@@ -21,8 +21,7 @@ import (
 // opposed to colima/docker state). Persisted as settings.json and edited via the
 // UI, the CLI, MCP, or by hand.
 type Settings struct {
-	BasePath     string           `json:"basePath"`     // reverse-proxy sub-path, e.g. /oriel ("" = root)
-	ProviderURL  string           `json:"providerUrl"`  // AI resolver endpoint ("" = dormant)
+	BasePath     string           `json:"basePath"` // reverse-proxy sub-path, e.g. /oriel ("" = root)
 	Discovery    discovery.Config `json:"discovery"`
 	AllowedHosts []string         `json:"allowedHosts"` // non-loopback Hosts allowed to reach /api
 	MaskEnv      string           `json:"maskEnv"`      // inspect env masking: "all" (default) | "sensitive" | "off"

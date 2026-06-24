@@ -3,7 +3,6 @@
   import { startLive, stopLive, connection } from './lib/live.svelte.js'
   import { refreshContainers } from './lib/containers.svelte.js'
   import { refreshStacks } from './lib/stacks.svelte.js'
-  import { checkProvider } from './lib/provider.svelte.js'
   import { startUpdateChecks, stopUpdateChecks } from './lib/update.svelte.js'
   import { togglePalette } from './lib/palette.svelte.js'
   import { resumeOps } from './lib/op.svelte.js'
@@ -37,7 +36,6 @@
     startLive()
     refreshContainers()
     refreshStacks()
-    checkProvider()
     startUpdateChecks() // checks now, then re-checks every few hours while open
     loadDiskThemes()
     resumeOps() // re-attach to any prune still running from before a refresh

@@ -15,7 +15,7 @@ import (
 //
 // container.inspect masks env, plus sensitive command/label values, through
 // envMask() — the same settings knob the HTTP inspect handler honours. A
-// non-consented caller (the NL provider / an automated agent) gets a hard floor:
+// non-consented caller (an MCP client / automated agent) gets a hard floor:
 // even when the human set masking to "off" for the local UI, secrets are never
 // returned raw on that path. The dedicated `oriel mcp` process masks all (it
 // passes MaskAll); only interactive UI calls, which carry consent, honour "off".
@@ -43,7 +43,7 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 				return nil, err
 			}
 			mode := envMask()
-			// Floor: a non-consented caller (NL provider / agent) never gets raw
+			// Floor: a non-consented caller (MCP / agent) never gets raw
 			// secrets, even if the human set masking to "off" for the local UI.
 			if mode == secrets.MaskOff && !tools.HasConsent(ctx) {
 				mode = secrets.MaskSensitive

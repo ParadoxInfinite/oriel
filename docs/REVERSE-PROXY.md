@@ -43,10 +43,10 @@ to break the deadlock; after that the in-app toggle works for further changes.
 
 ### Migrating from env vars (pre-0.2)
 
-Older versions configured this via `ORIEL_BASE_PATH` / `ORIEL_ALLOWED_HOSTS` /
-`ORIEL_PROVIDER_URL`. These are deprecated: on first start of 0.2+, any that are
-set are migrated into `settings.json` (and logged), then ignored. Remove them from
-your service unit/environment once migrated. `settings.json` is the source now.
+Older versions configured this via `ORIEL_BASE_PATH` / `ORIEL_ALLOWED_HOSTS`.
+These are deprecated: on first start of 0.2+, any that are set are migrated into
+`settings.json` (and logged), then ignored. Remove them from your service
+unit/environment once migrated. `settings.json` is the source now.
 
 ## nginx
 

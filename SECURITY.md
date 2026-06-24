@@ -29,11 +29,6 @@ Two more powers worth calling out:
 - **External themes** (`Settings → Themes → Load external theme`) dynamically
   `import()` a URL and run it as part of the app. Only load themes you trust.
   it's third-party JavaScript executing in your browser session.
-- **The AI provider** (`ORIEL_PROVIDER_URL` / `Settings → AI`) POSTs your command
-  text, the tool list, and live entity names to a URL you configure. Point it
-  only at a resolver you trust. Every returned action is still re-validated
-  against the tool registry before running, so a provider can't invoke an
-  unknown tool or a non-existent entity, but it does receive that context.
 
 ## Remote access (private networks only)
 

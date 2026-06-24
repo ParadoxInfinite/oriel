@@ -1,6 +1,6 @@
 // Package tools is the canonical action layer. Single-entity mutations — from a
-// UI button, the command palette, the MCP server, or a future NL provider —
-// route through Registry.Execute, which validates arguments and entity
+// UI button, the command palette, or the MCP server — route through
+// Registry.Execute, which validates arguments and entity
 // references and gates destructive tools before running the handler. (Bulk
 // prune runs as a background job over a user-selected list; see
 // internal/server/ops.go.) Safety lives here, in the base.
@@ -21,7 +21,7 @@ var ErrDestructiveLocked = errors.New("destructive action locked: open a grant w
 
 // consentKey marks a context as a trusted, human-initiated call (e.g. a UI/
 // palette action behind a confirm dialog). Such calls bypass the grant window;
-// agent callers (MCP, provider) never set it.
+// agent callers (MCP) never set it.
 type consentKey struct{}
 
 // WithConsent marks ctx as a human-confirmed call, allowing Destructive tools
@@ -36,7 +36,7 @@ func consented(ctx context.Context) bool {
 }
 
 // HasConsent reports whether ctx was marked human-confirmed via WithConsent.
-// Lets handlers give non-consented (agent / NL-provider) callers a stricter
+// Lets handlers give non-consented (agent / MCP) callers a stricter
 // floor than an interactive user.
 func HasConsent(ctx context.Context) bool { return consented(ctx) }
 

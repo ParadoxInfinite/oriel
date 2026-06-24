@@ -8,14 +8,14 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
-// handleTools lists the registered tools so the command palette (and a future
-// provider) knows what actions exist.
+// handleTools lists the registered tools so the command palette knows what
+// actions exist.
 func (s *Server) handleTools(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.tools.List())
 }
 
 // invokeRequest is the body for POST /api/invoke — the single execution entry
-// shared by UI buttons, the palette, and (later) the provider.
+// shared by UI buttons and the palette.
 type invokeRequest struct {
 	Tool string         `json:"tool"`
 	Args map[string]any `json:"args"`
@@ -30,7 +30,7 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 
 	// /api/invoke is the interactive surface (UI buttons + command palette, both
 	// behind their own confirm dialogs), so it carries consent — destructive
-	// tools run without needing a grant window. Agent paths (provider, MCP) don't.
+	// tools run without needing a grant window. Agent paths (MCP) don't.
 	result, err := s.tools.Execute(tools.WithConsent(r.Context()), req.Tool, req.Args)
 	if err != nil {
 		status := http.StatusUnprocessableEntity
