@@ -20,6 +20,20 @@ Manage containers, images, volumes, networks, and Compose from a clean browser U
   <img src="docs/img/studio-dark.png" alt="Oriel Studio (dark)" width="49%" />
 </p>
 
+## Drive it with AI
+
+Point any MCP client at Oriel and ask in plain English. It calls the same validated, secret-masked tools the UI does — chaining several to actually answer, not just firing one:
+
+> **you** — why does `api` keep restarting?
+>
+> **assistant** — *reads `container.list` → `container.inspect` → the logs* — it's exiting **137 (OOM)**: the container is capped at 256 MB and the Node heap runs past it. Raise the memory limit or fix the leak in `worker.js`.
+
+```sh
+oriel mcp        # stdio MCP server for Claude, Cursor, or a local LLM
+```
+
+No model ships in the binary — your client brings it. Reads run anytime; destructive actions stay locked behind a grant. [Setup & tool list ↓](#ai-control-mcp)
+
 ## Install
 
 **Homebrew** (macOS & Linux):
