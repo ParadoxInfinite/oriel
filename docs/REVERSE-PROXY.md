@@ -78,9 +78,17 @@ Set `oriel config base-path /oriel` to match the `location`, and
 
 ## Any other proxy (Caddy, Traefik, …)
 
-The same three requirements apply:
+The same requirements apply:
 
-1. **Forward the public `Host`** (must match `allowedHosts`).
-2. **Disable response buffering** for the SSE streams under `/api`.
-3. If mounting under a sub-path, `oriel config base-path` to match (Oriel works
+1. **Forward the public `Host`** (must match `allowedHosts`) — not a loopback Host.
+2. **Set a forwarding header** (`X-Forwarded-For` or `Forwarded`). Oriel uses it to
+   tell proxied traffic from the local UI: a proxied request never inherits the
+   loopback "no token needed" trust, so it always has to pass `allowedHosts` + the
+   token. Every proxy above does this by default; don't strip it.
+3. **Disable response buffering** for the SSE streams under `/api`.
+4. If mounting under a sub-path, `oriel config base-path` to match (Oriel works
    whether or not the proxy strips the prefix).
+
+> Don't configure the proxy to send `Host: 127.0.0.1`. With auth on, the forwarding
+> header still forces the token, but the supported setup is a real public Host in
+> `allowedHosts` — a loopback Host from a proxy is a misconfiguration, not a path in.

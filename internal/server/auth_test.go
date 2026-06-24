@@ -65,3 +65,36 @@ func TestAllowAPI_Auth(t *testing.T) {
 		}
 	}
 }
+
+// TestAllowAPI_ForwardedLoopback closes the proxy bypass: behind a reverse proxy
+// the Host is attacker-controlled, so a forged `Host: 127.0.0.1` must NOT inherit
+// the local-UI exemption — the forwarding header the proxy adds gives it away.
+func TestAllowAPI_ForwardedLoopback(t *testing.T) {
+	mk := func(token string) *Server {
+		return &Server{
+			guard: &hostGuard{hosts: map[string]bool{"oriel.example": true}},
+			auth:  &authGate{token: token},
+		}
+	}
+	// Direct local request — no forwarding header — keeps the exemption.
+	if !mk("secret").allowAPI(authReq("127.0.0.1:4321", "", "")) {
+		t.Fatal("direct loopback request must stay exempt (local UI)")
+	}
+	// Each standard forwarding header revokes the loopback shortcut: a forged
+	// loopback Host then fails the allow-list (127.0.0.1 isn't listed) → denied,
+	// even carrying the token, because the Host isn't an allowed remote host.
+	for _, hdr := range []string{"X-Forwarded-For", "X-Forwarded-Host", "Forwarded"} {
+		r := authReq("127.0.0.1", "Bearer secret", "")
+		r.Header.Set(hdr, "203.0.113.7")
+		if mk("secret").allowAPI(r) {
+			t.Errorf("%s: proxied request with forged loopback Host must be denied", hdr)
+		}
+	}
+	// A proxied request with the real (allowed) Host + token still works — proxies
+	// are a supported remote path, the forwarding header alone doesn't block them.
+	r := authReq("oriel.example", "Bearer secret", "")
+	r.Header.Set("X-Forwarded-For", "203.0.113.7")
+	if !mk("secret").allowAPI(r) {
+		t.Error("proxied request with allowed Host + token must be allowed")
+	}
+}
