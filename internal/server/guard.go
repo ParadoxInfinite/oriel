@@ -102,6 +102,15 @@ func isLoopbackHost(h string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
+// localAdmin reports whether r may perform a local-only administrative change —
+// setting the token or editing the allow-list. These are deliberately not
+// delegatable to remote callers, even authenticated ones: who may reach Oriel is
+// a local-machine decision. It requires a direct loopback request (loopback Host
+// AND not proxied), so a forged loopback Host behind a proxy can't reach them.
+func (s *Server) localAdmin(r *http.Request) bool {
+	return isLoopbackHost(hostOnly(r.Host)) && !forwarded(r)
+}
+
 // normalizeHosts lowercases, trims, drops blanks, and dedupes a host list.
 func normalizeHosts(in []string) []string {
 	seen := map[string]bool{}
@@ -127,7 +136,13 @@ func (s *Server) handleGetRemote(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePutRemote replaces the allowed-host list and updates the live guard.
+// Local-only: a remote caller — even an authenticated one — must not be able to
+// add its own host to the allow-list and entrench access.
 func (s *Server) handlePutRemote(w http.ResponseWriter, r *http.Request) {
+	if !s.localAdmin(r) {
+		writeJSON(w, http.StatusForbidden, map[string]string{"error": "the allow-list can only be changed from the local machine"})
+		return
+	}
 	var body struct {
 		Hosts []string `json:"hosts"`
 	}

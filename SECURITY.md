@@ -30,6 +30,22 @@ Two more powers worth calling out:
   `import()` a URL and run it as part of the app. Only load themes you trust.
   it's third-party JavaScript executing in your browser session.
 
+- **Shared / multi-user hosts:** because anything that can reach the loopback
+  port is trusted as the local user, **do not run Oriel on a shared, multi-user,
+  or CI host.** On such a machine any other local user or job can reach
+  `127.0.0.1` and gain the same root-equivalent Docker control — a local
+  privilege-escalation path. Run it only where you trust every local user.
+
+### What Oriel is not
+
+It is **not a high-assurance, audited, or multi-tenant system, and must not be
+treated as one.** There is no per-user identity, no audit log, no rate limiting,
+and no least-privilege scoping for remote callers — reaching the API at all means
+root-equivalent host control. It has had no independent security assessment.
+Suitable for a single trusted operator on a private network; **never** rely on it
+as a security boundary for untrusted users, regulated/government workloads, or
+public exposure without an independent audit and a hardened deployment.
+
 ## Remote access (private networks only)
 
 Because there's no app-level password, **exposing Oriel safely means putting a

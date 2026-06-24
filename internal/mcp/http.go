@@ -37,12 +37,12 @@ func ServeHTTP(ctx context.Context, addr string, reg *tools.Registry, version st
 	return nil
 }
 
-// authMiddleware requires the bearer token for non-loopback clients. Loopback
-// (the same machine) is exempt; an empty token disables the gate. It reuses the
-// single constant-time compare in internal/settings.
+// authMiddleware requires the bearer token for every caller except a genuinely
+// local, direct one. An empty token disables the gate. Reuses the single
+// constant-time compare in internal/settings.
 func authMiddleware(next http.Handler, token string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !clientLoopback(r) && !settings.TokenOK(settings.Bearer(r.Header.Get("Authorization")), token) {
+		if !localDirect(r) && !settings.TokenOK(settings.Bearer(r.Header.Get("Authorization")), token) {
 			http.Error(w, "unauthorized: missing or invalid bearer token", http.StatusUnauthorized)
 			return
 		}
@@ -50,7 +50,17 @@ func authMiddleware(next http.Handler, token string) http.Handler {
 	})
 }
 
-// clientLoopback reports whether the request came from the local machine.
+// localDirect reports a request from the local machine that did NOT pass through
+// a reverse proxy. RemoteAddr alone is not enough: a same-host proxy (the normal
+// way this endpoint is exposed for TLS) makes RemoteAddr loopback for EVERY
+// request it forwards, so trusting loopback would wave every proxied remote
+// caller past the token. A forwarding header — which the proxy adds and the real
+// client can't strip — means the caller is remote and must present the token.
+func localDirect(r *http.Request) bool {
+	return clientLoopback(r) && !forwarded(r)
+}
+
+// clientLoopback reports whether the TCP peer is the local machine.
 func clientLoopback(r *http.Request) bool {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
@@ -58,4 +68,12 @@ func clientLoopback(r *http.Request) bool {
 	}
 	ip := net.ParseIP(host)
 	return ip != nil && ip.IsLoopback()
+}
+
+// forwarded reports whether the request arrived through a reverse proxy, by the
+// presence of a standard forwarding header the proxy adds on the hop to us.
+func forwarded(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-For") != "" ||
+		r.Header.Get("X-Forwarded-Host") != "" ||
+		r.Header.Get("Forwarded") != ""
 }

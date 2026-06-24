@@ -52,7 +52,7 @@ func runMCP(args []string) error {
 		// Never expose MCP beyond loopback without a token — that's an open door
 		// to the user's Docker. Force them to set one first.
 		if exposedAddr(*httpAddr) && token == "" {
-			return fmt.Errorf("refusing to serve MCP over HTTP on a non-loopback address (%s) without auth — set a token first:\n  oriel config auth-token --generate", *httpAddr)
+			return fmt.Errorf("refusing to serve MCP over HTTP on a non-loopback address (%s) without auth — set a token first:\n  oriel config auth-token --generate\n\nNote: this server speaks plain HTTP. The bearer token is sent in cleartext, so on any untrusted network put it behind a TLS-terminating reverse proxy (one that sets X-Forwarded-For) rather than binding it to the open address directly.", *httpAddr)
 		}
 		return mcp.ServeHTTP(ctx, *httpAddr, reg, version, include, token)
 	}
