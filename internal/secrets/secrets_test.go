@@ -10,27 +10,27 @@ func TestIsSensitive(t *testing.T) {
 		key, val string
 		want     bool
 	}{
-		{"OPENAI_API_KEY", "sk-proj-abc", true},     // name
-		{"DATABASE_PASSWORD", "hunter2", true},      // name
-		{"GITHUB_TOKEN", "x", true},                 // name
-		{"AWS_SECRET_ACCESS_KEY", "x", true},        // name
-		{"FOO", "ghp_0123456789abcdef", true},       // value prefix
-		{"FOO", "AKIAIOSFODNN7EXAMPLE", true},       // value prefix
-		{"FOO", "eyJhbGciOiJIUzI1NiJ9.payload", true}, // jwt-ish
-		{"RANDOM", "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", true}, // high-entropy
-		{"DB_PWD", "short", true},                            // name: PWD
-		{"WEBHOOK_URL", "https://hooks.example.com/x", true}, // name: WEBHOOK
-		{"FOO", "abcdefabcdefabcdefabcdefabcdef", true},      // 30-char all-hex token (no digit)
-		{"FOO", "aGVsbG8vd29ybGQvc2VjcmV0L3Rva2Vu", true},    // base64 with internal slash
+		{"OPENAI_API_KEY", "sk-proj-abc", true},                          // name
+		{"DATABASE_PASSWORD", "hunter2", true},                           // name
+		{"GITHUB_TOKEN", "x", true},                                      // name
+		{"AWS_SECRET_ACCESS_KEY", "x", true},                             // name
+		{"FOO", "ghp_0123456789abcdef", true},                            // value prefix
+		{"FOO", "AKIAIOSFODNN7EXAMPLE", true},                            // value prefix
+		{"FOO", "eyJhbGciOiJIUzI1NiJ9.payload", true},                    // jwt-ish
+		{"RANDOM", "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6", true},             // high-entropy
+		{"DB_PWD", "short", true},                                        // name: PWD
+		{"WEBHOOK_URL", "https://hooks.example.com/x", true},             // name: WEBHOOK
+		{"FOO", "abcdefabcdefabcdefabcdefabcdef", true},                  // 30-char all-hex token (no digit)
+		{"FOO", "aGVsbG8vd29ybGQvc2VjcmV0L3Rva2Vu", true},                // base64 with internal slash
 		{"DATABASE_URL", "postgres://user:pass@localhost:5432/db", true}, // url userinfo creds
-		{"REDIS_URL", "redis://:secret@redis:6379", true},               // url password-only userinfo
+		{"REDIS_URL", "redis://:secret@redis:6379", true},                // url password-only userinfo
 		{"MONGO_URI", "mongodb+srv://u:p@cluster0.example/db", true},     // url userinfo creds
 		{"NODE_ENV", "production", false},
-		{"PUBLIC_URL", "https://example.com/path", false},               // plain url, no creds
-		{"CALLBACK", "postgres://localhost/db", false},                  // dsn, no creds
-		{"FOO", "https://host/long/path@version/segment", false},        // '@' in path, not userinfo
-		{"PATH", "/usr/local/bin:/usr/bin:/bin", false},                  // path (has ':')
-		{"HOME", "/Users/apple/some/long/path/to/a/file/here", false},    // path (leading '/')
+		{"PUBLIC_URL", "https://example.com/path", false},             // plain url, no creds
+		{"CALLBACK", "postgres://localhost/db", false},                // dsn, no creds
+		{"FOO", "https://host/long/path@version/segment", false},      // '@' in path, not userinfo
+		{"PATH", "/usr/local/bin:/usr/bin:/bin", false},               // path (has ':')
+		{"HOME", "/Users/apple/some/long/path/to/a/file/here", false}, // path (leading '/')
 		{"PORT", "3000", false},
 		{"GREETING", "hello world this is a long but spaced sentence", false},
 	}
