@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/ParadoxInfinite/oriel/internal/provider"
 	settingspkg "github.com/ParadoxInfinite/oriel/internal/settings"
 )
 
@@ -36,12 +35,6 @@ func mergeEnvConfig(c settings, getenv func(string) string) (settings, []string)
 		if v := strings.TrimSpace(getenv("ORIEL_ALLOWED_HOSTS")); v != "" {
 			c.AllowedHosts = normalizeHosts(strings.Split(v, ","))
 			migrated = append(migrated, "ORIEL_ALLOWED_HOSTS")
-		}
-	}
-	if c.ProviderURL == "" {
-		if v := strings.TrimSpace(getenv(provider.EnvURL)); v != "" {
-			c.ProviderURL = v
-			migrated = append(migrated, provider.EnvURL)
 		}
 	}
 	return c, migrated

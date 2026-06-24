@@ -1,12 +1,11 @@
 <script>
   import { onMount } from 'svelte'
   import {
-    provider, ProviderSettings,
     self, update, checkNow, restartService, promptUpdate,
     remote, loadRemote, removeRemoteHost, RemoteHostForm,
     grant, loadGrant, requestGrant, lockGrant, fmtRemaining,
     discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm,
-    THEMES_DOC_URL, DEPRECATIONS_DOC_URL,
+    THEMES_DOC_URL,
   } from '../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../editions/registry.svelte.js'
   import { btn, btnPrimary } from '../lib/ui.js'
@@ -16,13 +15,9 @@
   ensureDiscovery()
   const df = new DiscoveryForm()
   const hostForm = new RemoteHostForm()
-  const ps = new ProviderSettings()
-  const saveProvider = () => ps.save()
-  const runTest = () => ps.runTest()
   onMount(() => {
     loadRemote()
     loadGrant()
-    ps.load()
   })
 
   const field =
@@ -140,56 +135,11 @@
   </div>
 
   <div class="flex flex-col gap-5">
-  <!-- AI / Natural language -->
-  <section class="card rounded-[--radius] p-5">
-    <div class="flex items-center gap-2.5">
-      <h2 class="display text-sm font-semibold tracking-tight">AI · natural language</h2>
-      <span class="rounded-full bg-warn/15 px-2 py-0.5 text-[11px] text-warn">Deprecated</span>
-      <span class="rounded-full px-2 py-0.5 text-[11px] {provider.enabled ? 'bg-ok/15 text-ok' : 'bg-surface-2 text-muted'}">{provider.enabled ? 'Connected' : 'Not configured'}</span>
-    </div>
-    <div class="mt-3 rounded-[--radius] border border-warn/30 bg-warn/10 px-3 py-2 text-xs text-warn">
-      Deprecated in v0.5.0, removed in v0.6.0. Use the <span class="font-mono">oriel mcp</span> server instead; this still works until then.
-      <a href={DEPRECATIONS_DOC_URL} target="_blank" rel="noopener" class="font-medium underline">Why &amp; what to use instead →</a>
-    </div>
-    <p class="mt-2 text-xs text-muted">
-      The base ships no model. Point at an external resolver and the command palette (⌘K) gains a free-text mode — every suggestion still runs through the same validated tool path.
-    </p>
-
-    <div class="mt-4">
-      <span class="text-[13px] font-medium text-fg">Provider URL</span>
-      <div class="mt-2 flex gap-2">
-        <input bind:value={ps.urlDraft} placeholder="http://127.0.0.1:8899" class={field} onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
-        <button class={btnPrimary} onclick={saveProvider}>Save</button>
-        {#if provider.enabled}<button class={btn} onclick={() => { ps.urlDraft = ''; saveProvider() }}>Disable</button>{/if}
-      </div>
-      <p class="mt-2 text-xs text-faint">
-        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="font-mono">/resolve</span> contract. Or set <span class="font-mono">ORIEL_PROVIDER_URL</span> at launch.
-      </p>
-    </div>
-
-    {#if provider.enabled}
-      <div class="mt-5 border-t border-border pt-4">
-        <span class="text-[13px] font-medium text-fg">Test resolver</span>
-        <div class="mt-2 flex gap-2">
-          <input bind:value={ps.testText} placeholder="e.g. restart postgres" class={field} onkeydown={(e) => e.key === 'Enter' && runTest()} />
-          <button class={btn} onclick={runTest} disabled={ps.testBusy}>{ps.testBusy ? 'Resolving…' : 'Run'}</button>
-        </div>
-        {#if ps.testErr}<p class="mt-2 text-xs text-danger">{ps.testErr}</p>{/if}
-        {#if ps.testResult?.call}
-          <div class="mt-3 rounded-[--radius] border border-border bg-surface px-3 py-2 font-mono text-xs">
-            <div><span class="text-faint">tool</span> <span class="text-accent">{ps.testResult.call.tool}</span></div>
-            <div class="mt-1 break-all"><span class="text-faint">args</span> {JSON.stringify(ps.testResult.call.args)}</div>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </section>
-
   <!-- Automation access (destructive grant) -->
   <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Automation access</h2>
     <p class="mt-1 text-sm text-muted">
-      The MCP server (<span class="mono">oriel mcp</span>) and palette AI can run read actions any time. Destructive ones (remove, prune) stay locked until you open a time-boxed window — your own UI clicks are never affected.
+      The MCP server (<span class="mono">oriel mcp</span>) can run read actions any time. Destructive ones (remove, prune) stay locked until you open a time-boxed window — your own UI clicks are never affected.
     </p>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       {#if grant.active}

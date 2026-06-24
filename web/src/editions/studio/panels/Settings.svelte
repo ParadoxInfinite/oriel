@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { provider, toast, ProviderSettings, DEPRECATIONS_DOC_URL } from '../../../platform/index.js'
+  import { toast } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
@@ -49,13 +49,6 @@
     addCustomAccent(newName, newColor)
     newName = ''
   }
-
-
-  // AI provider.
-  const ps = new ProviderSettings()
-  const saveProvider = () => ps.save()
-  const runTest = () => ps.runTest()
-  onMount(() => ps.load())
 </script>
 
 <div class="mx-auto grid max-w-5xl grid-cols-1 gap-4 pb-4 md:grid-cols-2 md:items-start">
@@ -212,51 +205,6 @@
   </div>
 
   <div class="flex flex-col gap-4">
-  <!-- AI / Natural language -->
-  <section class="rise card p-5" style="animation-delay:80ms">
-    <div class="flex items-center gap-2.5">
-      <h2 class="text-[14px] font-semibold tracking-tight">AI · natural language</h2>
-      <span class="rounded-full px-2 py-0.5 text-[11px] font-medium" style="background:color-mix(in srgb, var(--amber) 15%, transparent); color:var(--amber)">Deprecated</span>
-      <span class="pill {provider.enabled ? 'on' : 'off'}"><span class="dot"></span>{provider.enabled ? 'Connected' : 'Not configured'}</span>
-    </div>
-    <div class="mt-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px] text-[var(--text-2)]">
-      <span class="font-medium" style="color:var(--amber)">Deprecated in v0.5.0, removed in v0.6.0.</span> Use the <span class="mono">oriel mcp</span> server instead; this still works until then.
-      <a href={DEPRECATIONS_DOC_URL} target="_blank" rel="noopener" class="underline">Why &amp; what to use instead →</a>
-    </div>
-    <p class="mt-2 text-[13px] text-[var(--text-2)]">
-      The base ships no model. Point at an external resolver and the command palette (⌘K) gains a free-text mode — every suggestion still runs through the same validated tool path.
-    </p>
-
-    <div class="mt-4">
-      <span class="text-[13px] font-medium">Provider URL</span>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <input bind:value={ps.urlDraft} placeholder="http://127.0.0.1:8899" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && saveProvider()} />
-        <button class="btn btn-primary btn-sm" onclick={saveProvider}>Save</button>
-        {#if provider.enabled}<button class="btn btn-default btn-sm" onclick={() => { ps.urlDraft = ''; saveProvider() }}>Disable</button>{/if}
-      </div>
-      <p class="mt-2 text-[12px] text-[var(--text-3)]">
-        Tier 1 is a ~40-line rules server; tier 2 swaps in embeddings or a local LLM behind the same <span class="mono">/resolve</span> contract. Or set <span class="mono">ORIEL_PROVIDER_URL</span> at launch.
-      </p>
-    </div>
-
-    {#if provider.enabled}
-      <div class="mt-5 border-t border-[var(--border)] pt-4">
-        <span class="text-[13px] font-medium">Test resolver</span>
-        <div class="mt-2 flex flex-wrap gap-2">
-          <input bind:value={ps.testText} placeholder="e.g. restart postgres" class="input min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && runTest()} />
-          <button class="btn btn-default btn-sm" onclick={runTest} disabled={ps.testBusy}>{ps.testBusy ? 'Resolving…' : 'Run'}</button>
-        </div>
-        {#if ps.testErr}<p class="mt-2 text-[12px] text-[var(--red)]">{ps.testErr}</p>{/if}
-        {#if ps.testResult?.call}
-          <div class="mono mt-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3 text-[12px]">
-            <div><span class="text-[var(--text-3)]">tool</span> <span class="text-[var(--accent)]">{ps.testResult.call.tool}</span></div>
-            <div class="mt-1 break-all"><span class="text-[var(--text-3)]">args</span> {JSON.stringify(ps.testResult.call.args)}</div>
-          </div>
-        {/if}
-      </div>
-    {/if}
-  </section>
-
   <!-- Secrets -->
   <section class="rise card p-5" style="animation-delay:90ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Secrets</h2>
@@ -290,7 +238,7 @@
   <section class="rise card p-5" style="animation-delay:95ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Automation access</h2>
     <p class="mt-1 text-[13px] text-[var(--text-2)]">
-      The MCP server (<span class="mono">oriel mcp</span>) and command-palette AI can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window — your own clicks here in the UI are never affected.
+      The MCP server (<span class="mono">oriel mcp</span>) can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window — your own clicks here in the UI are never affected.
     </p>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       {#if grant.active}

@@ -12,7 +12,6 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/actions"
 	"github.com/ParadoxInfinite/oriel/internal/docker"
 	"github.com/ParadoxInfinite/oriel/internal/grant"
-	"github.com/ParadoxInfinite/oriel/internal/provider"
 	"github.com/ParadoxInfinite/oriel/internal/secrets"
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
@@ -25,7 +24,6 @@ type Server struct {
 	version  string
 	docker   *docker.Client
 	tools    *tools.Registry
-	provider *provider.Provider
 	recorder *recorder
 	jobs     *jobManager
 	guard    *hostGuard
@@ -49,20 +47,15 @@ func New(web fs.FS, version string) *Server {
 		version:  version,
 		docker:   dc,
 		tools:    actions.New(dc, func() secrets.Mode { return secrets.ParseMode(loadSettings().MaskEnv) }),
-		provider: provider.New(),
 		recorder: newRecorder(dc),
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),
 		auth:     newAuthGate(),
 		grant:    grant.New(),
 	}
-	// Destructive tools are locked for non-interactive callers (MCP, provider)
-	// unless a grant window is open; the UI/palette pass consent instead.
+	// Destructive tools are locked for non-interactive callers (MCP) unless a
+	// grant window is open; the UI/palette pass consent instead.
 	s.tools.SetDestructiveWindow(s.grant.Active)
-	// Restore the AI provider URL the user configured (Settings → AI / settings.json).
-	if cfg.ProviderURL != "" {
-		s.provider.SetURL(cfg.ProviderURL)
-	}
 	// Always-on metrics recorder for the live stream + 30-min history buffer.
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
@@ -138,12 +131,6 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/grant", s.handleGrantStatus)
 	s.mux.HandleFunc("POST /api/grant", s.handleGrantOpen)
 	s.mux.HandleFunc("DELETE /api/grant", s.handleGrantLock)
-
-	// Provider seam (dormant unless ORIEL_PROVIDER_URL is set, or configured
-	// at runtime via Settings → AI).
-	s.mux.HandleFunc("GET /api/provider", s.handleProviderStatus)
-	s.mux.HandleFunc("POST /api/provider", s.handleSetProvider)
-	s.mux.HandleFunc("POST /api/resolve", s.handleResolve)
 
 	// Containers.
 	s.mux.HandleFunc("GET /api/containers", s.handleContainers)

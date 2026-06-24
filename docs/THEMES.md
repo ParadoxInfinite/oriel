@@ -53,7 +53,6 @@ markup and it updates as the backend does. Don't reassign; mutate via the action
 | `self` | `{ rss, goroutines, heapAlloc }` |
 | `outages` | `{ list: [{ start, end, kind }] }`: `kind` ∈ `down` \| `offline` |
 | `ops` | `{ list, focused }`: operation tracker driving the progress modal (`focused`) and the sidebar tray (the rest); items can be cancelled/resumed |
-| `provider` | `{ enabled, url }`: the NL/AI seam. **Deprecated v0.5.0, removed v0.6.0** — see [DEPRECATIONS.md](./DEPRECATIONS.md); don't build new editions on it. |
 | `nav` | `{ view, target }`: the active view id + an optional deep-link intent. Bind your view switch to `nav.view`. See [Navigation](#navigation). |
 
 Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
@@ -74,7 +73,6 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 | `openPalette()` / `togglePalette()` | command palette. |
 | `navigate(view, target?)` | switch the active view; pass a `target` to deep-open an entity at the destination. See [Navigation](#navigation). |
 | `takeTarget(view)` | claim + clear a pending intent addressed to `view` (e.g. open a container's logs). |
-| `setProvider(url)` / `resolveText(text)` | configure / use the NL seam. **Deprecated v0.5.0, removed v0.6.0** — see [DEPRECATIONS.md](./DEPRECATIONS.md). |
 | `setOverlayTheme(scheme, accent)` | tell the host how to theme the global overlays for your edition: `'classic'` (no override), or `'light'`/`'dark'` + an accent. |
 
 ### Helpers

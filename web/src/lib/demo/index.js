@@ -16,7 +16,6 @@ const db = {
   volumes: seed.makeVolumes(),
   networks: seed.makeNetworks(),
   colima: clone(seed.colimaStatus),
-  provider: clone(seed.provider),
   remoteHosts: [],
   discovery: clone(seed.discovery),
   maskEnv: 'all', // inspect env masking mode (Settings → Secrets)
@@ -70,7 +69,6 @@ export async function demoGet(path) {
     case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, envReveal: db.envReveal }
     case '/api/grant': return grantStatus()
     case '/api/update': return clone(seed.update)
-    case '/api/provider': return clone(db.provider)
     case '/api/remote': return { hosts: clone(db.remoteHosts) }
     case '/api/themes': return clone(seed.themes)
     case '/api/discovery': return clone(db.discovery)
@@ -179,10 +177,6 @@ export async function demoPost(path, body) {
     db.grantExpiresMs = hours > 0 ? Date.now() + hours * 3600_000 : 0
     return grantStatus()
   }
-  if (p === '/api/provider') {
-    db.provider = { enabled: !!body?.url, url: body?.url || '' }
-    return clone(db.provider)
-  }
   if (p === '/api/ops/system-prune') return startJob('system-prune', q)
   if (p === '/api/ops/image-prune') return startJob('image-prune', null, body?.items)
   if (p === '/api/ops/volume-prune') return startJob('volume-prune', null, body?.items)
@@ -191,8 +185,8 @@ export async function demoPost(path, body) {
     if (j) j.cancelled = true
     return null
   }
-  // /api/resolve, /api/fs/open, /api/update/* — not reachable in the demo
-  // (AI resolver + self-update are disabled); answer benignly.
+  // /api/fs/open, /api/update/* — not reachable in the demo
+  // (self-update is disabled); answer benignly.
   return null
 }
 

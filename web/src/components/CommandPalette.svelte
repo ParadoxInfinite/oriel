@@ -16,7 +16,6 @@
   import { fuzzyScore } from '../lib/fuzzy.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
-  import { provider, resolveText } from '../lib/provider.svelte.js'
   import { toast } from '../lib/toast.svelte.js'
 
   let query = $state('')
@@ -29,8 +28,8 @@
   })
 
   // The palette is a thin client over the tool registry: each entry maps to a
-  // {tool, args} call — the same shape /api/invoke runs for UI buttons and a
-  // provider emits. We enumerate live entities × the actions valid for them, so
+  // {tool, args} call — the same shape /api/invoke runs for UI buttons. We
+  // enumerate live entities × the actions valid for them, so
   // the palette only ever offers something that can actually run. Reads (logs,
   // inspect, df) are deliberately absent — those navigate to a view, not here.
   const DEFAULT_NETWORKS = new Set(['bridge', 'host', 'none'])
@@ -169,11 +168,6 @@
       .slice(0, 50)
       .map((x) => x.it)
 
-    // With a provider configured, offer free-text interpretation of the query
-    // as the first option — the same execution path, just an NL resolver.
-    if (provider.enabled) {
-      return [{ ai: true, key: '__ai__', label: 'Interpret', target: q }, ...scored]
-    }
     return scored
   })
 
@@ -228,20 +222,6 @@
       }
       // Streams in the op tray (cancellable), same as the Stacks view buttons.
       stackOp(it.target, it.op, refreshStacks)
-      return
-    }
-    if (it.ai) {
-      try {
-        const res = await resolveText(it.target)
-        if (!res?.call) {
-          toast(res?.message || 'No matching command', 'info')
-          return
-        }
-        toast(`${res.call.tool} · ${res.call.args?.id ?? ''}`.trim(), 'ok')
-      } catch (e) {
-        toast(e.message, 'error')
-      }
-      refreshContainers()
       return
     }
     if (it.danger) {
@@ -303,12 +283,7 @@
               onmouseenter={() => (selected = i)}
               onclick={() => run(it)}
             >
-              {#if it.ai}
-                <span class="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-medium text-accent">AI</span>
-                <span class="text-fg">Interpret</span>
-              {:else}
-                <span class="{it.danger ? 'text-danger' : 'text-fg'}">{it.label}</span>
-              {/if}
+              <span class="{it.danger ? 'text-danger' : 'text-fg'}">{it.label}</span>
               <span class="truncate font-mono text-xs text-muted">{it.target}</span>
             </button>
           {/each}

@@ -96,7 +96,6 @@ export const colimaStatus = {
 
 export const self = { version: 'demo', basePath: '/', os: 'darwin', rss: 24 * 1024 * 1024, goroutines: 11, heapAlloc: 3 * 1024 * 1024 }
 export const update = { current: 'demo', latest: '0.2.4', updateAvailable: false, managed: false, url: 'https://github.com/ParadoxInfinite/oriel/releases', publishedAt: '2026-06-21T14:14:30Z' }
-export const provider = { enabled: false, url: '' }
 export const themes = { dir: '/Users/dev/Library/Application Support/oriel/themes', themes: [] }
 export const discovery = { roots: [{ id: 'r-demo', path: '/Users/dev/projects', traverse: true, enabled: true }], filter: { mode: 'off', patterns: [] }, aliases: {} }
 

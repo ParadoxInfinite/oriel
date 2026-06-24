@@ -1,5 +1,5 @@
-// Command palette open/close state. The deterministic resolver today; the same
-// surface gains an NL input mode when a provider plugin is configured.
+// Command palette open/close state. A deterministic fuzzy matcher over the tool
+// registry — every entry maps to a validated {tool, args} call.
 export const palette = $state({ open: false })
 
 export function openPalette() {

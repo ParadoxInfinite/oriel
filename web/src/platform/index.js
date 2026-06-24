@@ -103,11 +103,6 @@ export { nav, navigate, takeTarget, VIEWS } from '../lib/nav.svelte.js'
 /** Column-sort state + helpers for tables: createSort, toggleSort, sortRows. */
 export { createSort, toggleSort, sortRows } from '../lib/sort.svelte.js'
 
-/** @deprecated Deprecated v0.5.0, removed v0.6.0. Superseded by the MCP server;
- *  see docs/DEPRECATIONS.md. Natural-language provider (the AI seam): state + runtime
- *  config + resolver. provider → { enabled, url }. setProvider(url) swaps + persists. */
-export { provider, checkProvider, setProvider, resolveText } from '../lib/provider.svelte.js'
-
 /** Formatting helpers: bytes, duration, timeOnly, dateTime, relativeTime. */
 export * as fmt from '../lib/format.js'
 
@@ -117,9 +112,6 @@ export { ImageActions } from '../lib/imageActions.svelte.js'
 /** Headless "rename in Oriel" controller: a display-only alias keyed by the real
  *  compose project name. `display(name)`, `start/save/cancel`, `editing`, `draft`. */
 export { AliasEditor } from '../lib/aliasEditor.svelte.js'
-
-/** Headless AI-provider Settings controller (resolver URL + test box). */
-export { ProviderSettings } from '../lib/providerSettings.svelte.js'
 
 /** Raw Lucide icon inner-SVG strings, keyed by name (see lib/icons.js). */
 export { icons } from '../lib/icons.js'
@@ -178,7 +170,7 @@ export {
 export { PathField, baseName } from '../lib/pathfield.svelte.js'
 
 /** Canonical external links (repo, theme-authoring guide). */
-export { REPO_URL, THEMES_DOC_URL, DEPRECATIONS_DOC_URL } from '../lib/links.js'
+export { REPO_URL, THEMES_DOC_URL } from '../lib/links.js'
 
 // ── Lifecycle convenience ────────────────────────────────────────────────────
 // The start/stop/restart control every edition needs, wired to the shared op
