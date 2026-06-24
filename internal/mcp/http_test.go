@@ -35,3 +35,41 @@ func TestAuthMiddleware(t *testing.T) {
 		}
 	}
 }
+
+// TestAuthMiddleware_ProxyBypass closes the critical hole: when this endpoint is
+// fronted by a same-host reverse proxy, every forwarded request arrives with a
+// loopback RemoteAddr. Trusting that would skip the configured token for every
+// remote caller. A forwarding header must force the token regardless of RemoteAddr.
+func TestAuthMiddleware_ProxyBypass(t *testing.T) {
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	call := func(fwdHeader, auth string) int {
+		r := httptest.NewRequest("POST", "/", nil)
+		r.RemoteAddr = "127.0.0.1:5555" // the same-host proxy — always loopback
+		r.Header.Set(fwdHeader, "203.0.113.7")
+		if auth != "" {
+			r.Header.Set("Authorization", auth)
+		}
+		w := httptest.NewRecorder()
+		authMiddleware(ok, "secret").ServeHTTP(w, r)
+		return w.Code
+	}
+	for _, h := range []string{"X-Forwarded-For", "X-Forwarded-Host", "Forwarded"} {
+		if got := call(h, ""); got != http.StatusUnauthorized {
+			t.Errorf("%s + no token: status=%d want 401 (proxied request must not inherit loopback trust)", h, got)
+		}
+		if got := call(h, "Bearer secret"); got != http.StatusOK {
+			t.Errorf("%s + correct token: status=%d want 200", h, got)
+		}
+		if got := call(h, "Bearer nope"); got != http.StatusUnauthorized {
+			t.Errorf("%s + wrong token: status=%d want 401", h, got)
+		}
+	}
+	// A genuinely direct loopback request (no forwarding header) stays exempt.
+	r := httptest.NewRequest("POST", "/", nil)
+	r.RemoteAddr = "127.0.0.1:5555"
+	w := httptest.NewRecorder()
+	authMiddleware(ok, "secret").ServeHTTP(w, r)
+	if w.Code != http.StatusOK {
+		t.Errorf("direct loopback (no proxy): status=%d want 200", w.Code)
+	}
+}

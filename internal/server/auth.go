@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net"
 	"net/http"
 	"strings"
@@ -11,6 +12,11 @@ import (
 
 	settingspkg "github.com/ParadoxInfinite/oriel/internal/settings"
 )
+
+// minTokenLen is the floor for a hand-set token. The generated token is 64 hex
+// chars (256 bits); a user who types their own must still clear a bar that a
+// rate-limit-free online guess can't reasonably cross.
+const minTokenLen = 16
 
 // authGate is the opt-in access-control layer for NON-loopback requests. The host
 // allow-list (hostGuard) is anti-rebinding, not authentication — anyone who can
@@ -46,10 +52,15 @@ func (a *authGate) ok(r *http.Request) bool {
 	return settingspkg.TokenOK(settingspkg.Bearer(r.Header.Get("Authorization")), token)
 }
 
-func randomToken() string {
+// randomToken returns a 256-bit hex token from the OS CSPRNG. It returns the
+// error rather than emitting on failure: a security token must never be
+// best-effort — a short read or RNG failure must abort, not install a weak token.
+func randomToken() (string, error) {
 	b := make([]byte, 32)
-	_, _ = rand.Read(b)
-	return hex.EncodeToString(b)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 func hostOnly(host string) string {
@@ -64,11 +75,12 @@ func (s *Server) handleGetAuth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"enabled": s.auth.enabled()})
 }
 
-// handlePutAuth sets, generates, or clears the token. Loopback-only: who may
-// authenticate is a local decision — even an already-authenticated remote client
-// can't rotate or disable the gate.
+// handlePutAuth sets, generates, or clears the token. Local-only: who may
+// authenticate is a local-machine decision — even an already-authenticated
+// remote client can't rotate or disable the gate (localAdmin also rejects a
+// proxied request wearing a forged loopback Host).
 func (s *Server) handlePutAuth(w http.ResponseWriter, r *http.Request) {
-	if !isLoopbackHost(hostOnly(r.Host)) {
+	if !s.localAdmin(r) {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "auth can only be changed from the local machine"})
 		return
 	}
@@ -86,7 +98,19 @@ func (s *Server) handlePutAuth(w http.ResponseWriter, r *http.Request) {
 	case body.Clear:
 		token = ""
 	case body.Generate:
-		token = randomToken()
+		t, err := randomToken()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not generate a token"})
+			return
+		}
+		token = t
+	default:
+		// A hand-set token must clear the strength floor; there's no rate limit
+		// on the gate, so a short token would be online-guessable.
+		if len([]rune(token)) < minTokenLen {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("token too weak: use at least %d characters, or --generate for a strong one", minTokenLen)})
+			return
+		}
 	}
 	if err := updateSettings(func(st *settings) { st.AuthToken = token }); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))

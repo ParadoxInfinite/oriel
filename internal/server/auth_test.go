@@ -98,3 +98,41 @@ func TestAllowAPI_ForwardedLoopback(t *testing.T) {
 		t.Error("proxied request with allowed Host + token must be allowed")
 	}
 }
+
+// TestLocalAdmin gates the local-only admin ops (set/clear token, edit allow-list):
+// a direct loopback request may; a proxied one wearing a forged loopback Host, or
+// any remote Host, may not — even though it might otherwise pass the /api gate.
+func TestLocalAdmin(t *testing.T) {
+	s := &Server{}
+	if !s.localAdmin(authReq("127.0.0.1:4321", "", "")) {
+		t.Error("direct loopback must be allowed to administer")
+	}
+	if !s.localAdmin(authReq("localhost", "", "")) {
+		t.Error("direct localhost must be allowed to administer")
+	}
+	// Forged loopback Host behind a proxy — the escalation path — must be denied.
+	for _, hdr := range []string{"X-Forwarded-For", "X-Forwarded-Host", "Forwarded"} {
+		req := authReq("127.0.0.1", "", "")
+		req.Header.Set(hdr, "203.0.113.7")
+		if s.localAdmin(req) {
+			t.Errorf("%s: proxied forged-loopback Host must NOT administer", hdr)
+		}
+	}
+	if s.localAdmin(authReq("oriel.example", "", "")) {
+		t.Error("a remote Host must never administer")
+	}
+}
+
+// TestRandomToken: 256-bit hex, fresh each call, no error.
+func TestRandomToken(t *testing.T) {
+	a, err := randomToken()
+	if err != nil {
+		t.Fatalf("randomToken errored: %v", err)
+	}
+	if len(a) != 64 {
+		t.Errorf("token len = %d, want 64 hex chars (256 bits)", len(a))
+	}
+	if b, _ := randomToken(); a == b {
+		t.Error("two generated tokens must differ")
+	}
+}
