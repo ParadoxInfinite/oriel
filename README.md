@@ -95,7 +95,7 @@ The usual ways to run containers on a Mac or Linux box, and where Oriel fits. (F
 |---|---|---|---|---|---|
 | License | **Apache-2.0, free** | Proprietary (paid for larger orgs) | Proprietary (paid for commercial use) | MIT, free | Free (CE) |
 | Interface | Graphical web UI | Desktop app | Native app | Terminal (TUI) | Web UI (server) |
-| Footprint | **~15–30 MB RAM, ~13 MB binary** | Heavy (Electron + VM) | Light (native) | Light | Needs a container + ≥2 GB RAM |
+| Footprint | **~15–30 MB RAM, ~13 MB binary** | Heavy (~3–4 GB VM) | Light (native) | Light | Container, ~200–300 MB |
 | Install | **Single static binary** | Installer | Installer | Single binary | Run a container |
 | Bring-your-own engine | **Colima · Docker · OrbStack · Podman · remote** | Bundled engine | Bundled engine | Any Docker socket | Any Docker socket |
 | Runs locally, no account | **Yes** | Account/sign-in | Account | Yes | Server + auth |

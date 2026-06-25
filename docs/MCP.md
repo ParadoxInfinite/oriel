@@ -1,7 +1,9 @@
 # MCP server
 
-> Status: **shipped** (stdio). `oriel mcp` serves the tool registry; destructive
-> tools are gated behind the grant window. See [ROADMAP.md](../ROADMAP.md).
+> Status: **shipped**. `oriel mcp` serves the tool registry over stdio or
+> Streamable HTTP (`--http`), with read-only / allow / deny scoping, resources &
+> prompts, and destructive tools gated behind the grant window. See
+> [ROADMAP.md](../ROADMAP.md).
 
 Oriel's tool layer, exposed over the
 [Model Context Protocol](https://modelcontextprotocol.io). Any MCP client (Claude

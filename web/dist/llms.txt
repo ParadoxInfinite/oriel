@@ -1,19 +1,22 @@
 # Oriel
 
-> Oriel is a fast, local, single-binary web GUI for Colima and Docker, a free, open-source Docker Desktop alternative. It manages containers, images, volumes, networks, and Compose stacks from a clean, themeable browser UI in ~15–30 MB of RAM, with no Electron and no login. Positioning: "the GUI Colima never had." Works with Colima (first-class), Docker Engine, OrbStack, Podman, and remote daemons.
+> Oriel is the local Docker GUI an AI can drive, safely. Manage containers, images, volumes, networks, and Compose from a clean, themeable browser UI, or hand the job to any MCP client (Claude, Cursor, a local LLM) through the same secret-masking and destructive-action grant the UI uses. A free, open-source Docker Desktop alternative in one ~13 MB binary (~15-30 MB RAM, no Electron, no account). Works with any Docker engine on macOS and Linux: Colima, Docker Engine, OrbStack, Podman, or a remote daemon.
 
 ## Key facts
 
 - License: Apache-2.0 (free and open source)
 - Platforms: macOS (Apple Silicon + Intel), Linux (amd64 + arm64)
-- Footprint: ~11 MB static binary, ~15–30 MB RAM, no Electron, no account
+- Footprint: ~13 MB static binary, ~15-30 MB RAM, no Electron, no account
+- AI control (MCP): `oriel mcp` runs Oriel as a Model Context Protocol server over stdio or Streamable HTTP (`--http`), so an MCP client can manage Docker/Colima. Same validated, secret-masked tools as the UI; destructive actions stay locked behind a time-boxed grant; access can be scoped read-only or to named tools. No model ships in the binary; the client brings its own.
+- Engines: brings your own, no lock-in. Colima (first-class, with VM start/stop), Docker Engine, OrbStack, Podman, and remote daemons.
 - Install: `brew install ParadoxInfinite/oriel/oriel` · a checksum-verified curl script · or `go install github.com/ParadoxInfinite/oriel@latest`
-- Security: no built-in auth; driving Docker is root-equivalent, so run on 127.0.0.1 or a private network only, never the public internet
+- Security: no login by default; an optional bearer token gates non-loopback and MCP-over-HTTP access. Driving Docker is root-equivalent, so run on 127.0.0.1 or a private network only, never the public internet.
 - Repository: https://github.com/ParadoxInfinite/oriel
 
 ## Docs
 
 - [README, overview, install, features, comparison, FAQ](https://github.com/ParadoxInfinite/oriel/blob/main/README.md)
+- [AI control over MCP (stdio + HTTP, tools, scoping, resources, prompts)](https://github.com/ParadoxInfinite/oriel/blob/main/docs/MCP.md)
 - [Supported engines (Colima, Docker, OrbStack, Podman, remote)](https://github.com/ParadoxInfinite/oriel/blob/main/docs/DAEMONS.md)
 - [Remote access and reverse-proxy setup](https://github.com/ParadoxInfinite/oriel/blob/main/docs/REVERSE-PROXY.md)
 - [Editions and theming](https://github.com/ParadoxInfinite/oriel/blob/main/docs/THEMES.md)
@@ -23,7 +26,8 @@
 
 ## How Oriel compares
 
-- vs Docker Desktop: Oriel is free/Apache-2.0 and lightweight; Docker Desktop is proprietary and paid for larger organizations.
-- vs OrbStack: both are fast and light, but OrbStack is proprietary and paid for commercial use; Oriel is open source and brings your own engine.
-- vs lazydocker: lazydocker is a terminal UI; Oriel is a real graphical web UI.
-- vs Portainer: Portainer is a server you deploy in a container (needs ≥2 GB RAM); Oriel is a single local binary.
+- Unique to Oriel: a built-in, safety-gated MCP server, so an AI can manage your containers directly through the same checks the UI uses. None of the tools below do this.
+- vs Docker Desktop: Oriel is free/Apache-2.0 and light (~15-30 MB RAM vs ~3-4 GB for Docker Desktop's bundled VM); Docker Desktop is proprietary and paid for larger organizations.
+- vs OrbStack: both are fast and light, but OrbStack is proprietary, paid for commercial use, and macOS-only; Oriel is open source and brings your own engine.
+- vs lazydocker: lazydocker is a terminal UI; Oriel is a graphical web UI and an MCP server an AI can drive.
+- vs Portainer: Portainer is a multi-user server you deploy in a container (with teams and RBAC); Oriel is a single local binary for one operator, by design.
