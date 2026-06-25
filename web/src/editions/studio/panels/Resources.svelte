@@ -150,7 +150,7 @@
 </script>
 
 <div class="mx-auto flex max-w-5xl flex-col gap-4">
-  <div class="rise flex items-center gap-3">
+  <div class="rise flex flex-wrap items-center gap-3">
     <span class="text-[13px] text-[var(--text-2)]"><span class="font-semibold text-[var(--text)]">{c.store.list.length}</span> {titles[kind]}</span>
     <div class="ml-auto flex gap-2">
       {#if c.prune}
@@ -170,8 +170,8 @@
       <p class="text-sm text-[var(--text-2)]">No {titles[kind]} yet.</p>
     </div>
   {:else}
-    <div class="rise card overflow-hidden" style="animation-delay:40ms">
-      <table class="w-full table-fixed border-collapse">
+    <div class="rise card overflow-x-auto" style="animation-delay:40ms">
+      <table class="w-full min-w-[600px] table-fixed border-collapse">
         <colgroup>
           {#each c.cols as col}<col style={col.w ? `width:${col.w}` : ''} />{/each}
           <col style="width:{kind === 'images' ? '108px' : '64px'}" />

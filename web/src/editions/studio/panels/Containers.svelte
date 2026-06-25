@@ -116,9 +116,9 @@
 
 <div class="mx-auto flex max-w-5xl flex-col gap-4">
   <div class="rise flex flex-wrap items-center gap-3">
-    <div class="relative">
+    <div class="relative w-full sm:w-auto">
       <Icon name="box" size={15} class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
-      <input bind:value={filter} placeholder="Search containers…" class="input has-icon w-72" />
+      <input bind:value={filter} placeholder="Search containers…" class="input has-icon w-full sm:w-72" />
     </div>
     <span class="text-[13px] text-[var(--text-3)]">{filtered.length} of {containers.list.length}</span>
     <button class="btn {groupByStack ? 'btn-primary' : 'btn-default'} ml-auto btn-sm" onclick={() => (groupByStack = !groupByStack)}>
@@ -147,8 +147,8 @@
       <p class="text-sm text-[var(--text-2)]">{containers.list.length ? 'No containers match your search.' : 'No containers yet.'}</p>
     </div>
   {:else}
-    <div class="rise card overflow-hidden" style="animation-delay:40ms">
-      <table class="w-full table-fixed border-collapse">
+    <div class="rise card overflow-x-auto" style="animation-delay:40ms">
+      <table class="w-full min-w-[720px] table-fixed border-collapse">
         <colgroup>
           <col style="width:42px" />
           {#each columns as col}<col style={col.w ? `width:${col.w}` : ''} />{/each}
