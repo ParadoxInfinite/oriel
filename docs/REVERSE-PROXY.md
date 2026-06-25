@@ -1,8 +1,9 @@
 # Reverse proxy & remote access
 
-Oriel binds to `127.0.0.1` and has **no authentication**: its security model is
-the network boundary (see [SECURITY.md](../SECURITY.md)). To reach it from another
-machine you put a reverse proxy in front of it and tell Oriel to trust that path.
+Oriel binds to `127.0.0.1` and has **no login by default** (an optional bearer
+token gates non-loopback access; see [SECURITY.md](../SECURITY.md)): its security
+model is the network boundary. To reach it from another machine you put a reverse
+proxy in front of it and tell Oriel to trust that path.
 
 All config lives in **`settings.json`** (in your OS config dir, e.g.
 `~/.config/oriel/settings.json`). You set it from the running instance (the UI,
