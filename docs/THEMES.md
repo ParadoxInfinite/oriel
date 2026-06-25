@@ -95,16 +95,16 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
   behavior-in-SDK, look-in-edition.
 - `AliasEditor`: headless "rename in Oriel" controller. An alias is a display-only
   label keyed by the real compose project name, so one instance drives renaming on
-  any stack — running or discovered. `display(name)`, `start/save/cancel`,
+  any stack, running or discovered. `display(name)`, `start/save/cancel`,
   `editing`, `draft`.
 
 ## Navigation
 
-The active view is shared state, not an edition's private flag — because the
+The active view is shared state, not an edition's private flag, because the
 command palette (a host overlay) and any deep-link have to move *whatever* edition
 is mounted. Participating is one binding:
 
-- **MUST** — render your view switch from `nav.view`, and point your nav controls
+- **MUST:** render your view switch from `nav.view`, and point your nav controls
   at `navigate(view)`:
 
   ```svelte
@@ -120,7 +120,7 @@ is mounted. Participating is one binding:
   With this alone, `⌘K → "stop postgres"` and `⌘K → "go to images"` move your
   edition for free. `VIEWS` is the canonical id list.
 
-- **SHOULD** — to honour a deep-link (e.g. "view logs of postgres"), have the
+- **SHOULD:** to honour a deep-link (e.g. "view logs of postgres"), have the
   destination view claim the pending intent and act on it:
 
   ```svelte
@@ -130,7 +130,7 @@ is mounted. Participating is one binding:
   })
   ```
 
-  An edition that skips this still lands on the right view — deep opens are
+  An edition that skips this still lands on the right view; deep opens are
   graceful, never required. Targets are `{ kind, ...payload, open? }` by convention.
 
 ## Add a built-in edition
@@ -188,7 +188,7 @@ capability, model it on `src/editions/studio/theme.svelte.js`.
   an `$effect`) and the host restyles them to match. Studio does this for its
   light/dark + accent.
 - The active view is shared state (`nav`), so the palette and deep-links can move
-  whichever edition is mounted. Bind your view switch to `nav.view` — see
+  whichever edition is mounted. Bind your view switch to `nav.view`. See
   [Navigation](#navigation). It's the one piece of cross-cutting wiring an edition
   must adopt.
 - Keep editions thin: business logic belongs behind the platform SDK so every

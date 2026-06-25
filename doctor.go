@@ -40,15 +40,15 @@ func runDoctor(args []string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
 	defer cancel()
 	if eng := docker.New().EngineInfo(ctx); eng.Reachable {
-		doctorLine("✓", "Docker", fmt.Sprintf("reachable — %s (%s)", eng.ServerVersion, eng.Host))
+		doctorLine("✓", "Docker", fmt.Sprintf("reachable, %s (%s)", eng.ServerVersion, eng.Host))
 	} else {
-		doctorLine("✗", "Docker", "unreachable — is the daemon (or colima) running?")
+		doctorLine("✗", "Docker", "unreachable, is the daemon (or colima) running?")
 		problems++
 	}
 
 	// --- Docker socket discovery (colima trips up tools that assume the default
 	// /var/run/docker.sock: Testcontainers, some SDK clients). Advisory, not a
-	// hard failure — `docker context use colima` is a valid alternative. ---
+	// hard failure, `docker context use colima` is a valid alternative. ---
 	if socket, err := colima.DockerSocketPath(ctx); err == nil && socket != "" {
 		host := "unix://" + socket
 		switch env := os.Getenv("DOCKER_HOST"); {
@@ -59,7 +59,7 @@ func runDoctor(args []string) error {
 		case defaultSocketIsColima(socket):
 			doctorLine("✓", "Docker socket", "/var/run/docker.sock points at colima")
 		default:
-			doctorLine("⚠", "Docker socket", "DOCKER_HOST unset and /var/run/docker.sock isn't colima's — Testcontainers / docker SDKs will miss it")
+			doctorLine("⚠", "Docker socket", "DOCKER_HOST unset and /var/run/docker.sock isn't colima's, Testcontainers / docker SDKs will miss it")
 			fmt.Println(`      fix: eval "$(oriel env)"   (or: docker context use colima)`)
 		}
 	}
@@ -67,11 +67,11 @@ func runDoctor(args []string) error {
 	// --- Running instance + its live config ---
 	self, err := fetchSelf(*port)
 	if err != nil {
-		doctorLine("○", "Instance", fmt.Sprintf("none reachable on 127.0.0.1:%d — pass --port if it listens elsewhere", *port))
+		doctorLine("○", "Instance", fmt.Sprintf("none reachable on 127.0.0.1:%d, pass --port if it listens elsewhere", *port))
 	} else {
 		doctorLine("✓", "Instance", fmt.Sprintf("running on 127.0.0.1:%d, version %s", *port, self.Version))
 		if version != "dev" && self.Version != "" && self.Version != version {
-			doctorLine("⚠", "Version", fmt.Sprintf("this binary is %s but the running service is %s — restart it to upgrade", version, self.Version))
+			doctorLine("⚠", "Version", fmt.Sprintf("this binary is %s but the running service is %s, restart it to upgrade", version, self.Version))
 		}
 
 		atRoot := self.BasePath == "" || self.BasePath == "/"
@@ -84,9 +84,9 @@ func runDoctor(args []string) error {
 		hosts, herr := remoteGet(*port)
 		switch {
 		case herr != nil:
-			doctorLine("⚠", "Allowed hosts", "could not read — "+herr.Error())
+			doctorLine("⚠", "Allowed hosts", "could not read, "+herr.Error())
 		case len(hosts) == 0 && !atRoot:
-			doctorLine("✗", "Allowed hosts", "none set, but a sub-path proxy is configured — /api will 403 over the proxy")
+			doctorLine("✗", "Allowed hosts", "none set, but a sub-path proxy is configured, /api will 403 over the proxy")
 			fmt.Println("      fix: oriel remote allow <your-proxy-hostname>")
 			problems++
 		case len(hosts) == 0:
@@ -100,7 +100,7 @@ func runDoctor(args []string) error {
 	if service.IsManaged() {
 		doctorLine("✓", "Service", "installed and managing this binary (in-app/CLI update available)")
 	} else {
-		doctorLine("○", "Service", "not a managed service — install with: oriel service install")
+		doctorLine("○", "Service", "not a managed service, install with: oriel service install")
 	}
 
 	if problems > 0 {

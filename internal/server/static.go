@@ -27,8 +27,8 @@ func normalizeBase(raw string) string {
 }
 
 // rewriteAssets loads the embedded frontend into memory, replacing the build
-// placeholder with base in text assets so every asset URL — and the bundle's
-// import.meta.env.BASE_URL, which the API client prepends to requests — resolves
+// placeholder with base in text assets so every asset URL, and the bundle's
+// import.meta.env.BASE_URL, which the API client prepends to requests, resolves
 // under the configured base. Binary files (fonts, images) pass through unchanged.
 func rewriteAssets(web fs.FS, base string) map[string][]byte {
 	out := map[string][]byte{}

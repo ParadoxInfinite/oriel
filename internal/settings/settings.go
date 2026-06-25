@@ -1,7 +1,7 @@
 // Package settings owns the user's persisted configuration (settings.json):
 // base path, allowed hosts, auth token, masking policy, and compose-discovery
 // config. It lives in its own package so both the server and the
-// standalone `oriel mcp` process can read and atomically write it — the server
+// standalone `oriel mcp` process can read and atomically write it, the server
 // is the usual writer, but MCP needs to set a stack alias.
 package settings
 
@@ -82,7 +82,7 @@ func TokenOK(provided, configured string) bool {
 }
 
 // SetAlias sets (or, with an empty alias, clears) the Oriel display alias for a
-// compose project. Display only — the real project name is unchanged.
+// compose project. Display only, the real project name is unchanged.
 func SetAlias(name, alias string) error {
 	return Update(func(c *Settings) {
 		if c.Discovery.Aliases == nil {

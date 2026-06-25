@@ -14,13 +14,13 @@ import (
 // safe to expose to an assistant or MCP client without a grant.
 //
 // container.inspect masks env, plus sensitive command/label values, through
-// envMask() — the same settings knob the HTTP inspect handler honours. A
+// envMask(), the same settings knob the HTTP inspect handler honours. A
 // non-consented caller (an MCP client / automated agent) gets a hard floor:
 // even when the human set masking to "off" for the local UI, secrets are never
 // returned raw on that path. The dedicated `oriel mcp` process masks all (it
 // passes MaskAll); only interactive UI calls, which carry consent, honour "off".
 func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.Mode) {
-	// Every tool here is a pure read — mark it ReadOnly so `oriel mcp --read-only`
+	// Every tool here is a pure read, mark it ReadOnly so `oriel mcp --read-only`
 	// and the MCP read-only hint are accurate (Destructive:false isn't enough,
 	// since start/stop mutate without being destructive).
 	ro := func(t *tools.Tool) { t.ReadOnly = true; r.Register(t) }
@@ -142,7 +142,7 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 		},
 	})
 	ro(&tools.Tool{
-		Name: "docker.env", Title: "Docker connection env", Description: "DOCKER_HOST + Testcontainers socket override for this machine's docker socket — fixes tools that default to /var/run/docker.sock and miss colima",
+		Name: "docker.env", Title: "Docker connection env", Description: "DOCKER_HOST + Testcontainers socket override for this machine's docker socket, fixes tools that default to /var/run/docker.sock and miss colima",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			socket, err := colima.DockerSocketPath(ctx)
 			if err != nil {

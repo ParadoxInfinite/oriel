@@ -53,17 +53,17 @@
   const specs = $derived(
     isDocker
       ? [
-          { k: 'CPUs', v: String(s?.cpu ?? '—') },
+          { k: 'CPUs', v: String(s?.cpu ?? ', ') },
           { k: 'Memory', v: fmt.bytes(s?.memory) },
-          { k: 'Version', v: s?.version || '—' },
-          { k: 'Driver', v: s?.driver || '—' },
+          { k: 'Version', v: s?.version || ', ' },
+          { k: 'Driver', v: s?.driver || ', ' },
         ]
       : [
-          { k: 'CPUs', v: String(s?.cpu ?? '—') },
+          { k: 'CPUs', v: String(s?.cpu ?? ', ') },
           { k: 'Memory', v: fmt.bytes(s?.memory) },
           { k: 'Disk', v: fmt.bytes(s?.disk) },
-          { k: 'Runtime', v: s?.runtime || '—' },
-          { k: 'Architecture', v: s?.arch || '—' },
+          { k: 'Runtime', v: s?.runtime || ', ' },
+          { k: 'Architecture', v: s?.arch || ', ' },
           { k: 'Kubernetes', v: s?.kubernetes ? 'Enabled' : 'Disabled' },
         ]
   )

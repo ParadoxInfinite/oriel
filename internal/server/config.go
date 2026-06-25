@@ -54,6 +54,6 @@ func migrateLegacyEnvConfig() {
 		return
 	}
 	for _, k := range migrated {
-		log.Printf("oriel: %s is deprecated — migrated into %s; remove it from your service unit / environment", k, settingsPath())
+		log.Printf("oriel: %s is deprecated, migrated into %s; remove it from your service unit / environment", k, settingsPath())
 	}
 }

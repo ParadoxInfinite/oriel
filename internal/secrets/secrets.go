@@ -27,7 +27,7 @@ func ParseMode(s string) Mode {
 	}
 }
 
-// masked is a fixed placeholder — no characters and no length leaked.
+// masked is a fixed placeholder, no characters and no length leaked.
 const masked = "••••••••"
 
 // sensitiveKey substrings (matched case-insensitively against the var name).
@@ -98,7 +98,7 @@ func looksSecret(v string) bool {
 	return true
 }
 
-// MaskValue returns the placeholder for a non-empty value (empty stays empty —
+// MaskValue returns the placeholder for a non-empty value (empty stays empty,
 // there's nothing to hide).
 func MaskValue(v string) string {
 	if v == "" {
@@ -131,7 +131,7 @@ func MaskEnv(env []string, mode Mode) []string {
 
 // MaskLabels masks only label values that look sensitive (by name or value
 // shape). Unlike env, label sets are mostly metadata (compose project, image
-// version), so "all" is not applied wholesale — that would gut the inspect view.
+// version), so "all" is not applied wholesale, that would gut the inspect view.
 func MaskLabels(labels map[string]string, mode Mode) map[string]string {
 	if mode == MaskOff || len(labels) == 0 {
 		return labels
@@ -151,7 +151,7 @@ func MaskLabels(labels map[string]string, mode Mode) map[string]string {
 // leaving the rest readable: a `--flag=value` / `KEY=value` whose name or value
 // is sensitive, or a bare token that looks like a credential (sk-…, JWT, long
 // token). A command is mostly non-secret, so only detected tokens are masked;
-// "off" disables it. Heuristic — combined forms like `-psecret` aren't caught.
+// "off" disables it. Heuristic, combined forms like `-psecret` aren't caught.
 func MaskCommand(cmd string, mode Mode) string {
 	if mode == MaskOff || cmd == "" {
 		return cmd

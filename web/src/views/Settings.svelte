@@ -23,7 +23,7 @@
   const field =
     'w-full rounded-[--radius] border border-border bg-bg px-3 py-1.5 text-sm outline-none placeholder:text-muted focus:border-accent/50'
 
-  const verLabel = $derived(self.version || '—')
+  const verLabel = $derived(self.version || ', ')
 </script>
 
 <div class="mx-auto grid max-w-5xl grid-cols-1 gap-5 pb-4 lg:grid-cols-2 lg:items-start">
@@ -139,7 +139,7 @@
   <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Automation access</h2>
     <p class="mt-1 text-sm text-muted">
-      The MCP server (<span class="mono">oriel mcp</span>) can run read actions any time. Destructive ones (remove, prune) stay locked until you open a time-boxed window — your own UI clicks are never affected.
+      The MCP server (<span class="mono">oriel mcp</span>) can run read actions any time. Destructive ones (remove, prune) stay locked until you open a time-boxed window, your own UI clicks are never affected.
     </p>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       {#if grant.active}
@@ -162,16 +162,16 @@
 
     <div class="mt-4">
       {#if update.phase === 'restarting'}
-        <p class="text-[13px] text-muted">Restarting Oriel — this page will reconnect…</p>
+        <p class="text-[13px] text-muted">Restarting Oriel, this page will reconnect…</p>
       {:else if update.phase === 'applying'}
         <p class="text-[13px] text-muted">Downloading &amp; verifying…</p>
       {:else if update.phase === 'done'}
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="text-[13px] text-muted">Installed <span class="font-mono">v{update.latest}</span> — restart to apply.</span>
+          <span class="text-[13px] text-muted">Installed <span class="font-mono">v{update.latest}</span>, restart to apply.</span>
           <button class={btnPrimary} onclick={() => restartService()}>Restart now</button>
         </div>
       {:else if !update.managed}
-        <p class="text-[13px] text-faint">In-app updates need a service install (<span class="font-mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="font-mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-accent hover:underline">see release ↗</a>.{/if}</p>
+        <p class="text-[13px] text-faint">In-app updates need a service install (<span class="font-mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="font-mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-accent hover:underline">see release ↗</a>.{/if}</p>
       {:else if update.available}
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="text-[13px] text-muted">Update available: <span class="font-mono font-medium text-fg">v{update.latest}</span></span>
@@ -194,7 +194,7 @@
   <section class="card rounded-[--radius] p-5">
     <h2 class="display text-sm font-semibold tracking-tight">Remote access</h2>
     <p class="mt-0.5 text-xs text-muted">By default Oriel only answers on <span class="font-mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
-    <p class="mt-2 rounded-[--radius] bg-danger/10 px-3 py-2 text-xs text-danger">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network — never the public internet.</p>
+    <p class="mt-2 rounded-[--radius] bg-danger/10 px-3 py-2 text-xs text-danger">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network, never the public internet.</p>
 
     {#if remote.hosts.length}
       <div class="mt-3 flex flex-col gap-1.5">

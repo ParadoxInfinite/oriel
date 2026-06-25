@@ -57,7 +57,7 @@ export async function revealOrCopy(path) {
     try {
       await navigator.clipboard.writeText(path)
     } catch {
-      /* clipboard may be unavailable over plain http — best-effort */
+      /* clipboard may be unavailable over plain http, best-effort */
     }
     return
   }

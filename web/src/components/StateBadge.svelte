@@ -1,7 +1,7 @@
 <script>
   let { state } = $props()
 
-  // A small coloured pill per docker container state — adds at-a-glance colour.
+  // A small coloured pill per docker container state, adds at-a-glance colour.
   const pill = {
     running: 'text-ok bg-ok/10 ring-ok/25',
     paused: 'text-warn bg-warn/10 ring-warn/25',

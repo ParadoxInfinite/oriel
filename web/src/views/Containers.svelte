@@ -184,10 +184,10 @@
       <div class="truncate text-xs text-muted">{c.image}</div>
     </td>
     <td class="px-3 py-2.5"><StateBadge state={c.state} /></td>
-    <td class="px-3 py-2.5 font-mono text-xs text-muted">{running && st ? `${st.cpu.toFixed(1)}%` : '—'}</td>
-    <td class="px-3 py-2.5 font-mono text-xs text-muted">{running && st ? bytes(st.mem) : '—'}</td>
+    <td class="px-3 py-2.5 font-mono text-xs text-muted">{running && st ? `${st.cpu.toFixed(1)}%` : ', '}</td>
+    <td class="px-3 py-2.5 font-mono text-xs text-muted">{running && st ? bytes(st.mem) : ', '}</td>
     <td class="px-3 py-2.5 text-xs text-muted" title={`created ${relativeTime(c.created)}`}>
-      <span class="whitespace-nowrap">{c.status || '—'}</span>
+      <span class="whitespace-nowrap">{c.status || ', '}</span>
     </td>
     <td class="px-3 py-2.5">
       <div class="flex flex-wrap gap-1">

@@ -34,7 +34,7 @@ export function bytes(n) {
   return `${v.toFixed(digits)} ${UNITS[i]}`
 }
 
-// Unambiguous date/time — "DD MMM YYYY" so no one mistakes day for month.
+// Unambiguous date/time, "DD MMM YYYY" so no one mistakes day for month.
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const pad = (n) => String(n).padStart(2, '0')
 
@@ -59,7 +59,7 @@ export function duration(ms) {
 }
 
 export function relativeTime(unixSeconds) {
-  if (!unixSeconds) return '—'
+  if (!unixSeconds) return ', '
   const diff = Date.now() / 1000 - unixSeconds
   if (diff < 60) return 'just now'
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`

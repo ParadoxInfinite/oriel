@@ -60,7 +60,7 @@
         <div class="mt-2 rounded-[--radius] border border-border p-2.5">
           <div class="mb-1.5 px-0.5 text-[11px] text-faint">Recent tags · {pc.repoBase.split('/').pop()}</div>
           {#if !pc.busy && !pc.shownTags.length}
-            <div class="px-0.5 py-1 text-xs text-faint">No tags found — type one manually.</div>
+            <div class="px-0.5 py-1 text-xs text-faint">No tags found, type one manually.</div>
           {:else}
             <div class="flex max-h-40 flex-wrap gap-1.5 overflow-auto">
               {#each pc.shownTags.slice(0, 40) as t, i (t)}
@@ -70,7 +70,7 @@
           {/if}
         </div>
       {:else if !pc.source.search}
-        <p class="mt-2 text-[11px] text-faint">{pc.source.label.split('·')[0].trim()} has no public search — type the full image name above. Pulls work the same.</p>
+        <p class="mt-2 text-[11px] text-faint">{pc.source.label.split('·')[0].trim()} has no public search, type the full image name above. Pulls work the same.</p>
       {/if}
 
       {#if pc.error}

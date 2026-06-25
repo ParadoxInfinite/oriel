@@ -1,10 +1,10 @@
 #!/bin/sh
 # ---------------------------------------------------------------------------
-# Oriel installer — downloads the right release binary for your platform,
+# Oriel installer, downloads the right release binary for your platform,
 # VERIFIES it against the published SHA256SUMS, and installs it onto your PATH.
 #
 # Running root-equivalent software from a piped script? Read it first. Or skip
-# this and use the explicit per-platform commands in the README — they do
+# this and use the explicit per-platform commands in the README, they do
 # exactly what this does, one step at a time.
 #
 # Run interactively and it asks where to install and whether to set up the
@@ -79,7 +79,7 @@ if command -v sha256sum >/dev/null 2>&1; then
 else
   actual=$(shasum -a 256 "$tmp/oriel" | awk '{print $1}')
 fi
-[ "$expected" = "$actual" ] || die "checksum mismatch — refusing to install (expected $expected, got $actual)"
+[ "$expected" = "$actual" ] || die "checksum mismatch, refusing to install (expected $expected, got $actual)"
 echo "Checksum verified."
 
 # --- install location (env var > prompt > default) -------------------------
@@ -88,8 +88,8 @@ if [ -d /usr/local/bin ] && [ -w /usr/local/bin ]; then default_dir=/usr/local/b
 dir="${ORIEL_INSTALL_DIR:-}"
 [ -n "$dir" ] || dir=$(ask "Install location [$default_dir]: " "$default_dir")
 
-mkdir -p "$dir" 2>/dev/null || die "cannot create $dir — re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
-[ -w "$dir" ] || die "$dir is not writable — re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
+mkdir -p "$dir" 2>/dev/null || die "cannot create $dir, re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
+[ -w "$dir" ] || die "$dir is not writable, re-run with sudo, or set ORIEL_INSTALL_DIR to a writable path"
 chmod +x "$tmp/oriel"
 mv "$tmp/oriel" "$dir/oriel"
 # Report the version we just installed (older binaries without the subcommand
@@ -99,7 +99,7 @@ echo "Installed ${installed_as:-oriel} to $dir/oriel"
 
 case ":$PATH:" in
   *":$dir:"*) ;;
-  *) echo "Note: $dir is not on your PATH — add it, or run $dir/oriel directly." ;;
+  *) echo "Note: $dir is not on your PATH, add it, or run $dir/oriel directly." ;;
 esac
 
 # --- background service (env var > prompt) ---------------------------------
@@ -112,7 +112,7 @@ else
 fi
 
 if [ "$want_service" = 1 ]; then
-  "$dir/oriel" service install || echo "Service setup failed — oriel is installed; run '$dir/oriel service install' yourself."
+  "$dir/oriel" service install || echo "Service setup failed, oriel is installed; run '$dir/oriel service install' yourself."
   # Reverse proxy / remote access is configured on the running instance (stored
   # in settings.json), not at install time. Point users at the commands.
   {
@@ -121,7 +121,7 @@ if [ "$want_service" = 1 ]; then
     echo "  $dir/oriel config base-path /oriel       # serve under a sub-path"
     echo "  $dir/oriel remote allow <hostname>       # allow a host to reach /api"
     echo "  $dir/oriel doctor                        # check it's all wired up"
-    echo "  ⚠ Oriel has no auth — only allow hosts on a trusted private network."
+    echo "  ⚠ Oriel has no auth, only allow hosts on a trusted private network."
   } > /dev/tty 2>/dev/null || true
 else
   echo

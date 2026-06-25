@@ -18,7 +18,7 @@ func (s *Server) LogStartup(url string) {
 	if s.base != "/" {
 		base = s.base
 	}
-	hosts := "(none — loopback only)"
+	hosts := "(none, loopback only)"
 	if len(cfg.AllowedHosts) > 0 {
 		hosts = strings.Join(cfg.AllowedHosts, ", ")
 	}
@@ -29,10 +29,10 @@ func (s *Server) LogStartup(url string) {
 	if eng := s.docker.EngineInfo(ctx); eng.Reachable {
 		log.Printf("  docker=reachable (%s)", eng.ServerVersion)
 	} else {
-		log.Printf("  docker=unreachable — start the daemon (or colima)")
+		log.Printf("  docker=unreachable, start the daemon (or colima)")
 	}
 
 	if s.base != "/" && len(cfg.AllowedHosts) == 0 {
-		log.Print("  ⚠ base-path is set but no allowed hosts — /api will 403 over a reverse proxy; fix: oriel remote allow <host>")
+		log.Print("  ⚠ base-path is set but no allowed hosts, /api will 403 over a reverse proxy; fix: oriel remote allow <host>")
 	}
 }

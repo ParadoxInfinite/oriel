@@ -24,7 +24,7 @@ var relevantTypes = map[events.Type]bool{
 }
 
 // isNoisyAction reports actions that fire constantly but change no list the UI
-// shows — chiefly the exec_* trio every health-check emits per container, plus
+// shows, chiefly the exec_* trio every health-check emits per container, plus
 // other inspection/interactive actions. Dropping them avoids a refetch storm.
 func isNoisyAction(a string) bool {
 	if strings.HasPrefix(a, "exec_") {

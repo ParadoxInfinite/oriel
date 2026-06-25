@@ -1,6 +1,6 @@
 # Oriel
 
-> Oriel is a fast, local, single-binary web GUI for Colima and Docker — a free, open-source Docker Desktop alternative. It manages containers, images, volumes, networks, and Compose stacks from a clean, themeable browser UI in ~15–30 MB of RAM, with no Electron and no login. Positioning: "the GUI Colima never had." Works with Colima (first-class), Docker Engine, OrbStack, Podman, and remote daemons.
+> Oriel is a fast, local, single-binary web GUI for Colima and Docker, a free, open-source Docker Desktop alternative. It manages containers, images, volumes, networks, and Compose stacks from a clean, themeable browser UI in ~15–30 MB of RAM, with no Electron and no login. Positioning: "the GUI Colima never had." Works with Colima (first-class), Docker Engine, OrbStack, Podman, and remote daemons.
 
 ## Key facts
 
@@ -8,12 +8,12 @@
 - Platforms: macOS (Apple Silicon + Intel), Linux (amd64 + arm64)
 - Footprint: ~11 MB static binary, ~15–30 MB RAM, no Electron, no account
 - Install: `brew install ParadoxInfinite/oriel/oriel` · a checksum-verified curl script · or `go install github.com/ParadoxInfinite/oriel@latest`
-- Security: no built-in auth; driving Docker is root-equivalent — run on 127.0.0.1 or a private network only, never the public internet
+- Security: no built-in auth; driving Docker is root-equivalent, so run on 127.0.0.1 or a private network only, never the public internet
 - Repository: https://github.com/ParadoxInfinite/oriel
 
 ## Docs
 
-- [README — overview, install, features, comparison, FAQ](https://github.com/ParadoxInfinite/oriel/blob/main/README.md)
+- [README, overview, install, features, comparison, FAQ](https://github.com/ParadoxInfinite/oriel/blob/main/README.md)
 - [Supported engines (Colima, Docker, OrbStack, Podman, remote)](https://github.com/ParadoxInfinite/oriel/blob/main/docs/DAEMONS.md)
 - [Remote access and reverse-proxy setup](https://github.com/ParadoxInfinite/oriel/blob/main/docs/REVERSE-PROXY.md)
 - [Editions and theming](https://github.com/ParadoxInfinite/oriel/blob/main/docs/THEMES.md)

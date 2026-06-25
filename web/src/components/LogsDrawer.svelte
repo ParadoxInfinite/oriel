@@ -70,7 +70,7 @@
   // Per-line markers: a wall-clock timestamp gutter + a stream-coloured left edge.
   const streamEdge = (s) => (s === 'stderr' ? 'border-warn' : s === 'error' ? 'border-danger' : 'border-transparent')
 
-  // Only close when a click both starts AND ends on the backdrop itself — so a
+  // Only close when a click both starts AND ends on the backdrop itself, so a
   // resize drag that releases outside the drawer never dismisses it.
   let pressedBackdrop = false
   function backdropDown(e) {
@@ -142,7 +142,7 @@
         <div class="px-3 py-3 text-muted">
           {#if logs.error}{logs.error}
           {:else if !logs.connected}Connecting…
-          {:else}No logs yet — this container hasn't written anything to stdout/stderr.{/if}
+          {:else}No logs yet, this container hasn't written anything to stdout/stderr.{/if}
         </div>
       {/if}
     </div>

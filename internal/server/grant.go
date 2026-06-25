@@ -14,7 +14,7 @@ type grantStatus struct {
 	RemainingSeconds int    `json:"remainingSeconds"`
 }
 
-// maxGrantHours caps a window at 30 days — long enough for a trusted automation
+// maxGrantHours caps a window at 30 days, long enough for a trusted automation
 // box, short enough that "forever" is a deliberate, repeated choice.
 const maxGrantHours = 24 * 30
 

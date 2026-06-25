@@ -36,7 +36,7 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleStats broadcasts the recorder's latest per-container snapshot every
-// second. Sampling happens once, centrally, in the recorder — this just relays.
+// second. Sampling happens once, centrally, in the recorder, this just relays.
 // handleLive is the single push channel for all periodic UI data, so the client
 // never polls. On connect it sends a full snapshot (history buffer, stats,
 // status, self, outages); then every second it pushes the latest stats + history

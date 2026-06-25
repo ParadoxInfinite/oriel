@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: Security vulnerability
     url: https://github.com/ParadoxInfinite/oriel/security/advisories/new
-    about: Report security issues privately — please do not open a public issue.
+    about: Report security issues privately, please do not open a public issue.
   - name: Question or idea
     url: https://github.com/ParadoxInfinite/oriel/discussions
     about: For questions and open-ended discussion, use Discussions.

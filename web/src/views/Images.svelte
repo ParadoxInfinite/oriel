@@ -96,7 +96,7 @@
         <td class="px-4 py-2.5 text-xs text-muted">
           {#if img.containers > 0}
             <button class="font-mono font-medium text-accent hover:underline" title="See which containers use this image" onclick={() => (ia.usedByImage = img)}>{img.containers} →</button>
-          {:else}—{/if}
+          {:else}, {/if}
         </td>
         <td class="px-4 py-2.5 text-xs text-muted">{relativeTime(img.created)}</td>
         <td class="px-4 py-2.5 text-right">
@@ -104,7 +104,7 @@
             {#if isPinnedImage(img)}
               <button class={action('accent')} title="Tag this digest-pinned image so it shows a name" onclick={() => openTag(img)}>Tag</button>
             {:else if img.tags[0] !== '<none>'}
-              <button class={action('accent')} title="Re-pull this tag from its registry (fails clearly if there's no such repo — e.g. a locally-built image)" onclick={() => startPull(img.tags[0])}>Pull</button>
+              <button class={action('accent')} title="Re-pull this tag from its registry (fails clearly if there's no such repo, e.g. a locally-built image)" onclick={() => startPull(img.tags[0])}>Pull</button>
             {/if}
             <button class={btnDanger} onclick={() => removeImage(img)}>{img.tags.length > 1 ? 'Remove all' : 'Remove'}</button>
           </div>
@@ -154,7 +154,7 @@
             <svg class="shrink-0 text-faint" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
           </button>
         {:else}
-          <div class="px-5 py-10 text-center text-sm text-muted">No matching containers found — the list may be refreshing.</div>
+          <div class="px-5 py-10 text-center text-sm text-muted">No matching containers found, the list may be refreshing.</div>
         {/each}
       </div>
     </div>

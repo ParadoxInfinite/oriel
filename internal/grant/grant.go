@@ -1,7 +1,7 @@
 // Package grant implements the time-boxed "destructive actions" window that
 // unlocks Destructive tools for non-interactive callers (the MCP server, a
-// future in-app assistant). Interactive UI calls don't need it — they're
-// already human-gated — but an agent can only remove/prune inside a window the
+// future in-app assistant). Interactive UI calls don't need it, they're
+// already human-gated, but an agent can only remove/prune inside a window the
 // user opened on purpose, and the window auto-relocks when it lapses.
 //
 // State is a single JSON file shared by every Oriel process (server, `oriel

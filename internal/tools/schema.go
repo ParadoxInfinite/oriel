@@ -2,7 +2,7 @@ package tools
 
 import "fmt"
 
-// Schema is a deliberately tiny JSON-Schema subset — enough to validate the
+// Schema is a deliberately tiny JSON-Schema subset, enough to validate the
 // flat, typed argument maps our tools take, without pulling in a dependency.
 type Schema struct {
 	Required []string        `json:"required,omitempty"`

@@ -10,11 +10,11 @@ import { applyOutages } from './outages.svelte.js'
 export const stats = $state({ byId: {} })
 
 // Live-stream health: `ok` flips false when the SSE stream drops, true once data
-// flows again — so the UI can flag stale state instead of silently showing it.
+// flows again, so the UI can flag stale state instead of silently showing it.
 export const connection = $state({ ok: true })
 
 // Rolling ~30-min aggregate series {t, cpu, mem, down}. Seeded by the stream's
-// "history" event on connect, then appended one "point" per second — no polling.
+// "history" event on connect, then appended one "point" per second, no polling.
 export const history = $state({ points: [] })
 const HISTORY_CAP = 1800 // ~30 min at 1s resolution; matches the backend buffer
 
@@ -53,7 +53,7 @@ export function startLive() {
   // Docker events drive list refreshes (change-triggered, already push-based).
   esEvents = sse('/api/events', ['event'], (_name, data) => schedule(data?.type))
 
-  // One consolidated stream for everything periodic — no polling anywhere.
+  // One consolidated stream for everything periodic, no polling anywhere.
   esLive = sse(
     '/api/live',
     ['history', 'stats', 'point', 'status', 'self', 'outages'],

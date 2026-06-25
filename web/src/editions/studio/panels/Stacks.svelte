@@ -121,7 +121,7 @@
     </div>
   {:else if discovery.stacks.length === 0}
     <div class="card px-5 py-4 text-[13px] text-[var(--text-3)]">
-      Nothing new to deploy — everything discovered is already running.{#if discovery.hidden}<span> {discovery.hidden} hidden by filter.</span>{/if}
+      Nothing new to deploy, everything discovered is already running.{#if discovery.hidden}<span> {discovery.hidden} hidden by filter.</span>{/if}
     </div>
   {:else if discovered.length === 0}
     <div class="card px-5 py-4 text-[13px] text-[var(--text-3)]">No available stacks match “{query}”.</div>

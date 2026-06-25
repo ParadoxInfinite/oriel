@@ -161,7 +161,7 @@ func githubLatestRelease(ctx context.Context) (*ghRelease, error) {
 }
 
 // isNewer reports whether latest is a strictly higher version than current. A
-// non-release current ("dev" or empty) never reports an update — local builds
+// non-release current ("dev" or empty) never reports an update, local builds
 // shouldn't nag.
 func isNewer(current, latest string) bool {
 	if latest == "" || current == "" || current == "dev" {
@@ -207,15 +207,15 @@ func httpError(w http.ResponseWriter, code int, msg string) {
 // handleUpdateApply downloads the latest release binary for this platform,
 // verifies it against the release's SHA256SUMS, and atomically replaces the
 // running executable. It refuses unless this is a service-managed install, so a
-// restart cleanly brings the new binary up. It does NOT restart — the client
+// restart cleanly brings the new binary up. It does NOT restart, the client
 // calls /api/update/restart when the user is ready.
 func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 	if service.PackageManager() == "homebrew" {
-		httpError(w, http.StatusBadRequest, "Oriel was installed with Homebrew — update it with: brew upgrade oriel")
+		httpError(w, http.StatusBadRequest, "Oriel was installed with Homebrew, update it with: brew upgrade oriel")
 		return
 	}
 	if !service.IsManaged() {
-		httpError(w, http.StatusBadRequest, "self-update is only available for service-managed installs — run: oriel service install")
+		httpError(w, http.StatusBadRequest, "self-update is only available for service-managed installs, run: oriel service install")
 		return
 	}
 	exe, err := os.Executable()
@@ -262,7 +262,7 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !strings.EqualFold(got, want) {
-		httpError(w, http.StatusBadGateway, "checksum mismatch — refusing to install")
+		httpError(w, http.StatusBadGateway, "checksum mismatch, refusing to install")
 		return
 	}
 	if err := os.Chmod(tmp, 0o755); err != nil {
@@ -271,7 +271,7 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 	}
 	// Back up the current binary by copying it to <exe>.bak (for rollback), then
 	// atomically replace exe in a single rename. os.Rename swaps the destination
-	// in one step, so there is never a moment when exe has no binary — a kill or
+	// in one step, so there is never a moment when exe has no binary, a kill or
 	// reboot mid-update leaves either the old or the new binary, never neither.
 	bak := exe + ".bak"
 	if err := copyFile(exe, bak); err != nil {

@@ -41,7 +41,7 @@ func (s *Server) currentStatus(ctx context.Context) statusResult {
 	}}
 }
 
-// handleColimaStatus returns engine status — the source of truth for the
+// handleColimaStatus returns engine status, the source of truth for the
 // dashboard gauges and the running/stopped zero-state.
 func (s *Server) handleColimaStatus(w http.ResponseWriter, r *http.Request) {
 	res := s.currentStatus(r.Context())

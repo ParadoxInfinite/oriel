@@ -33,7 +33,7 @@ func (s *Server) handleListThemes(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleServeTheme serves one theme bundle from disk as a JS module. The name
-// must be a bare .js filename in the themes dir — no path traversal.
+// must be a bare .js filename in the themes dir, no path traversal.
 func (s *Server) handleServeTheme(w http.ResponseWriter, r *http.Request) {
 	file := r.PathValue("file")
 	if file == "" || file != filepath.Base(file) || !strings.HasSuffix(file, ".js") {

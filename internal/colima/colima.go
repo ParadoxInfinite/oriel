@@ -76,7 +76,7 @@ func GetStatus(ctx context.Context) (Status, error) {
 		return st, err
 	}
 	if entry == nil {
-		// Profile has never been created — treat as stopped/empty.
+		// Profile has never been created, treat as stopped/empty.
 		return st, nil
 	}
 

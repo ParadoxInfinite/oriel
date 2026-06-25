@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The MCP server grows up. An AI client can now be scoped to read-only or a chosen
 set of tools, reach Oriel over HTTP behind a token, attach logs and inspect as
-context, and start from a built-in diagnose prompt — plus Colima VM control and a
+context, and start from a built-in diagnose prompt, plus Colima VM control and a
 Docker-env helper. The deprecated in-app natural-language resolver is gone; the
 MCP server replaced it.
 
@@ -25,11 +25,11 @@ MCP server replaced it.
   (or proxied) caller; binding a non-loopback address without one is refused.
 - **MCP resources & prompts.** A client can attach a container's logs or inspect
   output as context (`oriel://container/{id}/logs`, `/inspect`), and start from
-  built-in prompts — `diagnose-container`, `fix-docker-connection`, `reclaim-disk`.
+  built-in prompts: `diagnose-container`, `fix-docker-connection`, `reclaim-disk`.
 - **Colima VM control over MCP.** `colima.start` / `stop` / `restart` (stop and
   restart are destructive), alongside the existing `colima.status`.
 - **`docker.env` tool and `oriel env`.** Surface the Docker connection environment
-  (`DOCKER_HOST`, …) — from the CLI or to an agent — so a client can point other
+  (`DOCKER_HOST`, …), from the CLI or to an agent, so a client can point other
   tooling at the same daemon.
 - **Optional authentication.** A bearer token gates non-loopback `/api` and
   MCP-over-HTTP access. Off by default (loopback stays open, as before). Manage it
@@ -40,7 +40,7 @@ MCP server replaced it.
 
 - **The README leads with the AI/engine-agnostic pitch.** Oriel is the local Docker
   GUI an AI can drive, on any Docker engine (Colima, Docker, OrbStack, Podman,
-  remote) across macOS and Linux — not "a Colima UI for the Mac." Trimmed heavily,
+  remote) across macOS and Linux, not "a Colima UI for the Mac." Trimmed heavily,
   with a concrete AI-driving demo near the top.
 - **Leaner `stacks.list`.** The MCP/read projection returns just what a client needs
   to target a stack, not the full compose dump.
@@ -57,7 +57,7 @@ MCP server replaced it.
 ### Security
 
 - **Closed an auth bypass behind a reverse proxy.** A loopback `Host` header no
-  longer waves a *proxied* request past the host allow-list and token — a forwarded
+  longer waves a *proxied* request past the host allow-list and token; a forwarded
   request is treated as remote. The MCP-over-HTTP gate, which trusted the peer
   address, likewise no longer exempts a forwarded request (a same-host proxy made
   every caller look loopback). Token changes and allow-list edits are now
@@ -82,13 +82,13 @@ Oriel works everywhere.
   button, the same as the Stacks view; they're MCP tools too, so an agent can
   manage compose projects (`stack.down` is destructive).
 - **`stack.alias`** lets an agent rename a stack in Oriel. The alias is a display
-  label over the real compose name — it changes what you see, not the project.
+  label over the real compose name; it changes what you see, not the project.
 - **Rename works on running stacks**, not just discovered ones. The rename flow
   moved into a shared `AliasEditor` SDK controller, so any theme gets it.
 
 ### Fixed
 
-- **The demo "Stacks" view stopped crashing** — the try-it-live mock returned the
+- **The demo "Stacks" view stopped crashing:** the try-it-live mock returned the
   wrong shape for discovered projects.
 
 ## [0.5.0] - 2026-06-23
@@ -100,7 +100,7 @@ its way out.
 
 - **The palette covers everything now.** ⌘K opens empty and suggests as you type
   instead of dumping every action up front, and it spans containers, images,
-  volumes, networks, and prune — not just containers. Type "stop postgres" and it
+  volumes, networks, and prune, not just containers. Type "stop postgres" and it
   lists each matching container so you pick the exact one.
 - **Jump anywhere from ⌘K.** New entries to go to any view, or open a container's
   logs straight from the palette.
@@ -114,7 +114,7 @@ its way out.
 - **In-app natural-language resolver (Settings → AI).** The single-shot text→tool
   resolver and the palette's "Interpret" mode are deprecated. Driving Oriel with a
   model is the MCP server's job (local or hosted), and it does more. This still
-  works in 0.5.x and will be removed in 0.6.0 — see
+  works in 0.5.x and will be removed in 0.6.0. See
   [docs/DEPRECATIONS.md](docs/DEPRECATIONS.md), including how to keep using it or
   ask for it to stay.
 
@@ -126,8 +126,8 @@ on 0.4.1 (it carries a UI regression fixed here).
 
 ### Fixed
 
-- **Classic Dashboard "Retry" button** worked again — it threw a reference error
-  in the Docker-unreachable state (a 0.4.1 regression), leaving the recovery
+- **Classic Dashboard "Retry" button** works again. It had thrown a reference
+  error in the Docker-unreachable state (a 0.4.1 regression), leaving the recovery
   action dead.
 - **Disk prune reports failures.** A prune step that failed (daemon gone,
   permission denied, cancelled) was silently dropped and the job still reported

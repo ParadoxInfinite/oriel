@@ -89,11 +89,11 @@
           ['Image', detail.image],
           ['Image ID', (detail.imageId || '').replace('sha256:', '').slice(0, 12)],
           ['Command', detail.command],
-          ['Working dir', detail.workingDir || '—'],
+          ['Working dir', detail.workingDir || ', '],
           ['Restart policy', detail.restartPolicy || 'no'],
-          ['Started', detail.startedAt && detail.running ? new Date(detail.startedAt).toLocaleString() : '—'],
-          ['Exit code', detail.running ? '—' : String(detail.exitCode)],
-          ['Health', detail.health || '—'],
+          ['Started', detail.startedAt && detail.running ? new Date(detail.startedAt).toLocaleString() : ', '],
+          ['Exit code', detail.running ? ', ' : String(detail.exitCode)],
+          ['Health', detail.health || ', '],
         ]
       : []
   )
@@ -142,7 +142,7 @@
             {:else if !logs.connected}
               <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span> Connecting…
             {:else}
-              No logs yet — this container hasn't written anything to stdout/stderr.
+              No logs yet, this container hasn't written anything to stdout/stderr.
             {/if}
           </div>
         {/if}
@@ -171,7 +171,7 @@
               <div class="mt-2 card overflow-hidden">
                 {#each detail.networks as n, i}
                   <div class="flex items-center justify-between gap-3 px-4 py-2.5 {i ? 'border-t border-[var(--border)]' : ''}">
-                    <span class="text-[13px]">{n.name}</span><span class="mono text-[12px] text-[var(--text-2)]">{n.ipAddress || '—'}</span>
+                    <span class="text-[13px]">{n.name}</span><span class="mono text-[12px] text-[var(--text-2)]">{n.ipAddress || ', '}</span>
                   </div>
                 {/each}
               </div>

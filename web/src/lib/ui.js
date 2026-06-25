@@ -1,4 +1,4 @@
-// Shared control styles: the `.pop` spring + a colourful pill per tone — coloured
+// Shared control styles: the `.pop` spring + a colourful pill per tone, coloured
 // at rest, brighter with a glow on hover.
 const base = 'pop rounded-md border px-2.5 py-1 text-xs font-medium'
 

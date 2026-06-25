@@ -3,7 +3,7 @@ import { refreshImages } from './resources.svelte.js'
 import { REGISTRY_SOURCES, REGISTRY_HOSTS, searchRegistry, listImageTags } from './registry.js'
 
 // Headless controller for the image-pull dialog: registry selection, live search,
-// tag suggestions, and the streaming pull — all the behaviour, none of the look.
+// tag suggestions, and the streaming pull, all the behaviour, none of the look.
 // Editions construct one and render its reactive state however they like, so the
 // Studio and Classic pull dialogs share a single source of truth.
 export class PullController {

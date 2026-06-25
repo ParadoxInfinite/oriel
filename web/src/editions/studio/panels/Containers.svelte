@@ -213,8 +213,8 @@
         <div class="mono mt-0.5 truncate text-[10.5px] text-[var(--text-3)]" title={c.status}>{c.status}</div>
       {/if}
     </td>
-    <td class="mono tnum px-4 py-2.5 text-right text-[12.5px] text-[var(--text-2)]">{running && st ? `${st.cpu.toFixed(1)}%` : '—'}</td>
-    <td class="mono tnum px-4 py-2.5 text-right text-[12.5px] text-[var(--text-2)]">{running && st ? fmt.bytes(st.mem) : '—'}</td>
+    <td class="mono tnum px-4 py-2.5 text-right text-[12.5px] text-[var(--text-2)]">{running && st ? `${st.cpu.toFixed(1)}%` : ', '}</td>
+    <td class="mono tnum px-4 py-2.5 text-right text-[12.5px] text-[var(--text-2)]">{running && st ? fmt.bytes(st.mem) : ', '}</td>
     <td class="px-4 py-2.5">
       <div class="flex flex-wrap gap-1">
         {#each c.ports.filter((p) => p.public) as p}

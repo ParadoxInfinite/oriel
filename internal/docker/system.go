@@ -60,7 +60,7 @@ func (c *Client) SystemUsage(ctx context.Context) (SystemUsage, error) {
 	for _, img := range du.Images {
 		// Dangling = no usable tag AND no repo digest. A digest-pinned image
 		// (untagged but with a RepoDigest, e.g. compose images) is named and in
-		// use, not reclaimable — matching `docker image prune`'s dangling filter.
+		// use, not reclaimable, matching `docker image prune`'s dangling filter.
 		named := len(img.RepoDigests) > 0
 		for _, t := range img.RepoTags {
 			if t != "<none>:<none>" {
@@ -112,7 +112,7 @@ type PruneOptions struct {
 
 // SystemPrune runs the selected prune steps (stopped containers, unused networks,
 // dangling images, build cache, unused volumes). Build cache prunes dangling layers
-// by default; BuildCacheAll (All:true) also removes cache for existing images — the
+// by default; BuildCacheAll (All:true) also removes cache for existing images, the
 // larger amount SystemUsage previews. emit (nil-safe) gets a line per step.
 func (c *Client) SystemPrune(ctx context.Context, opts PruneOptions, emit func(string)) (PruneResult, error) {
 	if emit == nil {
@@ -125,7 +125,7 @@ func (c *Client) SystemPrune(ctx context.Context, opts PruneOptions, emit func(s
 	var res PruneResult
 	var errs []error
 	// fail records a step error and surfaces it on the progress stream. Steps are
-	// best-effort across categories, so a later step still runs — unless the
+	// best-effort across categories, so a later step still runs, unless the
 	// context was cancelled (the per-step ctx.Err() guards below stop the run).
 	fail := func(what string, err error) {
 		errs = append(errs, fmt.Errorf("%s: %w", what, err))
@@ -186,9 +186,9 @@ func (c *Client) SystemPrune(ctx context.Context, opts PruneOptions, emit func(s
 	}
 
 	if err := errors.Join(errs...); err != nil {
-		emit("Done with errors — some steps failed")
+		emit("Done with errors, some steps failed")
 		return res, err
 	}
-	emit(fmt.Sprintf("Done — reclaimed %s total", humanBytes(res.Reclaimed)))
+	emit(fmt.Sprintf("Done, reclaimed %s total", humanBytes(res.Reclaimed)))
 	return res, nil
 }

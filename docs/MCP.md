@@ -44,7 +44,7 @@ the tools:
 claude mcp get oriel      # look for: Status: ✔ Connected
 ```
 
-Now ask it something like *"list my running containers"* — it'll call
+Now ask it something like *"list my running containers"*. It'll call
 `container.list`. To remove it later: `claude mcp remove oriel` (add `-s user` if
 you used user scope).
 
@@ -75,8 +75,8 @@ oriel ai status                       # check what's open
 oriel ai lock                         # close it now
 ```
 
-`--for` accepts a Go duration — `30s`, `90m`, `6h`, `1h30m`, `1.5h` (units `s` /
-`m` / `h`, combinable) — or a days form like `2d` / `0.5d`. Anything from a few
+`--for` accepts a Go duration like `30s`, `90m`, `6h`, `1h30m`, or `1.5h` (units `s` /
+`m` / `h`, combinable), or a days form like `2d` / `0.5d`. Anything from a few
 seconds up to a **30-day** max; the days form doesn't combine with hours (use
 `36h`, not `1d12h`).
 
@@ -129,7 +129,7 @@ Mutations: `container.start` / `stop` / `restart` / `remove`, `image.remove` /
 return the collected output (the UI streams the same actions for live progress);
 `stack.down` is destructive. `stack.alias` is a display-only rename (sets the
 Oriel label for a project; the real compose name is unchanged). `colima.stop` and
-`colima.restart` are destructive — they stop the VM your containers run on.
+`colima.restart` are destructive, since they stop the VM your containers run on.
 
 Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
 `network.list`, `stacks.list`, `system.df`, `colima.status`, `docker.env`. These
@@ -144,13 +144,13 @@ By default `oriel mcp` exposes every tool. Narrow it to match the trust you're
 extending:
 
 ```bash
-oriel mcp --read-only                       # reads only — no start/stop/remove/prune
+oriel mcp --read-only                       # reads only, no start/stop/remove/prune
 oriel mcp --allow-tools container.list,container.logs   # exclusive allow-list
 oriel mcp --deny-tools image.prune,system.df            # remove named tools
 ```
 
 `--read-only` keeps only pure reads, `--allow-tools` is an exclusive whitelist
-(comma-separated names), and `--deny-tools` subtracts names. They compose —
+(comma-separated names), and `--deny-tools` subtracts names. They compose:
 `--read-only --allow-tools container.list` is the intersection. The scope is
 enforced at the registry boundary, so a tool you didn't expose isn't callable at
 all.
@@ -161,8 +161,8 @@ Beyond tools, the server offers **resources** (read-only context a client can
 attach) and **prompts** (ready-made starting points):
 
 - **Resources:** `oriel://container/{id}/logs` and `oriel://container/{id}/inspect`
-  — attach a specific container's logs or (masked) inspect output as context,
-  without the model having to call a tool for it.
+  let a client attach a specific container's logs or (masked) inspect output as
+  context, without the model having to call a tool for it.
 - **Prompts:** `diagnose-container` (why is it unhealthy / restarting?),
   `fix-docker-connection` (the daemon/Colima isn't reachable), and `reclaim-disk`
   (what's safe to prune?). They seed the conversation with the right tools and
@@ -183,7 +183,7 @@ attach) and **prompts** (ready-made starting points):
 ## Secret masking (shared with the inspect UI)
 
 `container.inspect` masks env values server-side, so MCP never feeds raw API
-keys to a model. The placeholder is fixed (`OPENAI_API_KEY=••••••••`) — no value
+keys to a model. The placeholder is fixed (`OPENAI_API_KEY=••••••••`), so no value
 or length is leaked.
 
 - **Detection (sensitive mode):** by key name (`KEY` / `SECRET` / `TOKEN` /
@@ -203,11 +203,11 @@ or length is leaked.
     `Authorization: Bearer <token>`** (the same token as the GUI gate). Set one
     with `oriel config auth-token --generate`.
   - Binding a non-loopback address **without** a token is refused outright.
-  - The server speaks plain HTTP — the token rides in cleartext. On any untrusted
+  - The server speaks plain HTTP, so the token rides in cleartext. On any untrusted
     network, front it with a TLS-terminating reverse proxy (one that sets
     `X-Forwarded-For`) rather than binding the open address directly. See
     [REVERSE-PROXY.md](./REVERSE-PROXY.md) and [SECURITY.md](../SECURITY.md).
-  - Rotating or clearing the token takes effect on the next request — no restart.
+  - Rotating or clearing the token takes effect on the next request, with no restart.
 
 ## How it's built
 

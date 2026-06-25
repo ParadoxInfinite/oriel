@@ -8,7 +8,7 @@
 {#if !dismissed}
   <div class="demo-pill">
     <span class="dot"></span>
-    <span class="txt"><strong>Demo</strong> · mock data, no real Docker — a refresh resets it.</span>
+    <span class="txt"><strong>Demo</strong> · mock data, no real Docker, a refresh resets it.</span>
     <button class="link" onclick={() => (compare.open = true)}>Compare</button>
     <a href="https://github.com/ParadoxInfinite/oriel" target="_blank" rel="noreferrer">GitHub ↗</a>
     <button aria-label="Dismiss" onclick={() => (dismissed = true)}>×</button>

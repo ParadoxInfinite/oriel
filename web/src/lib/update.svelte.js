@@ -1,4 +1,4 @@
-// Lazy, run-once update check — the backend pings GitHub (cached) only when asked.
+// Lazy, run-once update check, the backend pings GitHub (cached) only when asked.
 // Self-update (apply + restart) is offered only for service-managed installs.
 import { apiGet, apiPost } from './api.js'
 import { self } from './self.svelte.js'
@@ -36,13 +36,13 @@ export async function checkUpdate() {
   try {
     applyInfo(await apiGet('/api/update'))
   } catch {
-    // Offline or GitHub unreachable — stay silent, no nag.
+    // Offline or GitHub unreachable, stay silent, no nag.
   } finally {
     update.checked = true
   }
 }
 
-// checkNow is the manual "check for updates" action — it forces a fresh check,
+// checkNow is the manual "check for updates" action, it forces a fresh check,
 // but the backend rate-limits forced checks to once an hour.
 export async function checkNow() {
   if (update.checking) return
@@ -53,7 +53,7 @@ export async function checkNow() {
     const [info] = await Promise.all([apiGet('/api/update?force=1'), new Promise((r) => setTimeout(r, 600))])
     applyInfo(info)
   } catch {
-    /* offline — leave the last known state */
+    /* offline, leave the last known state */
   } finally {
     update.checking = false
     update.checked = true
@@ -61,7 +61,7 @@ export async function checkNow() {
 }
 
 // startUpdateChecks runs an immediate check on mount, then re-checks every few
-// hours — skipping while a self-update is mid-flow so it can't clobber that state.
+// hours, skipping while a self-update is mid-flow so it can't clobber that state.
 export function startUpdateChecks() {
   checkUpdate()
   timer = setInterval(() => {
@@ -125,7 +125,7 @@ export async function restartService() {
 }
 
 // canSelfUpdate is true only for a managed install not owned by a package
-// manager — Homebrew updates via `brew upgrade`, not in-app. Others should be
+// manager, Homebrew updates via `brew upgrade`, not in-app. Others should be
 // sent to the Updates panel for instructions.
 export function canSelfUpdate() {
   return update.managed && !update.packageManager

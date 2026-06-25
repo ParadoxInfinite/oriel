@@ -32,7 +32,7 @@ func (c *Client) ListImages(ctx context.Context) ([]Image, error) {
 	out := make([]Image, 0, len(raw))
 	for _, r := range raw {
 		// Untagged images pulled by digest (e.g. compose `image: repo:tag@sha256:…`)
-		// have no RepoTags but a RepoDigest "repo@sha256:…" — show that, not <none>,
+		// have no RepoTags but a RepoDigest "repo@sha256:…", show that, not <none>,
 		// so digest-pinned images (immich, etc.) are identifiable. Only a true
 		// dangling layer (no tags AND no digests) falls back to <none>.
 		tags := r.RepoTags

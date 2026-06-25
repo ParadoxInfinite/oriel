@@ -181,7 +181,7 @@ func sctl(system bool, args ...string) []string {
 
 const userBusHint = `
 Oriel installs a systemd *user* service by default, but this session has no user
-bus — common over SSH/sudo, and always the case for root.
+bus, common over SSH/sudo, and always the case for root.
 
   • Headless or root-only box → install a system service instead (starts on boot):
         oriel service install --system

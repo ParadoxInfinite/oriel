@@ -16,7 +16,7 @@ export class DashboardStats {
   cpuCap = $derived((status.data?.cpu || 1) * 100)
   cpuPct = $derived(Math.min(100, (this.totalCpu / this.cpuCap) * 100))
   memPct = $derived(this.memLimit ? Math.min(100, (this.usedMem / this.memLimit) * 100) : 0)
-  // History as utilisation % of total capacity — matches the headline number.
+  // History as utilisation % of total capacity, matches the headline number.
   pulse = $derived(
     history.points.map((p) => ({
       t: p.t,

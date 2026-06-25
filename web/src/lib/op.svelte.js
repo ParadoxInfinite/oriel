@@ -6,8 +6,8 @@ import { refreshImages, refreshVolumes, refreshNetworks } from './resources.svel
 // Operation tracker. Several operations can run at once; `list` holds them all and
 // `focused` is the one shown in the modal overlay (null = modal closed). The rest
 // surface in the sidebar tray. Two flavours share the model:
-//   • request-tied (runOp): colima lifecycle, compose — stream lives with the POST.
-//   • background jobs (attachJob): prune — run server-side, survive a refresh, and
+//   • request-tied (runOp): colima lifecycle, compose, stream lives with the POST.
+//   • background jobs (attachJob): prune, run server-side, survive a refresh, and
 //     can be cancelled. `jobId` is set only for these.
 export const ops = $state({ list: [], focused: null })
 

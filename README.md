@@ -4,7 +4,7 @@
 
 # Oriel
 
-**The local Docker GUI an AI can drive — safely.**
+**The local Docker GUI an AI can drive, safely.**
 
 Manage containers, images, volumes, networks, and Compose from a clean browser UI. Or hand the job to an AI: any MCP client (Claude, Cursor, a local LLM) drives the same tools the UI does, with the same secret masking and destructive-action grant. It works with **any Docker engine on macOS and Linux** (Colima, Docker Engine, OrbStack, Podman, or a remote daemon). A free, open-source Docker Desktop alternative in one ~13 MB binary that idles at 15–30 MB of RAM, with no Electron, no account, and an Apache-2.0 license.
 

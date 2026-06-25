@@ -53,7 +53,7 @@
           <span class="mono shrink-0 text-xs text-[var(--text-2)]">{fmt.bytes(it.size)}</span>
         </label>
       {:else}
-        <div class="px-5 py-12 text-center text-sm text-[var(--text-2)]">Nothing to prune — all clean.</div>
+        <div class="px-5 py-12 text-center text-sm text-[var(--text-2)]">Nothing to prune, all clean.</div>
       {/each}
     </div>
 

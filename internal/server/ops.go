@@ -74,7 +74,7 @@ func (s *Server) startItemPrune(w http.ResponseWriter, r *http.Request, kind, ti
 		var reclaimed int64
 		for i, it := range items {
 			if ctx.Err() != nil {
-				rep.Line(fmt.Sprintf("Cancelled — removed %d of %d (%s)", removed, len(items), humanBytes(reclaimed)))
+				rep.Line(fmt.Sprintf("Cancelled, removed %d of %d (%s)", removed, len(items), humanBytes(reclaimed)))
 				return ctx.Err()
 			}
 			rep.Progress(i+1, len(items)) // drives the bar; no per-item log spam
