@@ -18,6 +18,7 @@
     update,
     canSelfUpdate,
     promptUpdate,
+    OpTray,
   } from '../../platform/index.js'
 
   // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
@@ -34,7 +35,6 @@
   import { appearance, systemPref, initAppearance } from './theme.svelte.js'
   import Icon from './lib/Icon.svelte'
   import Outages from './lib/Outages.svelte'
-  import OpTray from '../../components/OpTray.svelte'
   import Dashboard from './panels/Dashboard.svelte'
   import Containers from './panels/Containers.svelte'
   import Resources from './panels/Resources.svelte'
@@ -84,27 +84,47 @@
   const running = $derived(containers.list.filter((c) => c.state === 'running'))
   const samples = $derived(running.map((c) => stats.byId[c.id]).filter(Boolean))
   const usedMem = $derived(samples.reduce((a, x) => a + x.mem, 0))
+
+  // On a phone the sidebar is an off-canvas drawer; on md+ it's always shown.
+  // Navigating (or tapping the backdrop) closes it.
+  let mobileNav = $state(false)
+  function go(view) {
+    navigate(view)
+    mobileNav = false
+  }
 </script>
 
 <div class="studio-root {dark ? 'dark' : ''}" style="--accent:{accent}">
-  <!-- Sidebar -->
-  <aside class="flex w-[232px] shrink-0 flex-col border-r border-[var(--border)] bg-[var(--sidebar)]">
+  <!-- Mobile drawer backdrop -->
+  {#if mobileNav}
+    <button class="fixed inset-0 z-30 bg-black/50 md:hidden" aria-label="Close menu" onclick={() => (mobileNav = false)}></button>
+  {/if}
+
+  <!-- Sidebar: static on md+, off-canvas drawer below -->
+  <aside
+    class="fixed inset-y-0 left-0 z-40 flex w-[264px] flex-col border-r border-[var(--border)] bg-[var(--sidebar)] transition-transform duration-200 ease-out
+           md:static md:z-auto md:w-[232px] md:shrink-0 md:translate-x-0 md:transition-none
+           {mobileNav ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}"
+  >
     <div class="flex items-center gap-2.5 px-5 pb-3 pt-5">
       <div class="grid h-7 w-7 place-items-center rounded-lg bg-[var(--accent)] text-white shadow-[var(--shadow-sm)]">
         <Icon name="box" size={16} stroke={2} />
       </div>
       <span class="text-[15px] font-semibold tracking-tight">Oriel</span>
+      <button class="ml-auto grid h-8 w-8 place-items-center rounded-lg text-[var(--text-3)] hover:bg-[var(--hover)] md:hidden" aria-label="Close menu" onclick={() => (mobileNav = false)}>
+        <Icon name="x" size={18} />
+      </button>
     </div>
 
     <nav class="flex flex-1 flex-col gap-0.5 px-3 py-2">
       {#each NAV as item}
-        <button class="nav {active === item.name ? 'on' : ''}" onclick={() => navigate(item.name)}>
+        <button class="nav {active === item.name ? 'on' : ''}" onclick={() => go(item.name)}>
           <Icon name={item.icon} size={17} class="nav-i" />
           {item.name}
         </button>
       {/each}
       <div class="my-1.5 mx-2 border-t border-[var(--border)]"></div>
-      <button class="nav {active === 'Settings' ? 'on' : ''}" onclick={() => navigate('Settings')}>
+      <button class="nav {active === 'Settings' ? 'on' : ''}" onclick={() => go('Settings')}>
         <Icon name="settings" size={17} class="nav-i" />
         Settings
       </button>
@@ -142,18 +162,21 @@
 
   <!-- Main -->
   <div class="flex min-w-0 flex-1 flex-col">
-    <header class="flex h-[60px] shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--panel)] px-6">
-      <div>
-        <h1 class="text-[15px] font-semibold leading-none tracking-tight">{active}</h1>
-        <p class="mt-1 text-xs text-[var(--text-3)]">{SUBTITLES[active]}</p>
+    <header class="flex h-[60px] shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-4 md:px-6">
+      <button class="-ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--text-2)] hover:bg-[var(--hover)] md:hidden" aria-label="Open menu" onclick={() => (mobileNav = true)}>
+        <Icon name="menu" size={20} />
+      </button>
+      <div class="min-w-0">
+        <h1 class="truncate text-[15px] font-semibold leading-none tracking-tight">{active}</h1>
+        <p class="mt-1 truncate text-xs text-[var(--text-3)]">{SUBTITLES[active]}</p>
       </div>
       <button class="btn btn-default ml-auto btn-sm" onclick={openPalette}>
-        <Icon name="command" size={13} /> Run command
-        <kbd class="mono ml-1 rounded border border-[var(--border)] bg-[var(--panel-2)] px-1.5 text-[10px] text-[var(--text-3)]">⌘K</kbd>
+        <Icon name="command" size={13} /> <span class="hidden sm:inline">Run command</span>
+        <kbd class="mono ml-1 hidden rounded border border-[var(--border)] bg-[var(--panel-2)] px-1.5 text-[10px] text-[var(--text-3)] sm:inline">⌘K</kbd>
       </button>
     </header>
 
-    <main class="min-h-0 flex-1 overflow-auto p-6">
+    <main class="min-h-0 flex-1 overflow-auto p-4 md:p-6">
       {#if active === 'Dashboard'}
         <Dashboard {navigate} />
       {:else if active === 'Containers'}

@@ -116,6 +116,9 @@ export { AliasEditor } from '../lib/aliasEditor.svelte.js'
 /** Raw Lucide icon inner-SVG strings, keyed by name (see lib/icons.js). */
 export { icons } from '../lib/icons.js'
 
+/** Operation tray widget (active + queued background ops) for an edition's chrome. */
+export { default as OpTray } from '../components/OpTray.svelte'
+
 /** Low-level fetch helpers for endpoints without a dedicated store: apiGet/apiPost
  *  (e.g. /api/volumes/prune/preview) and streamPost for SSE-over-POST actions
  *  (e.g. /api/images/pull). Prefer the typed stores where they exist. */
