@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 )
 
 // ErrDestructiveLocked is returned when a Destructive tool is invoked by a
@@ -97,6 +98,14 @@ func (r *Registry) Register(t *Tool) {
 	if _, dup := r.tools[t.Name]; dup {
 		panic("tools: duplicate registration " + t.Name)
 	}
+	// A tool whose name reads as an irreversible action must carry Destructive,
+	// or it would inherit the ungated default and run for an MCP/agent caller with
+	// no grant. This is a startup tripwire so a new `*.remove`/`*.prune`/… tool
+	// can't ship unflagged; the golden classification test (internal/actions)
+	// covers the cases this name heuristic can't see.
+	if !t.Destructive && destructiveName(t.Name) {
+		panic("tools: " + t.Name + ": name implies a destructive action but Destructive is false; set Destructive: true (or rename)")
+	}
 	if t.Entity != nil {
 		p, ok := t.Schema.Props[t.Entity.Param]
 		if !ok || p.Type != "string" || !slices.Contains(t.Schema.Required, t.Entity.Param) {
@@ -148,4 +157,20 @@ func (r *Registry) Execute(ctx context.Context, name string, args map[string]any
 
 func sortByName(ts []*Tool) {
 	slices.SortFunc(ts, func(a, b *Tool) int { return cmp.Compare(a.Name, b.Name) })
+}
+
+// destructiveVerbs are name suffixes that denote an irreversible action. A tool
+// named `<noun>.<verb>` (or bare `<verb>`) ending in one of these must be
+// flagged Destructive. Reversible mutations (start/stop/restart/create/connect/
+// tag/alias) are deliberately absent, they stay ungated by design.
+var destructiveVerbs = []string{"remove", "delete", "prune", "destroy", "rm", "kill", "down", "wipe", "purge", "drop"}
+
+// destructiveName reports whether a tool name's verb denotes an irreversible
+// action. The verb is the segment after the last dot, or the whole name.
+func destructiveName(name string) bool {
+	verb := name
+	if i := strings.LastIndexByte(name, '.'); i >= 0 {
+		verb = name[i+1:]
+	}
+	return slices.Contains(destructiveVerbs, verb)
 }

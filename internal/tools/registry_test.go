@@ -6,6 +6,40 @@ import (
 	"testing"
 )
 
+// TestRegisterDestructiveNameTripwire locks in the startup guard: a tool whose
+// name reads as an irreversible action must carry Destructive, or Register
+// panics. This stops a new `*.remove`/`*.prune`/… tool from shipping unflagged
+// and inheriting the ungated default for MCP/agent callers.
+func TestRegisterDestructiveNameTripwire(t *testing.T) {
+	cases := []struct {
+		name        string
+		destructive bool
+		wantPanic   bool
+	}{
+		{"volume.remove", false, true},   // destructive verb, unflagged → panic
+		{"container.prune", false, true}, // ditto
+		{"image.delete", false, true},
+		{"volume.remove", true, false},   // flagged → fine
+		{"container.stop", false, false}, // reversible verb → fine
+		{"network.create", false, false}, // reversible verb → fine
+		{"container.list", false, false}, // read → fine
+	}
+	for _, c := range cases {
+		func() {
+			defer func() {
+				if got := recover() != nil; got != c.wantPanic {
+					t.Errorf("Register(%q, destructive=%v): panic=%v, want %v", c.name, c.destructive, got, c.wantPanic)
+				}
+			}()
+			NewRegistry(nil).Register(&Tool{
+				Name:        c.name,
+				Destructive: c.destructive,
+				Handler:     func(context.Context, map[string]any) (any, error) { return nil, nil },
+			})
+		}()
+	}
+}
+
 // fakeResolver reports existence from a fixed set of "kind/id" keys.
 type fakeResolver struct{ known map[string]bool }
 
