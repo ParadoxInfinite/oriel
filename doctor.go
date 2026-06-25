@@ -138,6 +138,28 @@ func doctorLine(glyph, label, detail string) {
 	fmt.Printf("  %s  %-14s %s\n", glyph, label, detail)
 }
 
+// dockerHostHint returns a one-line warning when the current shell's DOCKER_HOST
+// won't reach colima (so docker SDKs / Testcontainers would silently miss it), or
+// "" when the environment is fine or colima isn't in use. It reads this process's
+// own env, so only a CLI invocation (not the managed service) sees the user's
+// interactive shell. Reused by the post-update nudge so a stale env surfaces
+// without a separate `oriel doctor` run.
+func dockerHostHint(ctx context.Context) string {
+	socket, err := colima.DockerSocketPath(ctx)
+	if err != nil || socket == "" {
+		return "" // no colima socket → nothing colima-specific to advise
+	}
+	host := "unix://" + socket
+	switch env := os.Getenv("DOCKER_HOST"); {
+	case env == host || defaultSocketIsColima(socket):
+		return ""
+	case env != "":
+		return fmt.Sprintf("DOCKER_HOST=%s doesn't match colima's %s. Fix: eval \"$(oriel env)\"", env, host)
+	default:
+		return "DOCKER_HOST is unset and /var/run/docker.sock isn't colima's, so docker SDKs / Testcontainers will miss colima. Fix: eval \"$(oriel env)\""
+	}
+}
+
 // defaultSocketIsColima reports whether /var/run/docker.sock is a symlink to
 // colima's socket (so tools hitting the default path actually reach colima).
 func defaultSocketIsColima(colimaSocket string) bool {
