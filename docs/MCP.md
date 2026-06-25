@@ -83,11 +83,20 @@ speaks MCP over stdio against the host's Docker via the mounted socket.
 }
 ```
 
-The image is `linux/amd64` + `linux/arm64`. Colima-specific tools are inert inside
-a container (there's no VM to control there); everything else (containers, images,
-volumes, networks, Compose) works through the socket. Mounting the Docker socket
-grants root-equivalent control of the host, the same trust the rest of Oriel
-assumes; see [SECURITY.md](../SECURITY.md).
+The image is `linux/amd64` + `linux/arm64`. (Docker images are always Linux; on a
+Mac the container runs in your Docker VM, so the `arm64` image still works there.)
+Colima-specific tools are inert inside a container (there's no VM to control from
+there); everything else (containers, images, volumes, networks, Compose) works
+through the socket. Mounting the Docker socket grants root-equivalent control of
+the host, the same trust the rest of Oriel assumes; see [SECURITY.md](../SECURITY.md).
+
+**The socket path above is the Linux default.** On Linux the Docker socket is a
+plain file at `/var/run/docker.sock`, so the command works as-is. With **Colima**
+(usually macOS) the socket is at `~/.colima/<profile>/docker.sock` instead, and
+it's forwarded from inside Colima's VM, so bind-mounting it into a container is
+finicky. On a Mac, run the **native binary** (`oriel mcp`) rather than the image:
+it talks to Colima directly and adds VM control. The container is the right fit on
+**Linux hosts** (homelab, servers), where the socket is a local file.
 
 ### Destructive actions need a grant
 
