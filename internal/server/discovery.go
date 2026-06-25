@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -104,13 +105,21 @@ func (s *Server) handleFsOpen(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	opener := "xdg-open"
+	args := []string{path}
 	switch runtime.GOOS {
 	case "darwin":
 		opener = "open"
+		// On macOS a directory whose name ends in a launchable bundle suffix
+		// (.app/.pkg/…) is executed by `open`, not merely revealed, even though it
+		// passed the IsDir check. Reveal it in Finder (-R) instead of running it.
+		switch strings.ToLower(filepath.Ext(path)) {
+		case ".app", ".bundle", ".pkg", ".command", ".workflow", ".prefpane", ".osx":
+			args = []string{"-R", path}
+		}
 	case "windows":
 		opener = "explorer"
 	}
-	if err := exec.Command(opener, path).Start(); err != nil {
+	if err := exec.Command(opener, args...).Start(); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not open: " + err.Error()})
 		return
 	}
