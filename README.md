@@ -46,11 +46,13 @@ No model ships in the binary; your client brings its own. Reads run anytime, and
 brew install ParadoxInfinite/oriel/oriel
 ```
 
-**Script** (detects your platform and verifies the checksum; [read it first](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh)):
+**Script** (detects your platform and verifies the checksum):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ParadoxInfinite/oriel/main/install.sh | sh
 ```
+
+> ⚠️ **Piping a script to `sh` runs code from the internet on your machine.** [Read `install.sh`](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh) before you run it, or download a binary from [releases](https://github.com/ParadoxInfinite/oriel/releases/latest) instead.
 
 <details>
 <summary>Manual binary, Go, or source</summary>
@@ -129,7 +131,7 @@ The UI is a swappable plugin on a stable platform SDK: **Studio** (default; ligh
 
 ## Security
 
-Oriel has **no authentication**, and driving Docker is effectively **root on the host**. Run it locally, or over a **private network only** (Tailscale, ZeroTier, WireGuard, and the like). **Never the public internet.** Full trust model: [SECURITY.md](SECURITY.md).
+Out of the box Oriel has **no login**, and driving Docker is effectively **root on the host**. An optional bearer token gates remote and MCP-over-HTTP access (off by default), but the safe default is local use, or a **private network only** (Tailscale, ZeroTier, WireGuard, and the like). **Never the public internet.** Full trust model: [SECURITY.md](SECURITY.md).
 
 ## FAQ
 
