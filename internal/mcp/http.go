@@ -12,7 +12,7 @@ import (
 )
 
 // ServeHTTP serves the MCP server over Streamable HTTP at addr until ctx is
-// cancelled. tokenFn supplies the gate token, read fresh per request — so a
+// cancelled. tokenFn supplies the gate token, read fresh per request, so a
 // rotation or clear (via the UI or `oriel config auth-token`, in the other
 // process) takes effect immediately, including revoking a leaked token without a
 // restart. A loopback, non-proxied client is exempt; an empty token disables the
@@ -23,7 +23,7 @@ func ServeHTTP(ctx context.Context, addr string, reg *tools.Registry, version st
 	srv := newServer(reg, version, include)
 	// nil options on purpose: it keeps the SDK's default browser protections ON,
 	// which we rely on alongside the token gate. Do NOT set DisableLocalhostProtection
-	// — that default 403s any request whose Host isn't loopback when we're bound to
+	//, that default 403s any request whose Host isn't loopback when we're bound to
 	// loopback (DNS-rebinding defense, keyed off the real socket address), and the
 	// default Content-Type: application/json requirement forces a CORS preflight a
 	// cross-origin page can't satisfy. Together with authMiddleware, that covers the
@@ -65,8 +65,8 @@ func authMiddleware(next http.Handler, tokenFn func() string) http.Handler {
 // a reverse proxy. RemoteAddr alone is not enough: a same-host proxy (the normal
 // way this endpoint is exposed for TLS) makes RemoteAddr loopback for EVERY
 // request it forwards, so trusting loopback would wave every proxied remote
-// caller past the token. A forwarding header — which the proxy adds and the real
-// client can't strip — means the caller is remote and must present the token.
+// caller past the token. A forwarding header, which the proxy adds and the real
+// client can't strip, means the caller is remote and must present the token.
 func localDirect(r *http.Request) bool {
 	return clientLoopback(r) && !forwarded(r)
 }

@@ -1,5 +1,5 @@
 // Studio's own appearance: light/dark/system + a per-theme accent colour.
-// Persisted locally and independent of the edition registry — this only governs
+// Persisted locally and independent of the edition registry, this only governs
 // how Studio looks, not which edition is mounted. Light and dark each remember
 // their own accent (indigo for light, teal for dark by default), so switching
 // theme swaps the accent too.
@@ -57,7 +57,7 @@ function persist() {
   try {
     localStorage.setItem(KEY, JSON.stringify({ mode: appearance.mode, accents: appearance.accents, custom: appearance.custom }))
   } catch {
-    /* private mode — just won't persist */
+    /* private mode, just won't persist */
   }
 }
 

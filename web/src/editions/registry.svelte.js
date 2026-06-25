@@ -7,7 +7,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
 
 // Built-in editions, in switcher order. Each `component` is a full-app Svelte
 // component built on the platform SDK. Third parties add their own either by
-// editing this array, or — without touching the bundle — by pushing manifests
+// editing this array, or, without touching the bundle, by pushing manifests
 // onto `window.__orielThemes` before mount (see editions/README.md).
 const BUILTIN = [
   { id: 'studio', name: 'Studio', tagline: 'Clean, native-feel control panel', accent: '#5b5bd6', component: Studio },
@@ -16,7 +16,7 @@ const BUILTIN = [
 
 // Disk-installed themes: drop a built bundle (an ES module default-exporting
 // { id, name, component, … }) into the server's themes directory and Oriel
-// serves it same-origin. No remote URLs — install is explicit and offline.
+// serves it same-origin. No remote URLs, install is explicit and offline.
 export const diskThemes = $state({ dir: '', list: [], errors: {} })
 
 // Discover + import every installed theme bundle. Call once at startup.
@@ -25,12 +25,12 @@ export async function loadDiskThemes() {
   try {
     data = await apiGet('/api/themes')
   } catch {
-    return // backend unreachable — built-ins still work
+    return // backend unreachable, built-ins still work
   }
   diskThemes.dir = data.dir || ''
   for (const t of data.themes || []) {
     // A theme is JS imported into the app origin, so guard the import specifier:
-    // basename ending in .js only (defense in depth — the backend already does).
+    // basename ending in .js only (defense in depth, the backend already does).
     if (!t.file || !/^[\w.-]+\.js$/.test(t.file)) continue
     try {
       const mod = await import(/* @vite-ignore */ `${BASE}/api/themes/${t.file}`)
@@ -62,7 +62,7 @@ export function setEdition(id) {
   try {
     localStorage.setItem(KEY, id)
   } catch {
-    /* private mode — selection just won't persist */
+    /* private mode, selection just won't persist */
   }
 }
 

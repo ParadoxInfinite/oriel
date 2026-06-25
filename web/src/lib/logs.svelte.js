@@ -39,7 +39,7 @@ export class LogsController {
         this.lines.splice(0, this.lines.length - FOLLOW_CAP)
       }
     })
-    // onopen fires once the stream is established — lets the UI tell an empty
+    // onopen fires once the stream is established, lets the UI tell an empty
     // (but live) stream apart from one that's still connecting.
     this.#es.onopen = () => (this.connected = true)
   }

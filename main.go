@@ -31,7 +31,7 @@ func main() {
 		case "service":
 			runSub("service", service.Run) // install | uninstall | status
 		case "remote":
-			runSub("remote", runRemote) // list | allow | deny — host allow-list over loopback
+			runSub("remote", runRemote) // list | allow | deny, host allow-list over loopback
 		case "doctor":
 			runSub("doctor", runDoctor) // config/connectivity health check
 		case "config":
@@ -39,7 +39,7 @@ func main() {
 		case "update":
 			runSub("update", runUpdate) // checksum-verified self-update
 		case "ai":
-			runSub("ai", runAI) // allow-destructive | status | lock — the grant window
+			runSub("ai", runAI) // allow-destructive | status | lock, the grant window
 		case "mcp":
 			runSub("mcp", runMCP) // serve the tool registry to an MCP client over stdio
 		case "env":
@@ -111,7 +111,7 @@ func main() {
 }
 
 // runSub runs a subcommand handler and exits. A -h request (flag.ErrHelp) is a
-// success — the flag package already printed usage — so it exits 0 cleanly
+// success, the flag package already printed usage, so it exits 0 cleanly
 // rather than re-printing the error and exiting non-zero.
 func runSub(name string, fn func([]string) error) {
 	if err := fn(os.Args[2:]); err != nil && !errors.Is(err, flag.ErrHelp) {

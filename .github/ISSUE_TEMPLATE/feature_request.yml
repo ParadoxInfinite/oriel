@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        New **editions and themes** are especially welcome — start with
+        New **editions and themes** are especially welcome, start with
         [docs/THEMES.md](../blob/main/docs/THEMES.md) and open a PR.
   - type: textarea
     id: problem

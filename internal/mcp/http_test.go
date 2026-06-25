@@ -44,7 +44,7 @@ func TestAuthMiddleware_ProxyBypass(t *testing.T) {
 	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	call := func(fwdHeader, auth string) int {
 		r := httptest.NewRequest("POST", "/", nil)
-		r.RemoteAddr = "127.0.0.1:5555" // the same-host proxy — always loopback
+		r.RemoteAddr = "127.0.0.1:5555" // the same-host proxy, always loopback
 		r.Header.Set(fwdHeader, "203.0.113.7")
 		if auth != "" {
 			r.Header.Set("Authorization", auth)
@@ -76,14 +76,14 @@ func TestAuthMiddleware_ProxyBypass(t *testing.T) {
 
 // TestAuthMiddleware_LiveTokenRotation: the token is read per request, so a
 // rotation (and especially a revocation by clearing) takes effect immediately on
-// a running server — no restart, no window where the old token still works.
+// a running server, no restart, no window where the old token still works.
 func TestAuthMiddleware_LiveTokenRotation(t *testing.T) {
 	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	current := "old-secret"
 	h := authMiddleware(ok, func() string { return current })
 	call := func(auth string) int {
 		r := httptest.NewRequest("POST", "/", nil)
-		r.RemoteAddr = "10.0.0.2:5555" // remote — token required
+		r.RemoteAddr = "10.0.0.2:5555" // remote, token required
 		if auth != "" {
 			r.Header.Set("Authorization", auth)
 		}
@@ -101,7 +101,7 @@ func TestAuthMiddleware_LiveTokenRotation(t *testing.T) {
 	if call("Bearer new-secret") != http.StatusOK {
 		t.Error("new token should work immediately after rotation")
 	}
-	current = "" // revoke (clear) — but a remote caller is still gated by exposedAddr at bind time
+	current = "" // revoke (clear), but a remote caller is still gated by exposedAddr at bind time
 	if call("Bearer new-secret") != http.StatusOK {
 		t.Error("clearing the token disables the gate (loopback-only model); documented behavior")
 	}

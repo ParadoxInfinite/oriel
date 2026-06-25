@@ -36,7 +36,7 @@ jobs:
       # Manual dispatch: validate the version, then create + push the tag so the
       # rest of the job (and GoReleaser) sees a tagged HEAD. A tag pushed with the
       # default GITHUB_TOKEN does NOT re-trigger this workflow, so there's no
-      # recursion — GoReleaser runs once, right here.
+      # recursion, GoReleaser runs once, right here.
       - name: Tag (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
         env:

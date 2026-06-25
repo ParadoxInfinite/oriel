@@ -66,7 +66,7 @@ func (s *Server) allowAPI(r *http.Request) bool {
 	if h, _, err := net.SplitHostPort(host); err == nil {
 		host = h
 	}
-	// A loopback Host is the local UI — trusted, no token. But ONLY when the
+	// A loopback Host is the local UI, trusted, no token. But ONLY when the
 	// request reached us directly: behind a reverse proxy the Host is whatever the
 	// remote client sent, so a `Host: 127.0.0.1` would otherwise wave a remote
 	// caller straight past the allow-list and the token. A proxied request always
@@ -86,7 +86,7 @@ func (s *Server) allowAPI(r *http.Request) bool {
 // forwarded reports whether the request arrived through a reverse proxy, by the
 // presence of a standard forwarding header the proxy adds on the hop to us. A
 // remote client can send these, but it can't prevent the proxy from setting them,
-// and a direct local request never has them — so this reliably distinguishes "the
+// and a direct local request never has them, so this reliably distinguishes "the
 // local UI" from "a remote caller wearing a forged loopback Host."
 func forwarded(r *http.Request) bool {
 	return r.Header.Get("X-Forwarded-For") != "" ||
@@ -102,7 +102,7 @@ func isLoopbackHost(h string) bool {
 	return ip != nil && ip.IsLoopback()
 }
 
-// localAdmin reports whether r may perform a local-only administrative change —
+// localAdmin reports whether r may perform a local-only administrative change,
 // setting the token or editing the allow-list. These are deliberately not
 // delegatable to remote callers, even authenticated ones: who may reach Oriel is
 // a local-machine decision. It requires a direct loopback request (loopback Host
@@ -136,7 +136,7 @@ func (s *Server) handleGetRemote(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePutRemote replaces the allowed-host list and updates the live guard.
-// Local-only: a remote caller — even an authenticated one — must not be able to
+// Local-only: a remote caller, even an authenticated one, must not be able to
 // add its own host to the allow-list and entrench access.
 func (s *Server) handlePutRemote(w http.ResponseWriter, r *http.Request) {
 	if !s.localAdmin(r) {

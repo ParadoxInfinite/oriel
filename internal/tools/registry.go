@@ -1,5 +1,5 @@
-// Package tools is the canonical action layer. Single-entity mutations — from a
-// UI button, the command palette, or the MCP server — route through
+// Package tools is the canonical action layer. Single-entity mutations, from a
+// UI button, the command palette, or the MCP server, route through
 // Registry.Execute, which validates arguments and entity
 // references and gates destructive tools before running the handler. (Bulk
 // prune runs as a background job over a user-selected list; see
@@ -75,7 +75,7 @@ type Registry struct {
 	tools    map[string]*Tool
 	resolver EntityResolver
 	// windowOpen reports whether a destructive grant window is currently open.
-	// nil means "never open" — destructive calls then require consent.
+	// nil means "never open", destructive calls then require consent.
 	windowOpen func() bool
 }
 
@@ -90,7 +90,7 @@ func (r *Registry) SetDestructiveWindow(open func() bool) { r.windowOpen = open 
 func (r *Registry) windowActive() bool { return r.windowOpen != nil && r.windowOpen() }
 
 // Register adds a tool. It panics on a duplicate name or a malformed entity ref
-// — both programming errors caught at startup rather than at call time. The
+// , both programming errors caught at startup rather than at call time. The
 // handlers rely on the schema guaranteeing the entity param is a present string,
 // so enforce that invariant here.
 func (r *Registry) Register(t *Tool) {

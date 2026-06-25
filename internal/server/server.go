@@ -83,7 +83,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// When served under a subpath, strip it before routing so the mux and the
 	// static handler see root-relative paths. This is tolerant: if the reverse
 	// proxy already strips the prefix, the request arrives root-relative and the
-	// TrimPrefix is a no-op — so it works with proxies that strip and those that
+	// TrimPrefix is a no-op, so it works with proxies that strip and those that
 	// don't.
 	if s.base != "/" {
 		prefix := strings.TrimSuffix(s.base, "/") // e.g. "/oriel"
@@ -99,7 +99,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Anti-rebinding / CSRF: API requests must be same-origin and arrive on a
 	// loopback or explicitly-allowed Host. Static assets (the SPA) are harmless.
 	if strings.HasPrefix(r.URL.Path, "/api/") && !s.allowAPI(r) {
-		http.Error(w, "forbidden: cross-site request or untrusted Host — add it in Settings → Remote access, or set ORIEL_ALLOWED_HOSTS", http.StatusForbidden)
+		http.Error(w, "forbidden: cross-site request or untrusted Host, add it in Settings → Remote access, or set ORIEL_ALLOWED_HOSTS", http.StatusForbidden)
 		return
 	}
 	s.mux.ServeHTTP(w, r)
@@ -123,7 +123,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/colima/status", s.handleColimaStatus)
 	s.mux.HandleFunc("POST /api/colima/{action}", s.handleColimaLifecycle)
 
-	// Tool registry — the canonical action layer.
+	// Tool registry, the canonical action layer.
 	s.mux.HandleFunc("GET /api/tools", s.handleTools)
 	s.mux.HandleFunc("POST /api/invoke", s.handleInvoke)
 

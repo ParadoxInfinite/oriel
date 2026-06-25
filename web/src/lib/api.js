@@ -2,7 +2,7 @@
 
 // In the GitHub Pages demo build, every call is served by an in-memory mock
 // instead of the network. __ORIEL_DEMO__ is a build-time boolean literal (see
-// vite.config.js define), so in prod it's `false` — the branches below fold away
+// vite.config.js define), so in prod it's `false`, the branches below fold away
 // and Rollup drops this import, keeping the demo entirely out of the real binary.
 import * as demo from './demo/index.js'
 const DEMO = __ORIEL_DEMO__

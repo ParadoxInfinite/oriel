@@ -1,4 +1,4 @@
-// Non-loopback Hosts allowed to reach /api — the opt-in for private-network access.
+// Non-loopback Hosts allowed to reach /api, the opt-in for private-network access.
 import { apiGet, apiPut } from './api.js'
 
 export const remote = $state({ hosts: [], loaded: false, saving: false, error: '' })
@@ -8,7 +8,7 @@ export async function loadRemote() {
     const d = await apiGet('/api/remote')
     remote.hosts = d.hosts || []
   } catch {
-    /* not reachable — leave empty */
+    /* not reachable, leave empty */
   } finally {
     remote.loaded = true
   }

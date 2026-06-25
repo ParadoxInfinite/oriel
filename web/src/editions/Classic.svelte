@@ -25,7 +25,7 @@
   import RecentOutages from '../components/RecentOutages.svelte'
   import OpTray from '../components/OpTray.svelte'
 
-  // Classic's own @theme tokens already style the global overlays — no override.
+  // Classic's own @theme tokens already style the global overlays, no override.
   $effect(() => setOverlayTheme('classic'))
 
   const navItems = [
@@ -63,8 +63,8 @@
   })
 
   // Two distinct truths, kept separate so the chrome never conflates them:
-  //   Oriel (this app's backend) — reachable? status.error means it is not.
-  //   colima (the VM) — running? only knowable when the backend is reachable.
+  //   Oriel (this app's backend), reachable? status.error means it is not.
+  //   colima (the VM), running? only knowable when the backend is reachable.
   const gui = $derived(status.loading ? 'connecting' : status.error ? 'offline' : 'connected')
   const vm = $derived(
     status.loading ? 'checking' : status.error ? 'unknown' : status.running ? 'running' : 'stopped'
@@ -147,7 +147,7 @@
       <span class="text-[11px] font-medium tracking-wide text-muted">Oriel</span>
       <div class="flex items-center gap-1.5">
         {#if update.available}
-          <button type="button" onclick={onUpdatePill} class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available — v{update.latest} · {canSelfUpdate() ? 'install now' : 'open updates'}">update</button>
+          <button type="button" onclick={onUpdatePill} class="rounded-full bg-accent/15 px-2 py-0.5 font-mono text-[10px] font-medium text-accent hover:underline" title="Update available, v{update.latest} · {canSelfUpdate() ? 'install now' : 'open updates'}">update</button>
         {/if}
         {#if verLabel}<span class="rounded-full border border-border bg-surface-2 px-2 py-0.5 font-mono text-[10px] font-medium text-fg/85">{verLabel}</span>{/if}
       </div>

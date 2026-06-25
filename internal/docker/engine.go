@@ -16,7 +16,7 @@ type EngineInfo struct {
 }
 
 // EngineInfo pings the daemon via `docker info`. A nil/zero result (Reachable
-// false) means the engine is down or unreachable — never an error to the caller.
+// false) means the engine is down or unreachable, never an error to the caller.
 func (c *Client) EngineInfo(ctx context.Context) EngineInfo {
 	cli, err := c.api(ctx)
 	if err != nil {

@@ -18,7 +18,7 @@ const SCHEMES = {
 }
 
 // Overlay shape per scheme (radius + shadow), so shared overlays adopt each
-// edition's modal language, not just its palette — classic keeps the old hardcoded
+// edition's modal language, not just its palette, classic keeps the old hardcoded
 // look; light/dark match Studio's rounded-xl + --shadow-lg.
 const SHAPE = {
   classic: { radius: '0.625rem', shadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)' },

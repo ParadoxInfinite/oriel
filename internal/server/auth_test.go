@@ -68,7 +68,7 @@ func TestAllowAPI_Auth(t *testing.T) {
 
 // TestAllowAPI_ForwardedLoopback closes the proxy bypass: behind a reverse proxy
 // the Host is attacker-controlled, so a forged `Host: 127.0.0.1` must NOT inherit
-// the local-UI exemption — the forwarding header the proxy adds gives it away.
+// the local-UI exemption, the forwarding header the proxy adds gives it away.
 func TestAllowAPI_ForwardedLoopback(t *testing.T) {
 	mk := func(token string) *Server {
 		return &Server{
@@ -76,7 +76,7 @@ func TestAllowAPI_ForwardedLoopback(t *testing.T) {
 			auth:  &authGate{token: token},
 		}
 	}
-	// Direct local request — no forwarding header — keeps the exemption.
+	// Direct local request, no forwarding header, keeps the exemption.
 	if !mk("secret").allowAPI(authReq("127.0.0.1:4321", "", "")) {
 		t.Fatal("direct loopback request must stay exempt (local UI)")
 	}
@@ -90,7 +90,7 @@ func TestAllowAPI_ForwardedLoopback(t *testing.T) {
 			t.Errorf("%s: proxied request with forged loopback Host must be denied", hdr)
 		}
 	}
-	// A proxied request with the real (allowed) Host + token still works — proxies
+	// A proxied request with the real (allowed) Host + token still works, proxies
 	// are a supported remote path, the forwarding header alone doesn't block them.
 	r := authReq("oriel.example", "Bearer secret", "")
 	r.Header.Set("X-Forwarded-For", "203.0.113.7")
@@ -101,7 +101,7 @@ func TestAllowAPI_ForwardedLoopback(t *testing.T) {
 
 // TestLocalAdmin gates the local-only admin ops (set/clear token, edit allow-list):
 // a direct loopback request may; a proxied one wearing a forged loopback Host, or
-// any remote Host, may not — even though it might otherwise pass the /api gate.
+// any remote Host, may not, even though it might otherwise pass the /api gate.
 func TestLocalAdmin(t *testing.T) {
 	s := &Server{}
 	if !s.localAdmin(authReq("127.0.0.1:4321", "", "")) {
@@ -110,7 +110,7 @@ func TestLocalAdmin(t *testing.T) {
 	if !s.localAdmin(authReq("localhost", "", "")) {
 		t.Error("direct localhost must be allowed to administer")
 	}
-	// Forged loopback Host behind a proxy — the escalation path — must be denied.
+	// Forged loopback Host behind a proxy, the escalation path, must be denied.
 	for _, hdr := range []string{"X-Forwarded-For", "X-Forwarded-Host", "Forwarded"} {
 		req := authReq("127.0.0.1", "", "")
 		req.Header.Set(hdr, "203.0.113.7")

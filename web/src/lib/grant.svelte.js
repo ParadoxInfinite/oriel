@@ -34,7 +34,7 @@ export async function openGrant(hours) {
   }
 }
 
-// requestGrant opens the window and surfaces any failure as a toast — the
+// requestGrant opens the window and surfaces any failure as a toast, the
 // shape both editions' "open window" buttons want.
 export async function requestGrant(hours) {
   try {

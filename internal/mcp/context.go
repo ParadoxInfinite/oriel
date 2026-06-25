@@ -10,7 +10,7 @@ import (
 )
 
 // addContext registers MCP resources and prompts on top of the tools. Resources
-// let a client attach a container's logs or inspect output as context — each is
+// let a client attach a container's logs or inspect output as context, each is
 // backed by the same validated tool, so masking and the read-only/allow/deny
 // scoping still apply (a resource is only offered when its tool is in scope).
 // Prompts are canned diagnostics: advisory text that points the model at the
@@ -52,7 +52,7 @@ func addContext(s *mcp.Server, reg *tools.Registry, include func(*tools.Tool) bo
 		return promptText("Fix Docker connection",
 			"A tool (e.g. Testcontainers, a docker SDK client) can't find Docker. Call docker.env to get the real "+
 				"socket, then tell the user the exact DOCKER_HOST and TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE to export "+
-				"— colima's socket isn't at /var/run/docker.sock."), nil
+				", colima's socket isn't at /var/run/docker.sock."), nil
 	})
 	s.AddPrompt(&mcp.Prompt{
 		Name: "reclaim-disk", Description: "Find what's safe to prune to reclaim Docker disk",

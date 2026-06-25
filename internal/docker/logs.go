@@ -14,7 +14,7 @@ import (
 // StreamLogs reads a container's logs, invoking emit per line. With follow=true it
 // tails live until ctx is cancelled; with follow=false it returns one historical
 // batch and stops. `until` (RFC3339Nano) bounds the batch to lines before that
-// moment — the cursor for lazy-loading older lines. Timestamps are always on so
+// moment, the cursor for lazy-loading older lines. Timestamps are always on so
 // each line carries the cursor; the ts is split out of the displayed text.
 func (c *Client) StreamLogs(ctx context.Context, id string, tail int, follow bool, until string, emit func(stream, ts, line string)) error {
 	cli, err := c.api(ctx)
@@ -89,7 +89,7 @@ func (w *lineWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 
-// flush emits any trailing line the stream ended without a newline — otherwise
+// flush emits any trailing line the stream ended without a newline, otherwise
 // the last line of a one-shot/crashed container is lost.
 func (w *lineWriter) flush() {
 	if len(w.buf) == 0 {

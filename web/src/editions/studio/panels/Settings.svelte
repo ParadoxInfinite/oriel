@@ -40,7 +40,7 @@
   ]
   const swatches = $derived([...ACCENTS, ...appearance.custom])
 
-  const verLabel = $derived(self.version || '—')
+  const verLabel = $derived(self.version || ', ')
 
   // Custom accent form.
   let newColor = $state('#22c55e')
@@ -238,7 +238,7 @@
   <section class="rise card p-5" style="animation-delay:95ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Automation access</h2>
     <p class="mt-1 text-[13px] text-[var(--text-2)]">
-      The MCP server (<span class="mono">oriel mcp</span>) can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window — your own clicks here in the UI are never affected.
+      The MCP server (<span class="mono">oriel mcp</span>) can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window, your own clicks here in the UI are never affected.
     </p>
     <div class="mt-4 flex flex-wrap items-center gap-2">
       {#if grant.active}
@@ -265,18 +265,18 @@
 
     <div class="mt-4">
       {#if update.phase === 'restarting'}
-        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Restarting Oriel — this page will reconnect…</div>
+        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Restarting Oriel, this page will reconnect…</div>
       {:else if update.phase === 'applying'}
         <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Downloading &amp; verifying…</div>
       {:else if update.phase === 'done'}
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="text-[13px] text-[var(--text-2)]">Installed <span class="mono">v{update.latest}</span> — restart to apply.</span>
+          <span class="text-[13px] text-[var(--text-2)]">Installed <span class="mono">v{update.latest}</span>, restart to apply.</span>
           <button class="btn btn-primary btn-sm" onclick={() => restartService()}>Restart now</button>
         </div>
       {:else if update.packageManager === 'homebrew'}
-        <p class="text-[13px] text-[var(--text-3)]">Installed via Homebrew — update with <span class="mono">brew upgrade oriel</span>.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+        <p class="text-[13px] text-[var(--text-3)]">Installed via Homebrew, update with <span class="mono">brew upgrade oriel</span>.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
       {:else if !update.managed}
-        <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out — <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+        <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
       {:else if update.available}
         <div class="flex flex-wrap items-center justify-between gap-3">
           <span class="text-[13px] text-[var(--text-2)]">Update available: <span class="mono font-medium text-[var(--text)]">v{update.latest}</span></span>
@@ -299,7 +299,7 @@
   <section class="rise card p-5" style="animation-delay:120ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Remote access</h2>
     <p class="mt-0.5 text-[12px] text-[var(--text-3)]">By default Oriel only answers on <span class="mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
-    <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network — never expose it to the public internet.</p>
+    <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network, never expose it to the public internet.</p>
 
     {#if remote.hosts.length}
       <div class="mt-3 flex flex-col gap-1.5">

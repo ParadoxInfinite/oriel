@@ -64,7 +64,7 @@
             {#if pc.busy}<span class="h-2.5 w-2.5 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span>{/if}
           </div>
           {#if !pc.busy && !pc.shownTags.length}
-            <div class="px-0.5 py-1 text-[12px] text-[var(--text-3)]">No tags found — type one manually.</div>
+            <div class="px-0.5 py-1 text-[12px] text-[var(--text-3)]">No tags found, type one manually.</div>
           {:else}
             <div class="flex max-h-40 flex-wrap gap-1.5 overflow-auto">
               {#each pc.shownTags.slice(0, 40) as t, i (t)}
@@ -74,7 +74,7 @@
           {/if}
         </div>
       {:else if !pc.source.search}
-        <p class="mt-2 text-[11.5px] text-[var(--text-3)]">{pc.source.label.split('·')[0].trim()} has no public search — type the full image name above. Pulls work the same.</p>
+        <p class="mt-2 text-[11.5px] text-[var(--text-3)]">{pc.source.label.split('·')[0].trim()} has no public search, type the full image name above. Pulls work the same.</p>
       {/if}
 
       {#if pc.error}

@@ -94,7 +94,7 @@ func setBasePath(port int, val string) error {
 		return err
 	}
 	if out.BasePath == "/" {
-		fmt.Println("base path cleared — serving at the host root")
+		fmt.Println("base path cleared, serving at the host root")
 	} else {
 		fmt.Printf("base path set to %s\n", out.BasePath)
 	}
@@ -123,9 +123,9 @@ func runConfigAuthToken(args []string) error {
 			return err
 		}
 		if enabled {
-			fmt.Println("auth: ON — non-loopback /api requires a bearer token")
+			fmt.Println("auth: ON, non-loopback /api requires a bearer token")
 		} else {
-			fmt.Println("auth: off — loopback only")
+			fmt.Println("auth: off, loopback only")
 		}
 		return nil
 	}
@@ -184,13 +184,13 @@ func setAuth(port int, body map[string]any) error {
 	}
 	switch {
 	case out.Token != "":
-		fmt.Println("auth token generated — set it as a bearer token on your MCP/HTTP client:")
+		fmt.Println("auth token generated, set it as a bearer token on your MCP/HTTP client:")
 		fmt.Printf("\n  %s\n\n", out.Token)
-		fmt.Println("Shown once — store it now. Non-loopback /api now requires it.")
+		fmt.Println("Shown once, store it now. Non-loopback /api now requires it.")
 	case out.Enabled:
-		fmt.Println("auth token set — non-loopback /api now requires it.")
+		fmt.Println("auth token set, non-loopback /api now requires it.")
 	default:
-		fmt.Println("auth disabled — loopback only.")
+		fmt.Println("auth disabled, loopback only.")
 	}
 	return nil
 }

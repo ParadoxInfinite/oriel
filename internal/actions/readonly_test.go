@@ -8,7 +8,7 @@ import (
 )
 
 // TestReadOnlyClassification locks in that pure reads are marked ReadOnly and
-// mutations are not — so `oriel mcp --read-only` and the MCP read-only hint are
+// mutations are not, so `oriel mcp --read-only` and the MCP read-only hint are
 // accurate (Destructive:false alone would wrongly include start/stop).
 func TestReadOnlyClassification(t *testing.T) {
 	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })

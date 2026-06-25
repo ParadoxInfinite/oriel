@@ -9,11 +9,11 @@ import (
 )
 
 // registerStacks wires compose-project lifecycle as tools. Each blocks until the
-// compose action finishes and returns the collected output — the synchronous
+// compose action finishes and returns the collected output, the synchronous
 // path the registry (and so MCP) needs. The UI drives the same actions over a
 // stream (op tray) for live progress. stack.down removes containers + networks,
 // so it's Destructive; start/stop/restart are reversible. Deploying a not-yet-
-// running project stays out of the registry — that's the discovery/file-path
+// running project stays out of the registry, that's the discovery/file-path
 // flow, not an action on a known stack name.
 func registerStacks(r *tools.Registry, dc *docker.Client) {
 	nameArg := tools.Schema{
@@ -57,7 +57,7 @@ func registerStacks(r *tools.Registry, dc *docker.Client) {
 
 	// stack.alias is a display-only label write, not a Docker action: it sets the
 	// Oriel name shown for a project; the real compose name is unchanged. No Entity
-	// check — an alias can target a discovered (not-yet-running) project too.
+	// check, an alias can target a discovered (not-yet-running) project too.
 	r.Register(&tools.Tool{
 		Name: "stack.alias", Title: "Rename stack in Oriel", Description: "Set or clear the Oriel display alias for a compose project (display only; the real project name is unchanged)",
 		Schema: tools.Schema{

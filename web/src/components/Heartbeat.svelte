@@ -1,8 +1,8 @@
 <script>
-  // Smooth, scrubbable system pulse — time-axed so outages read correctly:
-  //   • teal line     — colima up; peak CPU per 15s window
-  //   • red baseline  — colima was DOWN while we watched (recorded down-ticks)
-  //   • dashed grey   — Oriel itself was OFFLINE (nothing recorded → a gap)
+  // Smooth, scrubbable system pulse, time-axed so outages read correctly:
+  //   • teal line, colima up; peak CPU per 15s window
+  //   • red baseline, colima was DOWN while we watched (recorded down-ticks)
+  //   • dashed grey, Oriel itself was OFFLINE (nothing recorded → a gap)
   // Points are {t, cpu(percent), down(bool)}. Only the last 30 min is shown, so
   // data from before a long downtime simply scrolls out of view.
   let { points = [], color = 'var(--color-accent)' } = $props()
@@ -27,7 +27,7 @@
 
   // Clock-aligned 15s windows within the last 30 min. Each window keeps the peak
   // of its up-samples; a window with only down-ticks is itself "down". A jump of
-  // more than one window key means Oriel recorded nothing — an offline gap.
+  // more than one window key means Oriel recorded nothing, an offline gap.
   const series = $derived.by(() => {
     if (!points.length) return []
     const cutoff = Date.now() - VIEW_MS

@@ -10,7 +10,7 @@ import (
 // registerColima wires Colima VM lifecycle as tools so an agent can manage the
 // machine, not just read colima.status. Each blocks until the action finishes
 // (synchronous wrapper over colima.Stream; the UI streams for live progress).
-// stop and restart take the whole VM — and every container — down, so they're
+// stop and restart take the whole VM, and every container, down, so they're
 // Destructive (grant-gated); start only brings it up, so it stays free.
 func registerColima(r *tools.Registry) {
 	run := func(action string) func(context.Context, map[string]any) (any, error) {
@@ -28,12 +28,12 @@ func registerColima(r *tools.Registry) {
 		Handler: run("start"),
 	})
 	r.Register(&tools.Tool{
-		Name: "colima.stop", Title: "Stop Colima", Description: "Stop the Colima VM — this stops every container on it",
+		Name: "colima.stop", Title: "Stop Colima", Description: "Stop the Colima VM, this stops every container on it",
 		Destructive: true,
 		Handler:     run("stop"),
 	})
 	r.Register(&tools.Tool{
-		Name: "colima.restart", Title: "Restart Colima", Description: "Restart the Colima VM — this bounces every container on it",
+		Name: "colima.restart", Title: "Restart Colima", Description: "Restart the Colima VM, this bounces every container on it",
 		Destructive: true,
 		Handler:     run("restart"),
 	})

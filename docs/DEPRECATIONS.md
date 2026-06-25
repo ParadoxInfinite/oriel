@@ -16,7 +16,7 @@ the `/api/resolve` and `/api/provider` endpoints, the `ORIEL_PROVIDER_URL`
 setting, and the `provider` / `setProvider` / `resolveText` exports in the
 edition SDK. All gone as of v0.6.0.
 
-The normal command palette is untouched — typing `stop postgres` and picking an
+The normal command palette is untouched. Typing `stop postgres` and picking an
 action works exactly as before.
 
 ### Why it went
@@ -26,12 +26,12 @@ It never earned its place between the two paths that already existed:
 - The command palette (⌘K) matches the tool you mean and runs it, with no model
   and no setup.
 - The MCP server (`oriel mcp`) hands the same tools to your own model, local or
-  hosted, through any MCP client — and that model can reason across multiple
+  hosted, through any MCP client, and that model can reason across multiple
   steps.
 
 The provider seam was a one-shot thing wedged between them: send one sentence to
 an external model, get back one tool call. Same permissions as MCP (gated by the
-destructive-grant window) but strictly less capable — it couldn't chain calls or
+destructive-grant window) but strictly less capable: it couldn't chain calls or
 look at a result and decide what to do next. Whatever you'd point it at, a local
 model included, the MCP server handles better.
 

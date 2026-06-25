@@ -2,7 +2,7 @@
 @import '@fontsource-variable/geist';
 @import '@fontsource-variable/geist-mono';
 
-/* Single palette — near-black with a teal signal. Geist for UI, Geist Mono for
+/* Single palette, near-black with a teal signal. Geist for UI, Geist Mono for
    data. Tailwind generates utilities (bg-bg, text-fg, border-border …) from these. */
 @theme {
   --color-bg: #0a0c0f;
@@ -11,8 +11,8 @@
   --color-elevated: #1e232b;
   --color-border: #252a32;
   --color-border-light: #2f353f;
-  --color-muted: #aeb6c2; /* secondary text — readable, ~8:1 on bg */
-  --color-faint: #8b93a1; /* tertiary text — labels/timestamps, ~5.5:1 on bg */
+  --color-muted: #aeb6c2; /* secondary text, readable, ~8:1 on bg */
+  --color-faint: #8b93a1; /* tertiary text, labels/timestamps, ~5.5:1 on bg */
   --color-fg: #eef1f6;
   --color-accent: #2dd4bf;
   --color-accent-dim: #1c8577;
@@ -20,7 +20,7 @@
   --color-danger: #f4767a;
   --color-ok: #34d399;
   --color-warn: #fbbf24;
-  /* Secondary accents — used sparingly for state pills and stack grouping. */
+  /* Secondary accents, used sparingly for state pills and stack grouping. */
   --color-sky: #56b6f7;
   --color-violet: #a78bfa;
   --color-lime: #a3e635;
@@ -63,7 +63,7 @@ body {
 }
 
 /* ============================================================================
-   SURFACES + INTERACTION — hovers should feel reactive: a quick spring lift,
+   SURFACES + INTERACTION, hovers should feel reactive: a quick spring lift,
    an accent edge that ignites, never a dull background swap.
    ========================================================================== */
 .card {

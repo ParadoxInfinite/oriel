@@ -57,7 +57,7 @@
       <h2 class="display text-lg font-medium tracking-tight">Docker engine unreachable</h2>
       <p class="mt-1.5 max-w-sm text-sm text-muted">Start the Docker daemon, then retry.</p>
       <div class="mt-4 rounded-[--radius] border border-border bg-surface px-3 py-2 font-mono text-xs text-muted">
-        sudo systemctl start docker <span class="text-faint">— Linux</span>
+        sudo systemctl start docker <span class="text-faint">, Linux</span>
       </div>
       <button class="pop mt-5 flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted hover:text-fg" onclick={() => refreshStatus()}>
         <Icon name="restart" size={14} /> Retry
@@ -132,7 +132,7 @@
     <!-- Engine details -->
     <div class="rise mt-6 mb-2.5 text-[11px] uppercase tracking-[0.2em] text-faint" style="animation-delay:200ms">{isDocker ? 'Docker engine' : 'Virtual machine'}</div>
     <div class="rise grid grid-cols-2 gap-3 sm:grid-cols-4" style="animation-delay:200ms">
-      {#each isDocker ? [{ label: 'CPUs', value: String(s.cpu) }, { label: 'Memory', value: bytes(s.memory) }, { label: 'Version', value: s.version || '—' }, { label: 'Driver', value: s.driver || '—' }] : [{ label: 'CPUs', value: String(s.cpu) }, { label: 'Memory', value: bytes(s.memory) }, { label: 'Disk', value: bytes(s.disk) }, { label: 'Kubernetes', value: s.kubernetes ? 'on' : 'off' }] as c}
+      {#each isDocker ? [{ label: 'CPUs', value: String(s.cpu) }, { label: 'Memory', value: bytes(s.memory) }, { label: 'Version', value: s.version || ', ' }, { label: 'Driver', value: s.driver || ', ' }] : [{ label: 'CPUs', value: String(s.cpu) }, { label: 'Memory', value: bytes(s.memory) }, { label: 'Disk', value: bytes(s.disk) }, { label: 'Kubernetes', value: s.kubernetes ? 'on' : 'off' }] as c}
         <div class="card rounded-[--radius] p-4">
           <div class="text-[11px] uppercase tracking-wider text-muted">{c.label}</div>
           <div class="tnum mt-1.5 font-mono text-lg">{c.value}</div>

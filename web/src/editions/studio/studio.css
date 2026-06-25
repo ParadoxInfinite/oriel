@@ -1,5 +1,5 @@
 /* ============================================================================
-   STUDIO — a calm, native-feeling control panel for Oriel.
+   STUDIO, a calm, native-feeling control panel for Oriel.
    Design language borrowed from tools developers like living in: OrbStack's
    airy surfaces, Linear's restraint, Docker Desktop's familiarity.
    A single --accent drives the whole accent ramp (via color-mix), every gray is
@@ -31,7 +31,7 @@
   --text-2: #545b68;
   --text-3: #868d9a;
 
-  /* Accent — set one colour; the ramp derives from it. */
+  /* Accent, set one colour; the ramp derives from it. */
   --accent: #5b5bd6;
   --accent-hover: color-mix(in srgb, var(--accent) 86%, #000);
   --accent-press: color-mix(in srgb, var(--accent) 74%, #000);

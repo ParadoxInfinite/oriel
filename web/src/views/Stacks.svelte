@@ -97,7 +97,7 @@
     </div>
   {:else if discovery.stacks.length === 0}
     <div class="rounded-[--radius] border border-border bg-surface px-4 py-3 text-[13px] text-faint">
-      Nothing new to deploy — everything discovered is already running.{#if discovery.hidden}<span> {discovery.hidden} hidden by filter.</span>{/if}
+      Nothing new to deploy, everything discovered is already running.{#if discovery.hidden}<span> {discovery.hidden} hidden by filter.</span>{/if}
     </div>
   {:else}
     <div class="flex flex-col gap-2">

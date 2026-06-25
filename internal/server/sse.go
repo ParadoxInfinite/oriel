@@ -8,7 +8,7 @@ import (
 )
 
 // sseWriter is a minimal Server-Sent Events writer. SSE is used for all live
-// data (lifecycle progress, docker events, stats, logs) — one channel each,
+// data (lifecycle progress, docker events, stats, logs), one channel each,
 // cheap, and no websocket dependency. The mutex lets a keepalive goroutine ping
 // alongside the data goroutine without racing the underlying writer.
 type sseWriter struct {

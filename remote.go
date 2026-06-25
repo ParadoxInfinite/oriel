@@ -13,7 +13,7 @@ import (
 
 // The `remote` subcommand manages the host allow-list of a *running* Oriel over
 // loopback (127.0.0.1, which the API guard always trusts). The server persists
-// the list and hot-reloads its guard, so changes take effect with no restart —
+// the list and hot-reloads its guard, so changes take effect with no restart,
 // and, run on the box itself, this is the way out of the bootstrap deadlock
 // where you can't reach Settings → Remote access because the proxy host is 403'd.
 
@@ -56,7 +56,7 @@ func runRemote(args []string) error {
 			return err
 		}
 		printHosts(updated)
-		fmt.Println("Applied to the running instance — no restart needed.")
+		fmt.Println("Applied to the running instance, no restart needed.")
 		return nil
 	default:
 		return remoteUsage()
@@ -76,7 +76,7 @@ Commands:
 
   --port N   port the running Oriel listens on (default 4321)
 
-Oriel has no authentication — only allow hosts on a network you trust.`)
+Oriel has no authentication, only allow hosts on a network you trust.`)
 	return nil
 }
 
@@ -111,7 +111,7 @@ func normCLIHost(h string) string { return strings.ToLower(strings.TrimSpace(h))
 
 func printHosts(hosts []string) {
 	if len(hosts) == 0 {
-		fmt.Println("Allowed hosts: (none — loopback only)")
+		fmt.Println("Allowed hosts: (none, loopback only)")
 		return
 	}
 	fmt.Println("Allowed hosts:")

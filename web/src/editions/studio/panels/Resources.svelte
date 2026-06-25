@@ -47,7 +47,7 @@
       cols: [
         { label: 'Repository', key: 'repo', get: (i) => i.tags[0], grow: true, strong: true, mono: true, tags: true },
         { label: 'Size', key: 'size', get: (i) => i.size, right: true, mono: true, w: '110px', render: (i) => fmt.bytes(i.size) },
-        { label: 'In use', key: 'inuse', get: (i) => i.containers, right: true, w: '92px', render: (i) => (i.containers > 0 ? String(i.containers) : '—') },
+        { label: 'In use', key: 'inuse', get: (i) => i.containers, right: true, w: '92px', render: (i) => (i.containers > 0 ? String(i.containers) : ', ') },
         { label: 'Created', key: 'created', get: (i) => i.created, right: true, w: '140px', render: (i) => fmt.relativeTime(i.created) },
       ],
       removable: () => true,
@@ -262,7 +262,7 @@
             <svg class="shrink-0 text-[var(--text-3)]" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6" /></svg>
           </button>
         {:else}
-          <div class="px-5 py-10 text-center text-sm text-[var(--text-2)]">No matching containers found — the list may be refreshing.</div>
+          <div class="px-5 py-10 text-center text-sm text-[var(--text-2)]">No matching containers found, the list may be refreshing.</div>
         {/each}
       </div>
     </div>

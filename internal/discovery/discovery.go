@@ -26,7 +26,7 @@ type Root struct {
 
 // Filter restricts which discovered stacks surface. Mode "off" shows all;
 // "allow" shows only matches; "deny" hides matches. Running stacks are never
-// affected — the filter is applied to discovery results only.
+// affected, the filter is applied to discovery results only.
 type Filter struct {
 	Mode     string   `json:"mode"`
 	Patterns []string `json:"patterns"`
@@ -157,7 +157,7 @@ func scanRoot(root Root, seen map[string]bool) ([]Discovered, error) {
 	base := strings.Count(filepath.Clean(path), string(os.PathSeparator))
 	_ = filepath.WalkDir(path, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return nil // unreadable subtree — skip it, keep going
+			return nil // unreadable subtree, skip it, keep going
 		}
 		if !d.IsDir() { // symlinks report as non-dir, so we never follow them
 			return nil

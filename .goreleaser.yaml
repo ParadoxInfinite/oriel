@@ -1,9 +1,9 @@
-# GoReleaser — cross-compiles Oriel, publishes the GitHub Release, and updates
+# GoReleaser, cross-compiles Oriel, publishes the GitHub Release, and updates
 # the Homebrew tap (ParadoxInfinite/homebrew-oriel).
 #
 # Asset names are kept identical to the previous hand-rolled pipeline
 # (raw `oriel-<os>-<arch>` binaries + `SHA256SUMS.txt`) so install.sh and the
-# README curl one-liners keep working unchanged — no tarballs.
+# README curl one-liners keep working unchanged, no tarballs.
 #
 #   Release:  git tag v0.3.0 && git push origin v0.3.0   (Actions does the rest)
 #   Validate: goreleaser release --snapshot --clean      (no publish; inspect dist/)
@@ -15,7 +15,7 @@ version: 2
 project_name: oriel
 
 # web/dist is committed to the repo (go:embed needs it present; CI fails if it's
-# stale), so there is deliberately NO frontend build step here — rebuilding it
+# stale), so there is deliberately NO frontend build step here, rebuilding it
 # would dirty the tree and trip GoReleaser's clean-state check. The Go build
 # embeds whatever web/dist is committed at the tag.
 before:
@@ -39,7 +39,7 @@ builds:
 
 archives:
   - id: oriel
-    # Upload raw binaries, not tarballs — preserves the lean curl one-liner and
+    # Upload raw binaries, not tarballs, preserves the lean curl one-liner and
     # the existing asset names that install.sh + the README depend on.
     formats: [binary]
     name_template: "oriel-{{ .Os }}-{{ .Arch }}"
@@ -53,12 +53,12 @@ release:
     owner: ParadoxInfinite
     name: oriel
   # A hyphenated tag (v0.3.0-rc1) publishes as a pre-release, so GitHub's
-  # "latest" — which install.sh and the curl URLs resolve to — only ever points
+  # "latest", which install.sh and the curl URLs resolve to, only ever points
   # at a stable release. Matches the old workflow's behaviour.
   prerelease: auto
 
 # Homebrew CASK (not formula). GoReleaser removed `brews` in v2.16; casks are
-# the path for pre-compiled binaries. Casks are macOS-only — Linux users install
+# the path for pre-compiled binaries. Casks are macOS-only, Linux users install
 # via the curl one-liner or `go install` (those binaries are still released).
 homebrew_casks:
   - name: oriel
@@ -79,7 +79,7 @@ homebrew_casks:
     skip_upload: auto
     # Oriel's binaries aren't Apple-notarized, so macOS quarantines the download
     # and Gatekeeper would block first run. Strip the quarantine attr recursively
-    # on the staged dir — the staged file keeps its arch-specific name
+    # on the staged dir, the staged file keeps its arch-specific name
     # (oriel-darwin-arm64); only the PATH symlink is `oriel`, so target the dir.
     hooks:
       post:

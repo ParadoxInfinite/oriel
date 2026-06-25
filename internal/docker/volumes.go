@@ -25,8 +25,8 @@ type VolumePreview struct {
 	CreatedAt string `json:"createdAt"`
 }
 
-// PruneableVolumes lists volumes no container references — exactly what a prune
-// would remove — with sizes from the disk-usage API (0 when a driver can't
+// PruneableVolumes lists volumes no container references, exactly what a prune
+// would remove, with sizes from the disk-usage API (0 when a driver can't
 // report it, so the prune still works, the total is just approximate).
 func (c *Client) PruneableVolumes(ctx context.Context) ([]VolumePreview, error) {
 	cli, err := c.api(ctx)

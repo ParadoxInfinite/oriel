@@ -12,5 +12,5 @@ func (s *Server) handleSystemUsage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, u)
 }
 
-// System prune itself now runs as a background job — see handleStartSystemPrune
+// System prune itself now runs as a background job, see handleStartSystemPrune
 // in ops.go, which survives client refresh and is cancellable.

@@ -80,7 +80,7 @@ Set `oriel config base-path /oriel` to match the `location`, and
 
 The same requirements apply:
 
-1. **Forward the public `Host`** (must match `allowedHosts`) — not a loopback Host.
+1. **Forward the public `Host`** (must match `allowedHosts`), not a loopback Host.
 2. **Set a forwarding header** (`X-Forwarded-For` or `Forwarded`). Oriel uses it to
    tell proxied traffic from the local UI: a proxied request never inherits the
    loopback "no token needed" trust, so it always has to pass `allowedHosts` + the
@@ -91,4 +91,4 @@ The same requirements apply:
 
 > Don't configure the proxy to send `Host: 127.0.0.1`. With auth on, the forwarding
 > header still forces the token, but the supported setup is a real public Host in
-> `allowedHosts` — a loopback Host from a proxy is a misconfiguration, not a path in.
+> `allowedHosts`, a loopback Host from a proxy is a misconfiguration, not a path in.

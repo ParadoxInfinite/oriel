@@ -37,7 +37,7 @@ func unitFiles() []string {
 }
 
 // IsManaged reports whether the running executable is the one an installed Oriel
-// service launches — i.e. self-update is safe to replace it and restart. Manual
+// service launches, i.e. self-update is safe to replace it and restart. Manual
 // `./oriel` runs (a different binary path) return false.
 // normalizeManagedExe maps the live executable path back to the installed one.
 // After a self-update the running binary has been renamed to <exe>.bak before the
@@ -80,7 +80,7 @@ func isHomebrewPath(p string) bool {
 
 // PackageManager reports which package manager owns the running binary, or "" for
 // a standalone install. Only Homebrew is detected (its cask/formula staging dirs).
-// Such installs must update via `brew upgrade` — an in-app self-update would
+// Such installs must update via `brew upgrade`, an in-app self-update would
 // overwrite Homebrew-tracked files and desync brew's state.
 func PackageManager() string {
 	exe, err := os.Executable()
@@ -98,7 +98,7 @@ func PackageManager() string {
 
 // stableBrewBin returns the Homebrew `bin` symlink that resolves to `resolved`,
 // or "". A cask's versioned Caskroom path changes on every `brew upgrade`, but the
-// symlink is stable — so a service should launch via the symlink, not the path.
+// symlink is stable, so a service should launch via the symlink, not the path.
 func stableBrewBin(resolved string) string {
 	for _, p := range []string{"/opt/homebrew/bin/oriel", "/usr/local/bin/oriel", "/home/linuxbrew/.linuxbrew/bin/oriel"} {
 		if r, err := filepath.EvalSymlinks(p); err == nil && r == resolved {
@@ -117,7 +117,7 @@ func Restart() error {
 		// SIGTERM triggers the server's graceful shutdown; launchd then relaunches.
 		return syscall.Kill(os.Getpid(), syscall.SIGTERM)
 	case "linux":
-		// systemctl stops (SIGTERM) then starts a fresh instance. Don't wait — it
+		// systemctl stops (SIGTERM) then starts a fresh instance. Don't wait, it
 		// kills this very process mid-command.
 		return exec.Command("systemctl", sctl(useSystem(false), "restart", "oriel.service")...).Start()
 	default:
@@ -181,10 +181,10 @@ func install(port int, system bool) error {
 	// upgrades; updates then flow through `brew upgrade`, not in-app self-update.
 	if isHomebrewPath(bin) {
 		if sym := stableBrewBin(bin); sym != "" {
-			fmt.Printf("Homebrew install detected — the service will launch %s; update with `brew upgrade oriel`.\n", sym)
+			fmt.Printf("Homebrew install detected, the service will launch %s; update with `brew upgrade oriel`.\n", sym)
 			bin = sym
 		} else {
-			fmt.Println("Warning: Homebrew install at a versioned path — after `brew upgrade` you may need to re-run `oriel service install`.")
+			fmt.Println("Warning: Homebrew install at a versioned path, after `brew upgrade` you may need to re-run `oriel service install`.")
 		}
 	}
 

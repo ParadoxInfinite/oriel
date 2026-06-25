@@ -26,7 +26,7 @@ export function containersForImage(imageId) {
 }
 
 // A digest-pinned image is untagged but named by digest (its only "tag" is a
-// repo@sha256:… ref) — e.g. compose images pinned by digest.
+// repo@sha256:… ref), e.g. compose images pinned by digest.
 export function isPinnedImage(image) {
   return image?.tags?.length === 1 && image.tags[0].includes('@sha256:')
 }

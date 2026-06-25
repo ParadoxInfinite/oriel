@@ -118,7 +118,7 @@ func (s *Server) handleFsOpen(w http.ResponseWriter, r *http.Request) {
 }
 
 // discoveredFile reports whether (dir, file) is a compose project the current
-// discovery config actually finds — the allowlist for what handleStackUp may run.
+// discovery config actually finds, the allowlist for what handleStackUp may run.
 func discoveredFile(cfg discovery.Config, dir, file string) bool {
 	for _, d := range discovery.Scan(cfg).Stacks {
 		if d.Dir == dir && d.File == file {
@@ -138,7 +138,7 @@ func (s *Server) handleStackUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Only deploy a compose file discovery actually found under the configured
-	// roots — never an arbitrary path from the request. This blocks running any
+	// roots, never an arbitrary path from the request. This blocks running any
 	// YAML on disk and flag-injection via a leading '-'.
 	if !discoveredFile(loadSettings().Discovery, dir, file) {
 		writeJSON(w, http.StatusForbidden, map[string]string{"error": "not a discovered compose file"})

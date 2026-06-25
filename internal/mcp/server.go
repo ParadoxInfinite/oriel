@@ -2,7 +2,7 @@
 // Protocol server over stdio. Every MCP client (Claude Desktop, Claude Code,
 // Cursor, a local Ollama-backed host) speaks the same JSON-RPC-over-stdio
 // transport, so a single `oriel mcp` process lets any of them drive Docker and
-// Colima through the exact same execution path the UI uses — schema-validated,
+// Colima through the exact same execution path the UI uses, schema-validated,
 // entity-checked, with the same secret masking. No model ships in the binary;
 // the model lives in the client.
 //
@@ -23,7 +23,7 @@ import (
 
 // Serve runs the MCP server over stdio until the client disconnects (EOF) or
 // ctx is cancelled. It registers one MCP tool per registry tool that `include`
-// admits (a nil include exposes everything) — that's how `oriel mcp --read-only`
+// admits (a nil include exposes everything), that's how `oriel mcp --read-only`
 // and the allow/deny lists scope the surface handed to a client.
 func Serve(ctx context.Context, reg *tools.Registry, version string, include func(*tools.Tool) bool) error {
 	return newServer(reg, version, include).Run(ctx, &mcp.StdioTransport{})
@@ -49,7 +49,7 @@ func toolFor(t *tools.Tool) *mcp.Tool {
 	destructive := t.Destructive
 	desc := t.Description
 	if destructive {
-		desc += " (destructive — modifies state)"
+		desc += " (destructive, modifies state)"
 	}
 	return &mcp.Tool{
 		Name:        t.Name,

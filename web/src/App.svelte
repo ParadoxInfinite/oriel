@@ -55,7 +55,7 @@
 
 {#if !connection.ok}
   <div role="status" style="position:fixed;top:0;left:0;right:0;z-index:60;padding:5px 12px;text-align:center;font-size:12px;font-weight:500;background:#b45309;color:#fff;">
-    Live connection lost — reconnecting…
+    Live connection lost, reconnecting…
   </div>
 {/if}
 

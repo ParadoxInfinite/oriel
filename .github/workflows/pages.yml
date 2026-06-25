@@ -1,7 +1,7 @@
 name: Demo (GitHub Pages)
 
-# Builds the "try it live" demo — the frontend with VITE_DEMO=1, which swaps every
-# backend call for an in-memory mock — and deploys it to GitHub Pages at
+# Builds the "try it live" demo, the frontend with VITE_DEMO=1, which swaps every
+# backend call for an in-memory mock, and deploys it to GitHub Pages at
 # https://paradoxinfinite.github.io/oriel/. No backend, no real Docker host.
 
 on:

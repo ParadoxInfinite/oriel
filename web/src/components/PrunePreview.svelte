@@ -62,7 +62,7 @@
           <span class="shrink-0 font-mono text-xs text-muted">{bytes(it.size)}</span>
         </label>
       {:else}
-        <div class="px-5 py-12 text-center text-sm text-muted">Nothing to prune — all clean.</div>
+        <div class="px-5 py-12 text-center text-sm text-muted">Nothing to prune, all clean.</div>
       {/each}
     </div>
 

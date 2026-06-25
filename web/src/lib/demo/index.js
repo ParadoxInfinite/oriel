@@ -1,7 +1,7 @@
 // In-memory mock backend for the GitHub Pages "try it live" build. Satisfies the
 // api.js contract so the whole UI runs with zero network. Guarded behind VITE_DEMO
 // in api.js (so it tree-shakes out of the real binary); `db` re-seeds on every
-// page load, so a refresh resets all demo mutations — by design.
+// page load, so a refresh resets all demo mutations, by design.
 import * as seed from './seed.js'
 
 const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)))
@@ -34,7 +34,7 @@ const isDangling = (i) => !(i.tags || []).length || i.tags[0] === '<none>'
 // store mutations can push refresh-events and status changes back to the UI.
 let eventsCb = null
 let liveCb = null
-// Real wall clock — live points must fall in the chart's Date.now()-30min window.
+// Real wall clock, live points must fall in the chart's Date.now()-30min window.
 let clock = Date.now()
 
 const emit = (type) => eventsCb && eventsCb('event', { type })
@@ -185,7 +185,7 @@ export async function demoPost(path, body) {
     if (j) j.cancelled = true
     return null
   }
-  // /api/fs/open, /api/update/* — not reachable in the demo
+  // /api/fs/open, /api/update/*, not reachable in the demo
   // (self-update is disabled); answer benignly.
   return null
 }
@@ -249,7 +249,7 @@ export async function demoStreamPost(path, { onEvent } = {}) {
   const q = new URLSearchParams(qs || '')
   if (p.startsWith('/api/colima/')) return streamColima(p.split('/')[3], onEvent)
   if (p === '/api/stacks/up') return streamDeploy(q, onEvent)
-  if (p.startsWith('/api/stacks/')) { const [, , , name, action] = p.split('/'); return streamStack(name, action, onEvent) }
+  if (p.startsWith('/api/stacks/')) { const [,, name, action] = p.split('/'); return streamStack(name, action, onEvent) }
   if (p === '/api/images/pull') return streamPull(q.get('ref') || '', onEvent)
 }
 

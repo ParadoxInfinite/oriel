@@ -30,7 +30,7 @@
         { label: 'Distribution', cells: ['Single static binary', 'Installer', 'Installer', 'Installer', 'Single binary', 'Run a container'] },
         { label: 'Size', cells: ['~13 MB', 'Hundreds of MB', '~tens of MB', 'Hundreds of MB', '~tens of MB', 'Container image'] },
         { label: 'Idle RAM', cells: ['~15–30 MB', 'Heavy (Electron + VM)', 'Light (native)', 'Heavy (Electron + VM)', 'Light', '≥2 GB host'] },
-        { label: 'Bundles its own VM / engine', cells: ['n — uses yours', 'y', 'y', 'y (Podman machine)', 'n', 'n'] },
+        { label: 'Bundles its own VM / engine', cells: ['n, uses yours', 'y', 'y', 'y (Podman machine)', 'n', 'n'] },
       ],
     },
     {
@@ -62,7 +62,7 @@
     {
       title: 'AI & automation',
       rows: [
-        { label: 'Built-in MCP server (drive via AI)', cells: ['y — safety-gated', 'MCP Toolkit (runs other servers)', 'n', 'n', 'n', 'n'] },
+        { label: 'Built-in MCP server (drive via AI)', cells: ['y, safety-gated', 'MCP Toolkit (runs other servers)', 'n', 'n', 'n', 'n'] },
         { label: 'Secret masking + destructive grant', cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
         { label: 'Headless / scriptable', cells: ['y (oriel mcp, CLI)', '~ (CLI)', '~ (CLI)', '~ (CLI)', 'n', 'API'] },
       ],
@@ -76,7 +76,7 @@
       ],
     },
     {
-      title: "Where Oriel doesn't (yet) win — be honest",
+      title: "Where Oriel doesn't (yet) win, be honest",
       honest: true,
       rows: [
         { label: 'Windows support', cells: ['n (macOS · Linux)', 'y', 'n (macOS only)', 'y', 'y', 'y (server)'] },
@@ -103,7 +103,7 @@
       <header class="cmp-head">
         <div>
           <h2>How Oriel compares</h2>
-          <p>The full breakdown — including where it doesn't win. Tiers and figures drift; treat as a snapshot.</p>
+          <p>The full breakdown, including where it doesn't win. Tiers and figures drift; treat as a snapshot.</p>
         </div>
         <button class="cmp-x" aria-label="Close" onclick={close}>×</button>
       </header>

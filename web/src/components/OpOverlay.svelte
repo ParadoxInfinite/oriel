@@ -52,7 +52,7 @@
 
       <div class="flex items-center justify-between gap-3 border-t border-border bg-surface-2/40 px-5 py-3">
         {#if cur.jobId && !cur.done}
-          <span class="text-[11px] text-faint">Runs in the background — safe to close.</span>
+          <span class="text-[11px] text-faint">Runs in the background, safe to close.</span>
         {:else}
           <span></span>
         {/if}

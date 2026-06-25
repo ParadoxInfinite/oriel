@@ -39,7 +39,7 @@ type Outage struct {
 
 // HistoryPoint is one aggregate sample of total CPU% and memory at a moment.
 // Down marks a tick where colima/docker was unreachable while the recorder was
-// running — distinct from Oriel itself being offline, which records nothing
+// running, distinct from Oriel itself being offline, which records nothing
 // at all and so leaves a time gap between points. (omitempty keeps the common
 // "up" case compact and lets older persisted files load as up.)
 type HistoryPoint struct {
@@ -97,7 +97,7 @@ func retentionWindow() time.Duration {
 }
 
 // detectStartupOffline logs an Oriel outage when the buffer resumes after a
-// gap longer than offlineThreshold — i.e. we weren't running for a while.
+// gap longer than offlineThreshold, i.e. we weren't running for a while.
 func (r *recorder) detectStartupOffline() {
 	if len(r.history) == 0 {
 		return
@@ -200,7 +200,7 @@ func (r *recorder) tick(ctx context.Context) {
 	recovered := false
 	r.mu.Lock()
 	r.latest = stats
-	if r.downSince != 0 { // colima just came back — close the outage
+	if r.downSince != 0 { // colima just came back, close the outage
 		r.appendOutageLocked(Outage{Kind: "down", Start: r.downSince, End: now})
 		r.downSince = 0
 		r.pruneOutagesLocked()
@@ -255,7 +255,7 @@ func (r *recorder) outagesCopy() []Outage {
 	return out
 }
 
-// closeOpenOutage ends an in-progress colima outage at "now" — called on
+// closeOpenOutage ends an in-progress colima outage at "now", called on
 // shutdown so a downtime spanning a restart is still recorded.
 func (r *recorder) closeOpenOutage() {
 	r.mu.Lock()

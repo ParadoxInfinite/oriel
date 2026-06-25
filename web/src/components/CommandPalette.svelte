@@ -28,10 +28,10 @@
   })
 
   // The palette is a thin client over the tool registry: each entry maps to a
-  // {tool, args} call — the same shape /api/invoke runs for UI buttons. We
+  // {tool, args} call, the same shape /api/invoke runs for UI buttons. We
   // enumerate live entities × the actions valid for them, so
   // the palette only ever offers something that can actually run. Reads (logs,
-  // inspect, df) are deliberately absent — those navigate to a view, not here.
+  // inspect, df) are deliberately absent, those navigate to a view, not here.
   const DEFAULT_NETWORKS = new Set(['bridge', 'host', 'none'])
   const shortId = (id) => (id || '').replace(/^sha256:/, '').slice(0, 12)
   const imageName = (img) => {
@@ -87,7 +87,7 @@
   }
 
   function networkActions(n) {
-    // The predefined bridge/host/none networks can't be removed — don't offer it.
+    // The predefined bridge/host/none networks can't be removed, don't offer it.
     if (DEFAULT_NETWORKS.has(n.name)) return []
     return [
       {
@@ -102,7 +102,7 @@
     ]
   }
 
-  // Compose stacks run through the op tray (stackOp), not invoke — so ⌘K gets the
+  // Compose stacks run through the op tray (stackOp), not invoke, so ⌘K gets the
   // same live progress + cancel as the Stacks view buttons. Marked with `op`.
   function stackActions(s) {
     const acts = []
@@ -157,7 +157,7 @@
 
   const filtered = $derived.by(() => {
     const q = query.trim()
-    // Nothing shows until the user types — the palette opens as an empty prompt
+    // Nothing shows until the user types, the palette opens as an empty prompt
     // rather than dumping every action for every entity.
     if (!q) return []
 

@@ -22,7 +22,7 @@ import (
 )
 
 // runMCP serves the validated tool registry to an MCP client over stdio. It
-// speaks JSON-RPC on stdin/stdout, so nothing may be logged to stdout — the SDK
+// speaks JSON-RPC on stdin/stdout, so nothing may be logged to stdout, the SDK
 // owns it. The process lives for the client session and exits on EOF.
 //
 // Two safety choices, because the client is an LLM with no human in the loop:
@@ -48,10 +48,10 @@ func runMCP(args []string) error {
 	include := toolFilter(*readOnly, *allow, *deny)
 
 	if *httpAddr != "" {
-		// Never expose MCP beyond loopback without a token — that's an open door
+		// Never expose MCP beyond loopback without a token, that's an open door
 		// to the user's Docker. Force them to set one first.
 		if exposedAddr(*httpAddr) && settings.Load().AuthToken == "" {
-			return fmt.Errorf("refusing to serve MCP over HTTP on a non-loopback address (%s) without auth — set a token first:\n  oriel config auth-token --generate\n\nNote: this server speaks plain HTTP. The bearer token is sent in cleartext, so on any untrusted network put it behind a TLS-terminating reverse proxy (one that sets X-Forwarded-For) rather than binding it to the open address directly.", *httpAddr)
+			return fmt.Errorf("refusing to serve MCP over HTTP on a non-loopback address (%s) without auth, set a token first:\n  oriel config auth-token --generate\n\nNote: this server speaks plain HTTP. The bearer token is sent in cleartext, so on any untrusted network put it behind a TLS-terminating reverse proxy (one that sets X-Forwarded-For) rather than binding it to the open address directly.", *httpAddr)
 		}
 		// Read the token fresh per request so a rotation/clear in the other
 		// process (UI or `oriel config auth-token`) takes effect without a restart.
@@ -109,7 +109,7 @@ func csvSet(s string) map[string]bool {
 }
 
 // cleanShutdown reports whether err is just the client disconnecting or a
-// signal — the normal way a stdio MCP server ends. The SDK wraps stdin EOF in
+// signal, the normal way a stdio MCP server ends. The SDK wraps stdin EOF in
 // an unexported jsonrpc2 "server is closing" error that errors.Is can't match,
 // so fall back to the message for that one.
 func cleanShutdown(err error) bool {

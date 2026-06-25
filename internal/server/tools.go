@@ -14,7 +14,7 @@ func (s *Server) handleTools(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.tools.List())
 }
 
-// invokeRequest is the body for POST /api/invoke — the single execution entry
+// invokeRequest is the body for POST /api/invoke, the single execution entry
 // shared by UI buttons and the palette.
 type invokeRequest struct {
 	Tool string         `json:"tool"`
@@ -29,7 +29,7 @@ func (s *Server) handleInvoke(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// /api/invoke is the interactive surface (UI buttons + command palette, both
-	// behind their own confirm dialogs), so it carries consent — destructive
+	// behind their own confirm dialogs), so it carries consent, destructive
 	// tools run without needing a grant window. Agent paths (MCP) don't.
 	result, err := s.tools.Execute(tools.WithConsent(r.Context()), req.Tool, req.Args)
 	if err != nil {

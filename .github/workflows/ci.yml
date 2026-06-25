@@ -51,7 +51,7 @@ jobs:
       - name: Verify embedded web/dist is current
         run: |
           git diff --exit-code -- web/dist || {
-            echo "::error::web/dist is stale — run 'make build' and commit web/dist."
+            echo "::error::web/dist is stale, run 'make build' and commit web/dist."
             exit 1
           }
 

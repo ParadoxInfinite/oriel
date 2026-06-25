@@ -19,7 +19,7 @@ import (
 const minTokenLen = 16
 
 // authGate is the opt-in access-control layer for NON-loopback requests. The host
-// allow-list (hostGuard) is anti-rebinding, not authentication — anyone who can
+// allow-list (hostGuard) is anti-rebinding, not authentication, anyone who can
 // reach an allowed host can otherwise use the API unauthenticated. When a token
 // is configured, remote callers (including MCP-over-HTTP) must present it as a
 // bearer token. Loopback is always exempt: the local UI is trusted, and a local
@@ -54,7 +54,7 @@ func (a *authGate) ok(r *http.Request) bool {
 
 // randomToken returns a 256-bit hex token from the OS CSPRNG. It returns the
 // error rather than emitting on failure: a security token must never be
-// best-effort — a short read or RNG failure must abort, not install a weak token.
+// best-effort, a short read or RNG failure must abort, not install a weak token.
 func randomToken() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -76,7 +76,7 @@ func (s *Server) handleGetAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 // handlePutAuth sets, generates, or clears the token. Local-only: who may
-// authenticate is a local-machine decision — even an already-authenticated
+// authenticate is a local-machine decision, even an already-authenticated
 // remote client can't rotate or disable the gate (localAdmin also rejects a
 // proxied request wearing a forged loopback Host).
 func (s *Server) handlePutAuth(w http.ResponseWriter, r *http.Request) {

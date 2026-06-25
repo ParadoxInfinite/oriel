@@ -19,7 +19,7 @@ export default defineConfig(({ command }) => ({
     outDir: 'dist',
     emptyOutDir: true,
     rollupOptions: {
-      // Demo modules do top-level init (const db = …makeContainers()) — a side
+      // Demo modules do top-level init (const db = …makeContainers()), a side
       // effect that pins them in prod. Mark side-effect-free so Rollup drops them.
       treeshake: { moduleSideEffects: (id) => !id.includes('/lib/demo/') },
     },

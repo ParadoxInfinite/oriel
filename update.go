@@ -9,7 +9,7 @@ import (
 )
 
 // The `update` subcommand drives the running instance's self-update over
-// loopback — check, download+verify, restart — so a headless box can upgrade
+// loopback, check, download+verify, restart, so a headless box can upgrade
 // from the terminal without the (possibly 403'd) UI. It reuses the same
 // checksum-verified machinery as the in-app updater.
 
@@ -57,18 +57,18 @@ func runUpdate(args []string) error {
 		return nil
 	}
 	if st.PackageManager == "homebrew" {
-		fmt.Printf("v%s is available. Oriel was installed with Homebrew — update it with: brew upgrade oriel\n", st.Latest)
+		fmt.Printf("v%s is available. Oriel was installed with Homebrew, update it with: brew upgrade oriel\n", st.Latest)
 		return nil
 	}
 	if *checkOnly {
-		fmt.Printf("Update available — run `oriel update` to install v%s.\n", st.Latest)
+		fmt.Printf("Update available, run `oriel update` to install v%s.\n", st.Latest)
 		return nil
 	}
 	if !st.Managed {
-		return fmt.Errorf("self-update needs a service install — run `oriel service install` (or re-run install.sh)")
+		return fmt.Errorf("self-update needs a service install, run `oriel service install` (or re-run install.sh)")
 	}
 
-	fmt.Printf("Updating to v%s — downloading and verifying…\n", st.Latest)
+	fmt.Printf("Updating to v%s, downloading and verifying…\n", st.Latest)
 	res, err := postJSON[applyResult](updateApplyClient, *port, "/api/update/apply")
 	if err != nil {
 		return err

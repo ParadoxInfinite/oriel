@@ -1,9 +1,9 @@
 <script>
-  // Compact, scrubbable CPU history — adapted from Classic's Heartbeat, themed
+  // Compact, scrubbable CPU history, adapted from Classic's Heartbeat, themed
   // for Studio. Time-axed so outages read correctly:
-  //   • accent line  — colima up; peak CPU per 15s window
-  //   • red baseline — colima was DOWN while recording
-  //   • dashed grey  — Oriel itself was offline (a recording gap)
+  //   • accent line, colima up; peak CPU per 15s window
+  //   • red baseline, colima was DOWN while recording
+  //   • dashed grey, Oriel itself was offline (a recording gap)
   // Points are { t, cpu(percent), down(bool) }; only the last 30 min is shown.
   let { points = [], height = 132 } = $props()
 
@@ -25,7 +25,7 @@
   }
 
   // Clock-aligned 15s windows, each keeping the peak of its up-samples. A jump of
-  // more than one window key means nothing was recorded — an offline gap.
+  // more than one window key means nothing was recorded, an offline gap.
   const series = $derived.by(() => {
     if (!points.length) return []
     const cutoff = Date.now() - VIEW_MS

@@ -26,7 +26,7 @@ func New() *Client { return &Client{} }
 // api returns a connected Docker SDK client. The connection is cached once
 // established: the SDK dials the unix socket per request, so a cached client
 // survives colima restarts, and we avoid spawning the `colima` CLI (socket
-// discovery) on every call — critical now that the recorder samples each second.
+// discovery) on every call, critical now that the recorder samples each second.
 func (c *Client) api(ctx context.Context) (*client.Client, error) {
 	c.mu.Lock()
 	if c.cli != nil {
@@ -43,11 +43,11 @@ func (c *Client) api(ctx context.Context) (*client.Client, error) {
 	var sock string
 	switch s, err := colima.DockerSocketPath(ctx); {
 	case err == nil:
-		// colima is running — talk to its socket.
+		// colima is running, talk to its socket.
 		sock = s
 		opts = append(opts, client.WithHost("unix://"+sock))
 	case colima.Installed():
-		// colima is present but not ready; don't cache a fallback — retry next
+		// colima is present but not ready; don't cache a fallback, retry next
 		// call once the VM is up, rather than latch onto the wrong socket.
 		return nil, err
 	default:
@@ -63,7 +63,7 @@ func (c *Client) api(ctx context.Context) (*client.Client, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if c.cli != nil {
-		// Another caller dialed while we were probing — keep theirs, drop ours.
+		// Another caller dialed while we were probing, keep theirs, drop ours.
 		_ = cli.Close()
 		return c.cli, nil
 	}

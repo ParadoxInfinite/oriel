@@ -1,5 +1,5 @@
 // Synthetic, self-contained data for the live demo (GitHub Pages). NOTHING here
-// comes from a real Docker host — it's hand-authored to look like a believable
+// comes from a real Docker host, it's hand-authored to look like a believable
 // dev machine. A page refresh re-imports this module, resetting any mutations.
 
 const hex = (seed) => {
@@ -14,7 +14,7 @@ const hex = (seed) => {
   return h
 }
 const sha = (seed) => 'sha256:' + hex(seed)
-// Real load time (unix sec) — so seeded history lands in the chart's Date.now()-based 30-min window.
+// Real load time (unix sec), so seeded history lands in the chart's Date.now()-based 30-min window.
 const now = Math.floor(Date.now() / 1000)
 const ago = (sec) => now - sec
 const GiB = 1024 * 1024 * 1024
