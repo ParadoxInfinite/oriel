@@ -22,6 +22,9 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH \
 # Runtime: the docker CLI + compose plugin (Oriel shells out to `docker compose`;
 # everything else talks to the mounted socket through the Docker API).
 FROM alpine:3.21
+# Proves to the official MCP registry that this image belongs to the Oriel server
+# entry (io.github.ParadoxInfinite/oriel); required to list the oci package.
+LABEL io.modelcontextprotocol.server.name="io.github.ParadoxInfinite/oriel"
 RUN apk add --no-cache docker-cli docker-cli-compose ca-certificates
 COPY --from=build /out/oriel /usr/local/bin/oriel
 ENTRYPOINT ["oriel"]
