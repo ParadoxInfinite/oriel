@@ -111,8 +111,9 @@ the mesh ACLs are the access control.
 This is reasonably safe **if and only if**:
 
 - you use `tailscale serve` (tailnet-scoped), **never `tailscale funnel`**
-  (Funnel publishes to the public internet; with no auth that is an instant,
-  total compromise of your Docker host; do not do it);
+  (Funnel publishes to the public internet; a single cleartext token in front of
+  root-equivalent Docker is not enough there, so it is an instant, total
+  compromise of your Docker host; do not do it);
 - your tailnet ACLs restrict that port to devices/users you trust. Remember
   that *anyone who can reach Oriel has full host control*, so a shared node or a
   compromised tailnet device inherits that power;
