@@ -61,7 +61,7 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 
 | Export | Use |
 | --- | --- |
-| `invoke(tool, args, { success })` | run a backend tool; tools include `container.start\|stop\|restart\|remove`, `image.remove\|tag`, `volume.remove`, `network.remove`. |
+| `invoke(tool, args, { success })` | run a backend tool; tools include `container.start\|stop\|restart\|remove`, `image.remove\|tag`, `volume.remove`, `network.create\|remove\|connect\|disconnect`. |
 | `lifecycle('start'\|'stop'\|'restart')` | Colima lifecycle, wired to the op overlay. |
 | `stackOp(name, 'start'\|'stop'\|'restart'\|'down', onDone)` | compose actions. |
 | `runOp(title, path, onDone)` | drive the op overlay for any streaming endpoint. |

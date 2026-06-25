@@ -158,7 +158,8 @@ server does and serves MCP over stdio.
 ## Tools
 
 Mutations: `container.start` / `stop` / `restart` / `remove`, `image.remove` /
-`tag` / `prune`, `volume.remove` / `prune`, `network.remove`,
+`tag` / `prune`, `volume.remove` / `prune`,
+`network.create` / `remove` / `connect` / `disconnect`,
 `stack.start` / `stop` / `restart` / `down`, `stack.alias`,
 `colima.start` / `stop` / `restart`. Stack actions run compose synchronously and
 return the collected output (the UI streams the same actions for live progress);
@@ -167,7 +168,8 @@ Oriel label for a project; the real compose name is unchanged). `colima.stop` an
 `colima.restart` are destructive, since they stop the VM your containers run on.
 
 Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
-`network.list`, `stacks.list`, `system.df`, `colima.status`, `docker.env`. These
+`network.list` / `inspect`, `stacks.list`, `system.df`, `colima.status`,
+`docker.env`. These
 let an AI see the current state and target things by description, instead of
 acting blind. `docker.env` returns the Docker connection environment
 (`DOCKER_HOST`, …) so a client can point other tooling at the same daemon; the CLI

@@ -25,6 +25,8 @@
   import PullDialog from '../lib/PullDialog.svelte'
   import StatusPill from '../lib/StatusPill.svelte'
   import ContainerDrawer from '../lib/ContainerDrawer.svelte'
+  import NetworkCreateDialog from '../lib/NetworkCreateDialog.svelte'
+  import NetworkDrawer from '../lib/NetworkDrawer.svelte'
 
   let { kind } = $props()
 
@@ -137,6 +139,8 @@
   let pullRef = $state(null) // null = closed; string = open with that initial ref
   let pruneItems = $state(null) // null = closed
   let drawerContainer = $state(null) // container shown in the drawer
+  let inspectNet = $state(null) // network shown in the detail drawer
+  let showCreateNet = $state(false) // network create dialog open
 
   async function openPrune() {
     try {
@@ -161,6 +165,9 @@
       {/if}
       {#if c.pullable}
         <button class="btn btn-primary btn-sm" onclick={() => (pullRef = '')}><Icon name="download" size={14} /> Pull image</button>
+      {/if}
+      {#if kind === 'networks'}
+        <button class="btn btn-primary btn-sm" onclick={() => (showCreateNet = true)}><Icon name="network" size={14} /> Create network</button>
       {/if}
     </div>
   </div>
@@ -214,7 +221,9 @@
               {/each}
               <td class="px-4 py-2.5">
                 <div class="flex items-center justify-end gap-1.5">
-                  {#if kind === 'images' && isPinnedImage(item)}
+                  {#if kind === 'networks'}
+                    <button class="btn btn-default btn-sm" onclick={() => (inspectNet = item)}>Inspect</button>
+                  {:else if kind === 'images' && isPinnedImage(item)}
                     <button class="btn btn-default btn-icon btn-sm" title="Tag this digest-pinned image" aria-label="Tag" onclick={() => openTag(item)}><Icon name="tag" size={14} /></button>
                   {:else if kind === 'images' && item.tags?.[0] && item.tags[0] !== '<none>'}
                     <button class="btn btn-default btn-icon btn-sm" title="Re-pull from registry" aria-label="Re-pull" onclick={() => (pullRef = item.tags[0])}><Icon name="download" size={14} /></button>
@@ -239,7 +248,7 @@
 
 {#snippet rcard(item)}
   {@const head = c.cols[0]}
-  {@const showActions = kind === 'images' || c.removable(item)}
+  {@const showActions = kind === 'images' || kind === 'networks' || c.removable(item)}
   <div class="card p-3">
     <div class="flex items-start gap-2">
       <Icon name={c.icon} size={15} class="mt-0.5 shrink-0 text-[var(--text-3)]" />
@@ -274,7 +283,9 @@
     </dl>
     {#if showActions}
       <div class="mt-3 flex justify-end gap-2">
-        {#if kind === 'images' && isPinnedImage(item)}
+        {#if kind === 'networks'}
+          <button class="btn btn-default btn-sm" onclick={() => (inspectNet = item)}>Inspect</button>
+        {:else if kind === 'images' && isPinnedImage(item)}
           <button class="btn btn-default btn-sm" onclick={() => openTag(item)}><Icon name="tag" size={14} /> Tag</button>
         {:else if kind === 'images' && item.tags?.[0] && item.tags[0] !== '<none>'}
           <button class="btn btn-default btn-sm" onclick={() => (pullRef = item.tags[0])}><Icon name="download" size={14} /> Re-pull</button>
@@ -293,6 +304,14 @@
 
 {#if pullRef !== null}
   <PullDialog initial={pullRef} onClose={() => (pullRef = null)} />
+{/if}
+
+{#if showCreateNet}
+  <NetworkCreateDialog onClose={() => (showCreateNet = false)} />
+{/if}
+
+{#if inspectNet}
+  <NetworkDrawer network={inspectNet} onClose={() => (inspectNet = null)} />
 {/if}
 
 <svelte:window

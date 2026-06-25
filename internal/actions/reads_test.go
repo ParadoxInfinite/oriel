@@ -23,7 +23,7 @@ func TestReadToolsRegistered(t *testing.T) {
 
 	reads := []string{
 		"container.list", "container.inspect", "container.logs",
-		"image.list", "volume.list", "network.list",
+		"image.list", "volume.list", "network.list", "network.inspect",
 		"stacks.list", "system.df", "colima.status",
 	}
 	for _, name := range reads {
@@ -36,7 +36,7 @@ func TestReadToolsRegistered(t *testing.T) {
 	}
 
 	// Mutations from the existing registrations must still be present.
-	for _, name := range []string{"container.stop", "image.remove", "volume.remove", "network.remove"} {
+	for _, name := range []string{"container.stop", "image.remove", "volume.remove", "network.remove", "network.create", "network.connect", "network.disconnect"} {
 		if !byName[name] {
 			t.Errorf("mutation tool %q missing after adding reads", name)
 		}
@@ -45,17 +45,22 @@ func TestReadToolsRegistered(t *testing.T) {
 
 func TestReadToolSchemas(t *testing.T) {
 	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
-	want := map[string]string{"container.inspect": "id", "container.logs": "id"}
+	// tool name → {required param, entity kind it validates}
+	want := map[string]struct{ req, kind string }{
+		"container.inspect": {"id", "container"},
+		"container.logs":    {"id", "container"},
+		"network.inspect":   {"id", "network"},
+	}
 	for _, tool := range r.List() {
-		req, ok := want[tool.Name]
+		w, ok := want[tool.Name]
 		if !ok {
 			continue
 		}
-		if len(tool.Schema.Required) != 1 || tool.Schema.Required[0] != req {
-			t.Errorf("%s: want required [%s], got %v", tool.Name, req, tool.Schema.Required)
+		if len(tool.Schema.Required) != 1 || tool.Schema.Required[0] != w.req {
+			t.Errorf("%s: want required [%s], got %v", tool.Name, w.req, tool.Schema.Required)
 		}
-		if tool.Entity == nil || tool.Entity.Kind != "container" {
-			t.Errorf("%s: want container entity ref, got %+v", tool.Name, tool.Entity)
+		if tool.Entity == nil || tool.Entity.Kind != w.kind {
+			t.Errorf("%s: want %s entity ref, got %+v", tool.Name, w.kind, tool.Entity)
 		}
 	}
 }

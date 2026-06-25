@@ -43,6 +43,19 @@ func (s *Server) handleNetworks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, list)
 }
 
+// handleNetworkInspect returns the curated network detail (addressing + attached
+// containers) for the detail panel. Mutations (create, connect, disconnect) go
+// through /api/invoke like every other tool; this is the only read that needs its
+// own route beyond the list.
+func (s *Server) handleNetworkInspect(w http.ResponseWriter, r *http.Request) {
+	d, err := s.docker.InspectNetwork(r.Context(), r.PathValue("id"))
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, errorBody(err))
+		return
+	}
+	writeJSON(w, http.StatusOK, d)
+}
+
 // handleImageSearch proxies a registry search so the pull dialog can offer live
 // suggestions without hitting CORS. `source` selects the registry: Docker Hub
 // (via the daemon) or Quay.io (via its public API). Registries without a public

@@ -14,16 +14,20 @@ func TestReadOnlyClassification(t *testing.T) {
 	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
 
 	want := map[string]bool{ // tool name → ReadOnly
-		"container.list":   true,
-		"container.logs":   true,
-		"colima.status":    true,
-		"docker.env":       true,
-		"stacks.list":      true,
-		"container.start":  false,
-		"container.remove": false,
-		"image.prune":      false,
-		"stack.down":       false,
-		"stack.alias":      false,
+		"container.list":     true,
+		"container.logs":     true,
+		"colima.status":      true,
+		"docker.env":         true,
+		"stacks.list":        true,
+		"network.inspect":    true,
+		"container.start":    false,
+		"container.remove":   false,
+		"image.prune":        false,
+		"stack.down":         false,
+		"stack.alias":        false,
+		"network.create":     false,
+		"network.connect":    false,
+		"network.disconnect": false,
 	}
 	got := map[string]bool{}
 	for _, tl := range r.List() {
