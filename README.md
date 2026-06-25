@@ -115,11 +115,19 @@ For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-
 - **Destructive actions are locked** until you open a window (`oriel ai allow-destructive --for 6h`). Reads always work; remove/prune don't, until you say so.
 - **No model in the binary.** Your client brings the model, so Oriel stays vendor-neutral.
 
+Point any MCP client at it. With Oriel installed:
+
 ```json
 { "mcpServers": { "oriel": { "command": "oriel", "args": ["mcp"] } } }
 ```
 
-Setup and the full tool list: [docs/MCP.md](docs/MCP.md).
+Or with no install, via the published image (Linux hosts; mounts the Docker socket):
+
+```json
+{ "mcpServers": { "oriel": { "command": "docker", "args": ["run", "-i", "--rm", "-v", "/var/run/docker.sock:/var/run/docker.sock", "ghcr.io/paradoxinfinite/oriel"] } } }
+```
+
+Claude Code: `claude mcp add oriel -- oriel mcp`. Setup, HTTP, scoping, and the full tool list: [docs/MCP.md](docs/MCP.md).
 
 ## Editions & themes
 
