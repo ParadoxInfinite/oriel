@@ -17,9 +17,10 @@ import (
 
 // `oriel doctor` is a read-only preflight: it reports the things that actually
 // break a reverse-proxy / remote setup (Docker reachability, the running
-// instance's base path + allowed hosts, version skew, service status) and prints
-// the exact command to fix anything that's wrong. It queries the *running*
-// instance over loopback so it reflects the live config, not this process's env.
+// instance's base path + allowed hosts, version skew, whether a newer release is
+// out, service status) and prints the exact command to fix anything that's wrong.
+// It queries the *running* instance over loopback so it reflects the live config,
+// not this process's env.
 
 type selfInfo struct {
 	Version  string `json:"version"`
@@ -72,6 +73,30 @@ func runDoctor(args []string) error {
 		doctorLine("✓", "Instance", fmt.Sprintf("running on 127.0.0.1:%d, version %s", *port, self.Version))
 		if version != "dev" && self.Version != "" && self.Version != version {
 			doctorLine("⚠", "Version", fmt.Sprintf("this binary is %s but the running service is %s, restart it to upgrade", version, self.Version))
+		}
+
+		// --- Version currency: how the running service compares to the latest
+		// release. Reuses the instance's cached /api/update check (shared with the
+		// GUI), so repeated doctor runs don't hammer the GitHub rate limit. ---
+		if st, uerr := getUpdateStatus(*port); uerr == nil {
+			switch {
+			case st.Current == "" || st.Current == "dev":
+				doctorLine("○", "Updates", "running a local/dev build, version check skipped")
+			case st.Error != "":
+				doctorLine("○", "Updates", "couldn't reach GitHub to check ("+st.Error+")")
+			case st.UpdateAvailable:
+				doctorLine("⚠", "Updates", fmt.Sprintf("%s installed, v%s available", st.Current, st.Latest))
+				switch {
+				case st.PackageManager == "homebrew":
+					fmt.Println("      fix: brew upgrade oriel")
+				case st.Managed:
+					fmt.Println("      fix: oriel update")
+				default:
+					fmt.Printf("      fix: download v%s from https://github.com/ParadoxInfinite/oriel/releases/latest\n", st.Latest)
+				}
+			default:
+				doctorLine("✓", "Updates", fmt.Sprintf("%s is the latest", st.Current))
+			}
 		}
 
 		atRoot := self.BasePath == "" || self.BasePath == "/"
