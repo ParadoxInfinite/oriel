@@ -1,7 +1,16 @@
 <script>
   // Demo-only: the full Oriel-vs-alternatives breakdown. The README carries a
   // trimmed version; this is the exhaustive one, honest about where Oriel loses.
+  import { onMount } from 'svelte'
   import { compare } from './compare.svelte.js'
+
+  // Deep link: /#compare opens this straight away, so the README can point at it.
+  onMount(() => {
+    const sync = () => { if (location.hash.slice(1) === 'compare') compare.open = true }
+    sync()
+    window.addEventListener('hashchange', sync)
+    return () => window.removeEventListener('hashchange', sync)
+  })
 
   const tools = ['Oriel', 'Docker Desktop', 'OrbStack', 'Podman Desktop', 'lazydocker', 'Portainer']
 
@@ -79,7 +88,10 @@
     },
   ]
 
-  function close() { compare.open = false }
+  function close() {
+    compare.open = false
+    if (location.hash.slice(1) === 'compare') history.replaceState(null, '', location.pathname + location.search)
+  }
   function onKey(e) { if (e.key === 'Escape') close() }
 </script>
 
