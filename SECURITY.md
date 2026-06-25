@@ -100,6 +100,14 @@ The allowed host is stored in `settings.json`, so it persists across restarts an
 updates. For sub-path mounts and nginx/Caddy/Traefik, see
 [docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md).
 
+**Other overlays (ZeroTier, Netbird, plain WireGuard).** These give the host a
+mesh IP but no built-in HTTP proxy like `tailscale serve`, so a service on
+`127.0.0.1` isn't reachable on the mesh IP on its own. Keep Oriel on `127.0.0.1`
+and run a small reverse proxy on the host bound to the mesh IP, forwarding to
+`127.0.0.1:4321` (a few lines of Caddy or nginx; see
+[docs/REVERSE-PROXY.md](docs/REVERSE-PROXY.md)). Oriel still never leaves loopback;
+the mesh ACLs are the access control.
+
 This is reasonably safe **if and only if**:
 
 - you use `tailscale serve` (tailnet-scoped), **never `tailscale funnel`**
