@@ -12,7 +12,7 @@ import (
 // take an id must require it. Handlers aren't executed here (that needs a live
 // Docker host); we only assert the registration shape.
 func TestReadToolsRegistered(t *testing.T) {
-	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
+	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll }, func() secrets.Mode { return secrets.MaskSensitive })
 
 	byName := map[string]bool{}
 	dangerous := map[string]bool{}
@@ -44,7 +44,7 @@ func TestReadToolsRegistered(t *testing.T) {
 }
 
 func TestReadToolSchemas(t *testing.T) {
-	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
+	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll }, func() secrets.Mode { return secrets.MaskSensitive })
 	// tool name → {required param, entity kind it validates}
 	want := map[string]struct{ req, kind string }{
 		"container.inspect": {"id", "container"},

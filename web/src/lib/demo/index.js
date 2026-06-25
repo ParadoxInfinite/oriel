@@ -19,6 +19,7 @@ const db = {
   remoteHosts: [],
   discovery: clone(seed.discovery),
   maskEnv: 'all', // inspect env masking mode (Settings → Secrets)
+  maskLogs: 'sensitive', // UI log-secret redaction mode (Settings → Secrets)
   envReveal: 'local',
   grantExpiresMs: 0, // destructive-grant window expiry (epoch ms); 0 = locked
 }
@@ -66,7 +67,7 @@ export async function demoGet(path) {
     case '/api/stacks': return seed.makeStacks(db.containers)
     case '/api/system/df': return seed.makeDf(db.containers, db.images, db.volumes)
     case '/api/colima/status': return clone(db.colima)
-    case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, envReveal: db.envReveal }
+    case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal }
     case '/api/grant': return grantStatus()
     case '/api/update': return clone(seed.update)
     case '/api/remote': return { hosts: clone(db.remoteHosts) }
@@ -221,8 +222,9 @@ export async function demoPut(path, body) {
   if (path === '/api/remote') { db.remoteHosts = body?.hosts || []; return { hosts: clone(db.remoteHosts) } }
   if (path === '/api/config') {
     if (body?.maskEnv) db.maskEnv = body.maskEnv
+    if (body?.maskLogs) db.maskLogs = body.maskLogs
     if (body?.envReveal) db.envReveal = body.envReveal
-    return { maskEnv: db.maskEnv, envReveal: db.envReveal, restarting: false }
+    return { maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal, restarting: false }
   }
   return null
 }

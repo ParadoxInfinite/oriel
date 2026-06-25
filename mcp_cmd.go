@@ -26,7 +26,10 @@ import (
 // owns it. The process lives for the client session and exits on EOF.
 //
 // Two safety choices, because the client is an LLM with no human in the loop:
-//   - Env values are masked with MaskAll regardless of the UI setting.
+//   - Env and log values are masked at MaskSensitive regardless of the UI
+//     setting: secret-shaped values are redacted, benign ones (NODE_ENV,
+//     PORT, log levels) stay visible so the model keeps useful context. The
+//     client can never turn masking fully off, "off" is floored to sensitive.
 //   - Destructive tools are locked unless the user opened a grant window
 //     (`oriel ai allow-destructive`); the MCP path never carries consent, so a
 //     locked remove/prune returns a structured "how to unlock" error.
@@ -43,7 +46,9 @@ func runMCP(args []string) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	reg := actions.New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
+	reg := actions.New(docker.New(),
+		func() secrets.Mode { return secrets.MaskSensitive },
+		func() secrets.Mode { return secrets.MaskSensitive })
 	reg.SetDestructiveWindow(grant.New().Active)
 	include := toolFilter(*readOnly, *allow, *deny)
 

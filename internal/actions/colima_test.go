@@ -10,7 +10,7 @@ import (
 // TestColimaToolsRegistered locks in the VM lifecycle tools and their gating:
 // stop/restart take the whole VM down, so they're destructive; start is free.
 func TestColimaToolsRegistered(t *testing.T) {
-	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
+	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll }, func() secrets.Mode { return secrets.MaskSensitive })
 
 	want := map[string]bool{ // tool name → destructive
 		"colima.start":   false,

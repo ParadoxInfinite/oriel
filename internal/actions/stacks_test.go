@@ -11,7 +11,7 @@ import (
 // are present in the registry (so MCP exposes them) with the right destructive
 // flags: only `down` tears things down.
 func TestStackToolsRegistered(t *testing.T) {
-	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll })
+	r := New(docker.New(), func() secrets.Mode { return secrets.MaskAll }, func() secrets.Mode { return secrets.MaskSensitive })
 
 	want := map[string]bool{ // tool name → destructive
 		"stack.start":   false,

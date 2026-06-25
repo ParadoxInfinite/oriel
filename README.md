@@ -111,7 +111,7 @@ For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-
 
 `oriel mcp` runs Oriel as a [Model Context Protocol](https://modelcontextprotocol.io) server, so an MCP client (Claude Desktop, Claude Code, Cursor, a local LLM) manages your Docker/Colima in plain English, headless, with no GUI needed. Same tools, same guardrails:
 
-- **Secrets stay masked.** `container.inspect` never hands raw env values to a model.
+- **Secrets stay masked.** `container.inspect` and `container.logs` redact secret-shaped values before they reach a model; an MCP client never gets fully-raw env or logs (the "off" setting applies only to the local UI). Log redaction is best-effort over free-form text.
 - **Destructive actions are locked** until you open a short, time-boxed window (`oriel ai allow-destructive --for 15m`). Reads always work; remove/prune don't, until you say so.
 - **No model in the binary.** Your client brings the model, so Oriel stays vendor-neutral.
 

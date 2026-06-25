@@ -27,6 +27,18 @@ func ParseMode(s string) Mode {
 	}
 }
 
+// ParseLogMode maps a settings string to a log-masking Mode. Logs are free-form
+// and default to MaskSensitive (best-effort secret redaction); only an explicit
+// "off" disables it. There is no all-values mode, masking a whole log line
+// wholesale would destroy it. The MCP/agent path floors this to MaskSensitive
+// regardless, so an automated client can never set logs to "off".
+func ParseLogMode(s string) Mode {
+	if Mode(s) == MaskOff {
+		return MaskOff
+	}
+	return MaskSensitive
+}
+
 // masked is a fixed placeholder, no characters and no length leaked.
 const masked = "••••••••"
 
@@ -42,19 +54,27 @@ var sensitiveKey = []string{
 var secretPrefix = []string{
 	"sk-", "rk-", "pk_live", "sk_live", "ghp_", "gho_", "ghs_", "ghr_",
 	"github_pat_", "glpat-", "AKIA", "ASIA", "xoxb-", "xoxp-", "xoxa-",
-	"xoxr-", "xoxs-", "-----BEGIN", "eyJ",
+	"xoxr-", "xoxs-", "-----BEGIN", "eyJ", "AIza", "ya29.", "npm_", "dckr_pat_",
 }
 
 // IsSensitive reports whether an env entry should be treated as a secret, by the
 // variable name or by the shape of its value.
 func IsSensitive(key, value string) bool {
+	return nameIsSensitive(key) || looksSecret(value)
+}
+
+// nameIsSensitive reports whether a variable/flag/field name alone marks the
+// entry as holding a secret, by a known sensitive substring (case-insensitive).
+// Split out from IsSensitive so log masking can match a `password:`-style label
+// whose value sits in the next token.
+func nameIsSensitive(key string) bool {
 	up := strings.ToUpper(key)
 	for _, s := range sensitiveKey {
 		if strings.Contains(up, s) {
 			return true
 		}
 	}
-	return looksSecret(value)
+	return false
 }
 
 func looksSecret(v string) bool {
@@ -169,4 +189,81 @@ func MaskCommand(cmd string, mode Mode) string {
 		}
 	}
 	return strings.Join(fields, " ")
+}
+
+// MaskLine redacts secret-shaped tokens from a single free-form log line,
+// leaving the rest readable. A log line has no fixed structure, so unlike env
+// (KEY=VALUE) this is best-effort: it masks `KEY=secret` / `--flag=secret`
+// pairs, `password: secret` / `"token":"secret"` labelled values,
+// `Authorization: Bearer <token>` headers, credentialed connection strings, and
+// bare tokens that match a known secret shape (sk-…, JWT, long high-entropy
+// runs). Benign content (level=info, environment=production) is left intact so
+// the line stays useful to a viewer or an AI client.
+//
+// MaskOff is a pass-through. MaskSensitive and MaskAll behave identically here:
+// a log line can't be masked "wholesale" without destroying it, so there is no
+// all-values mode. The masking is applied to the value tokens by literal
+// replacement, preserving the line's original spacing.
+func MaskLine(line string, mode Mode) string {
+	if mode == MaskOff || line == "" {
+		return line
+	}
+	fields := strings.Fields(line)
+	var redact []string // value tokens to replace with the placeholder
+	for i := 0; i < len(fields); i++ {
+		f := fields[i]
+		// KEY=value / --flag=value (the common structured-log and argv shape).
+		if k, v, ok := strings.Cut(f, "="); ok && v != "" {
+			if IsSensitive(strings.TrimLeft(k, "-"), v) {
+				redact = append(redact, v)
+			}
+			continue
+		}
+		// Colon forms, but never a URL scheme (handled by looksSecret below).
+		if strings.Contains(f, ":") && !strings.Contains(f, "://") {
+			k, v, _ := strings.Cut(f, ":")
+			name := strings.Trim(k, `"' `)
+			switch {
+			case v != "": // key:value / "key":"value" in one token (JSON / logfmt)
+				if nameIsSensitive(name) {
+					// Stop at the next separator so a packed `"k":"v","k2":"v2"`
+					// token redacts only this value, not the rest of the line.
+					if c := strings.IndexByte(v, ','); c >= 0 {
+						v = v[:c]
+					}
+					if v = strings.Trim(v, `"'{} `); v != "" {
+						redact = append(redact, v)
+					}
+					continue
+				}
+			case nameIsSensitive(name): // "Authorization:" / "password:" then a separate value token
+				if j := i + 1; j < len(fields) {
+					switch strings.ToLower(fields[j]) { // skip an auth scheme word
+					case "bearer", "basic", "token", "digest":
+						if j+1 < len(fields) {
+							redact = append(redact, fields[j+1])
+							i = j + 1
+							continue
+						}
+					}
+					redact = append(redact, fields[j])
+					i = j
+					continue
+				}
+			}
+		}
+		// Bare token that matches a known secret shape.
+		if looksSecret(f) {
+			redact = append(redact, f)
+		}
+	}
+	if len(redact) == 0 {
+		return line
+	}
+	for _, s := range redact {
+		if s != "" && s != masked {
+			line = strings.ReplaceAll(line, s, masked)
+		}
+	}
+	return line
 }

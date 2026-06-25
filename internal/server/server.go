@@ -41,12 +41,14 @@ func New(web fs.FS, version string) *Server {
 
 	dc := docker.New()
 	s := &Server{
-		mux:      http.NewServeMux(),
-		web:      web,
-		base:     normalizeBase(cfg.BasePath),
-		version:  version,
-		docker:   dc,
-		tools:    actions.New(dc, func() secrets.Mode { return secrets.ParseMode(loadSettings().MaskEnv) }),
+		mux:     http.NewServeMux(),
+		web:     web,
+		base:    normalizeBase(cfg.BasePath),
+		version: version,
+		docker:  dc,
+		tools: actions.New(dc,
+			func() secrets.Mode { return secrets.ParseMode(loadSettings().MaskEnv) },
+			func() secrets.Mode { return secrets.ParseLogMode(loadSettings().MaskLogs) }),
 		recorder: newRecorder(dc),
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),

@@ -75,6 +75,36 @@ What it does and doesn't do:
 The network boundary is still the primary control. The token is defense-in-depth
 on top of it, not a license to expose Oriel to the public internet.
 
+## Secret masking (inspect + logs)
+
+Oriel redacts secret-shaped values before they reach a viewer or an AI client,
+so an API key doesn't leak from a screenshot, a screen-share, or a model's
+context. It applies in two places:
+
+- **`container.inspect` / the inspect panel** masks environment-variable values
+  (and sensitive command/label values). Modes: `all` (default, mask every
+  value), `sensitive` (mask only values that look like secrets), `off`. Set in
+  **Settings → Secrets** (`maskEnv`).
+- **`container.logs` / the logs view** redacts secret-shaped tokens from log
+  lines: `KEY=secret` pairs, `Authorization: Bearer …` headers, credentialed
+  connection strings, JWTs, and known token prefixes. Toggle in **Settings →
+  Secrets** (`maskLogs`: `sensitive` default, or `off`).
+
+Two things to understand about the guarantee:
+
+- **The AI/MCP path is never fully unmasked.** A non-consented caller (any MCP /
+  agent client) is floored to at least `sensitive`, even if you set masking to
+  `off` for your local UI. The dedicated `oriel mcp` process masks env and logs
+  at `sensitive`, so secret-shaped values are redacted while benign context
+  (`NODE_ENV`, log levels) stays visible to the model.
+- **Log masking is best-effort, not a guarantee.** Log output is free-form text;
+  the redactor matches common secret shapes and key names, so it can miss a
+  secret that doesn't look like one (a short, prefix-less token), and it does not
+  turn an untrusted log stream into a safe one. Treat it as a guard against
+  *accidental* leakage, not a security boundary. If a container is known to print
+  sensitive data you don't want a model to see, scope it out with
+  `oriel mcp --deny-tools container.logs`.
+
 ## Remote access (private networks only)
 
 The optional token helps, but **exposing Oriel safely still means putting a
