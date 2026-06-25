@@ -24,10 +24,11 @@ way to push something up the list is to open an
 
 ## Next
 
-- **Mobile-friendly, responsive UI.** Make the dashboard and the resource views
-  usable from a phone or tablet over the private network, not just a desktop browser.
 - **Accessibility & translations.** A keyboard/screen-reader pass and i18n so the
   UI isn't English-only.
+- **Deeper container networking.** Create networks, inspect their detail (subnet,
+  gateway, attached containers), and connect/disconnect containers, in the UI and
+  over MCP. Engine-level config (proxies, subnets) stays on your engine.
 
 ## Later
 
@@ -49,9 +50,11 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: **scoped & read-only MCP, MCP over
-HTTP behind a token, MCP resources & prompts, Colima VM control, a Docker-env
-helper, optional authentication, and removal of the in-app NL resolver** (v0.6.0);
+See the [CHANGELOG](CHANGELOG.md). Highlights: **a responsive, mobile-friendly UI
+and removal of the second (Classic) edition** (v0.7.0); **scoped & read-only MCP,
+MCP over HTTP behind a token, MCP resources & prompts, Colima VM control, a
+Docker-env helper, optional authentication, and removal of the in-app NL
+resolver** (v0.6.0);
 **compose stacks drivable from ⌘K +
 MCP (start/stop/restart/down/alias) and Oriel-side renaming on any stack** (v0.5.1);
 the **run-command palette across all resources + ⌘K navigation, a shared nav seam in
