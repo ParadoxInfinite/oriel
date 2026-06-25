@@ -57,7 +57,8 @@
       prune: {
         label: 'Prune dangling',
         title: 'Prune dangling images',
-        note: 'Untagged image layers left behind by rebuilds and re-pulls.',
+        note: 'Removes only untagged (<none>) layers left by rebuilds and re-pulls. Tagged images you are not running are not "dangling" and are kept.',
+        empty: 'No dangling (untagged) images to prune',
         collect: () =>
           images.list
             .filter((i) => i.tags.length === 1 && i.tags[0] === '<none>')
@@ -91,6 +92,7 @@
         label: 'Prune unused',
         title: 'Prune unused volumes',
         note: 'Volumes no container references. Their data is deleted permanently.',
+        empty: 'No unused volumes to prune',
         collect: async () => {
           const list = await apiGet('/api/volumes/prune/preview')
           return list.map((v) => ({ id: v.name, primary: v.name, secondary: 'unused · data will be deleted', size: v.size }))
@@ -140,7 +142,7 @@
     try {
       const items = await c.prune.collect()
       if (!items.length) {
-        toast(`No ${titles[kind]} to prune`, 'info')
+        toast(c.prune.empty ?? `No ${titles[kind]} to prune`, 'info')
         return
       }
       pruneItems = items
@@ -155,7 +157,7 @@
     <span class="text-[13px] text-[var(--text-2)]"><span class="font-semibold text-[var(--text)]">{c.store.list.length}</span> {titles[kind]}</span>
     <div class="flex flex-wrap gap-2 sm:ml-auto">
       {#if c.prune}
-        <button class="btn btn-default btn-sm" onclick={openPrune}><Icon name="broom" size={14} /> {c.prune.label}</button>
+        <button class="btn btn-default btn-sm" onclick={openPrune} title={c.prune.note}><Icon name="broom" size={14} /> {c.prune.label}</button>
       {/if}
       {#if c.pullable}
         <button class="btn btn-primary btn-sm" onclick={() => (pullRef = '')}><Icon name="download" size={14} /> Pull image</button>
