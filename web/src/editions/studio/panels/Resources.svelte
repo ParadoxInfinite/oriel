@@ -17,6 +17,7 @@
     startVolumePrune,
     isPinnedImage,
     ImageActions,
+    trapFocus,
   } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import SortHeader from '../lib/SortHeader.svelte'
@@ -152,7 +153,7 @@
 <div class="mx-auto flex max-w-5xl flex-col gap-4">
   <div class="rise flex flex-wrap items-center gap-3">
     <span class="text-[13px] text-[var(--text-2)]"><span class="font-semibold text-[var(--text)]">{c.store.list.length}</span> {titles[kind]}</span>
-    <div class="ml-auto flex gap-2">
+    <div class="flex flex-wrap gap-2 sm:ml-auto">
       {#if c.prune}
         <button class="btn btn-default btn-sm" onclick={openPrune}><Icon name="broom" size={14} /> {c.prune.label}</button>
       {/if}
@@ -170,7 +171,8 @@
       <p class="text-sm text-[var(--text-2)]">No {titles[kind]} yet.</p>
     </div>
   {:else}
-    <div class="rise card overflow-x-auto" style="animation-delay:40ms">
+    <!-- Table layout: sm and up -->
+    <div class="rise card hidden overflow-x-auto sm:block" style="animation-delay:40ms">
       <table class="w-full min-w-[600px] table-fixed border-collapse">
         <colgroup>
           {#each c.cols as col}<col style={col.w ? `width:${col.w}` : ''} />{/each}
@@ -225,8 +227,63 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Card layout: below sm (phones). Same rows, reflowed so nothing scrolls sideways. -->
+    <div class="rise flex flex-col gap-2.5 sm:hidden" style="animation-delay:40ms">
+      {#each rows as item (c.key(item))}{@render rcard(item)}{/each}
+    </div>
   {/if}
 </div>
+
+{#snippet rcard(item)}
+  {@const head = c.cols[0]}
+  {@const showActions = kind === 'images' || c.removable(item)}
+  <div class="card p-3">
+    <div class="flex items-start gap-2">
+      <Icon name={c.icon} size={15} class="mt-0.5 shrink-0 text-[var(--text-3)]" />
+      <div class="min-w-0 flex-1">
+        {#if head.tags}
+          <div class="flex flex-col gap-0.5">
+            {#each item.tags as t (t)}
+              <span class="mono block truncate text-[13px] font-medium text-[var(--text)]" title={t}>{fmt.shortRef(t)}</span>
+            {/each}
+          </div>
+        {:else}
+          <div class="flex items-center gap-2">
+            <span class="mono truncate text-[13px] font-medium text-[var(--text)]" title={head.get(item)}>{head.render ? head.render(item) : head.get(item)}</span>
+            {#if head.badge?.(item)}<span class="chip shrink-0">{head.badge(item)}</span>{/if}
+          </div>
+        {/if}
+      </div>
+    </div>
+    <dl class="mt-2.5 flex flex-col gap-1 text-[12px]">
+      {#each c.cols.slice(1) as col}
+        <div class="flex items-baseline justify-between gap-3">
+          <dt class="shrink-0 text-[var(--text-3)]">{col.label}</dt>
+          <dd class="mono tnum min-w-0 truncate text-right text-[var(--text-2)]" title={col.get(item)}>
+            {#if col.key === 'inuse' && item.containers > 0}
+              <button class="font-medium text-[var(--accent)] hover:underline" title="See which containers use this image" onclick={() => (ia.usedByImage = item)}>{item.containers} →</button>
+            {:else}
+              {col.render ? col.render(item) : col.get(item)}
+            {/if}
+          </dd>
+        </div>
+      {/each}
+    </dl>
+    {#if showActions}
+      <div class="mt-3 flex justify-end gap-2">
+        {#if kind === 'images' && isPinnedImage(item)}
+          <button class="btn btn-default btn-sm" onclick={() => openTag(item)}><Icon name="tag" size={14} /> Tag</button>
+        {:else if kind === 'images' && item.tags?.[0] && item.tags[0] !== '<none>'}
+          <button class="btn btn-default btn-sm" onclick={() => (pullRef = item.tags[0])}><Icon name="download" size={14} /> Re-pull</button>
+        {/if}
+        {#if c.removable(item)}
+          <button class="btn btn-danger btn-sm" onclick={() => c.remove(item)}><Icon name="trash" size={14} /> Remove</button>
+        {/if}
+      </div>
+    {/if}
+  </div>
+{/snippet}
 
 {#if pruneItems}
   <PrunePreview title={c.prune.title} note={c.prune.note} items={pruneItems} onClose={() => (pruneItems = null)} onPrune={c.prune.run} />
