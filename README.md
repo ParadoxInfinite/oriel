@@ -16,7 +16,7 @@ Manage containers, images, volumes, networks, and Compose from a clean browser U
 </div>
 
 <p align="center">
-  <strong><a href="https://paradoxinfinite.github.io/oriel/">Try it live ↗</a></strong> · the full UI in your browser, mock data, no install.
+  <strong><a href="https://paradoxinfinite.github.io/oriel/" target="_blank" rel="noopener">Try it live ↗</a></strong> · the full UI in your browser, mock data, no install.
 </p>
 
 <p align="center">
@@ -101,7 +101,7 @@ The usual ways to run containers on a Mac or Linux box, and where Oriel fits. (F
 
 It's the only one here an AI can drive directly, through the same checks the UI gives you. Reach for it over Docker Desktop / OrbStack (no paid license, bundled VM, or menu-bar app), over lazydocker (a real graphical UI, not a terminal one), or over Portainer (a binary you run for yourself, not a server to deploy and lock down).
 
-For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-host, in-browser shell), see the [exhaustive comparison in the live demo](https://paradoxinfinite.github.io/oriel/#compare).
+For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-host, in-browser shell), see the <a href="https://paradoxinfinite.github.io/oriel/#compare" target="_blank" rel="noopener">exhaustive comparison in the live demo</a>.
 
 > **Coming:** an in-browser shell, an audit log, richer remote auth (sessions / SSO), and a mobile-friendly UI. [Roadmap](ROADMAP.md).
 
