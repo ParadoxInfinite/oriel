@@ -92,4 +92,54 @@ func registerNetworks(r *tools.Registry, dc *docker.Client) {
 			return okResult, dc.RemoveNetwork(ctx, a["id"].(string))
 		},
 	})
+	r.Register(&tools.Tool{
+		Name: "network.create", Title: "Create network", Description: "Create a user-defined network (driver defaults to bridge)",
+		Schema: tools.Schema{
+			Required: []string{"name"},
+			Props: map[string]tools.Prop{
+				"name":     {Type: "string", Description: "network name"},
+				"driver":   {Type: "string", Description: "network driver (default bridge)"},
+				"internal": {Type: "boolean", Description: "isolate from external access"},
+			},
+		},
+		Handler: func(ctx context.Context, a map[string]any) (any, error) {
+			driver, _ := a["driver"].(string)
+			internal, _ := a["internal"].(bool)
+			id, err := dc.CreateNetwork(ctx, a["name"].(string), driver, internal)
+			if err != nil {
+				return nil, err
+			}
+			return map[string]any{"ok": true, "id": id}, nil
+		},
+	})
+	r.Register(&tools.Tool{
+		Name: "network.connect", Title: "Connect container", Description: "Attach a container to a network",
+		Schema: tools.Schema{
+			Required: []string{"network", "container"},
+			Props: map[string]tools.Prop{
+				"network":   {Type: "string", Description: "network id or name"},
+				"container": {Type: "string", Description: "container id or name"},
+			},
+		},
+		Entity: &tools.EntityRef{Param: "network", Kind: "network"},
+		Handler: func(ctx context.Context, a map[string]any) (any, error) {
+			return okResult, dc.ConnectContainer(ctx, a["network"].(string), a["container"].(string))
+		},
+	})
+	r.Register(&tools.Tool{
+		Name: "network.disconnect", Title: "Disconnect container", Description: "Detach a container from a network",
+		Schema: tools.Schema{
+			Required: []string{"network", "container"},
+			Props: map[string]tools.Prop{
+				"network":   {Type: "string", Description: "network id or name"},
+				"container": {Type: "string", Description: "container id or name"},
+				"force":     {Type: "boolean", Description: "force-detach even a running container"},
+			},
+		},
+		Entity: &tools.EntityRef{Param: "network", Kind: "network"},
+		Handler: func(ctx context.Context, a map[string]any) (any, error) {
+			force, _ := a["force"].(bool)
+			return okResult, dc.DisconnectContainer(ctx, a["network"].(string), a["container"].(string), force)
+		},
+	})
 }

@@ -107,6 +107,17 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 		},
 	})
 	ro(&tools.Tool{
+		Name: "network.inspect", Title: "Inspect network", Description: "Network detail: addressing (subnet/gateway) and attached containers",
+		Schema: tools.Schema{
+			Required: []string{"id"},
+			Props:    map[string]tools.Prop{"id": {Type: "string", Description: "network id or name"}},
+		},
+		Entity: &tools.EntityRef{Param: "id", Kind: "network"},
+		Handler: func(ctx context.Context, a map[string]any) (any, error) {
+			return dc.InspectNetwork(ctx, a["id"].(string))
+		},
+	})
+	ro(&tools.Tool{
 		Name: "stacks.list", Title: "List compose stacks", Description: "List Docker Compose projects with their running/total counts",
 		Handler: func(ctx context.Context, _ map[string]any) (any, error) {
 			list, err := dc.ListStacks(ctx)

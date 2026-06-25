@@ -37,6 +37,7 @@ export {
   refreshImages,
   refreshVolumes,
   refreshNetworks,
+  inspectNetwork,
 } from '../lib/resources.svelte.js'
 
 /** Compose stacks. `{ list, loading, error }`.

@@ -21,3 +21,6 @@ async function load(store, path) {
 export const refreshImages = () => load(images, '/api/images')
 export const refreshVolumes = () => load(volumes, '/api/volumes')
 export const refreshNetworks = () => load(networks, '/api/networks')
+
+// Curated detail (addressing + attached containers) for one network's detail view.
+export const inspectNetwork = (id) => apiGet(`/api/networks/${encodeURIComponent(id)}/inspect`)

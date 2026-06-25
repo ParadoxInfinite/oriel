@@ -156,6 +156,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/volumes", s.handleVolumes)
 	s.mux.HandleFunc("GET /api/volumes/prune/preview", s.handleVolumesPrunePreview)
 	s.mux.HandleFunc("GET /api/networks", s.handleNetworks)
+	s.mux.HandleFunc("GET /api/networks/{id}/inspect", s.handleNetworkInspect)
 
 	// System-wide disk usage.
 	s.mux.HandleFunc("GET /api/system/df", s.handleSystemUsage)
