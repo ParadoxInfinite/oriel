@@ -1,5 +1,5 @@
 <script>
-  import { fmt, registerEscape } from '../../../platform/index.js'
+  import { fmt, registerEscape, trapFocus } from '../../../platform/index.js'
 
   // items: [{ id, primary, secondary?, size }]. onPrune receives the chosen items.
   let { title, note = '', items, onClose, onPrune } = $props()
@@ -31,7 +31,7 @@
 </script>
 
 <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && !busy && onClose()}>
-  <div class="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+  <div class="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Prune preview" tabindex="-1" use:trapFocus>
     <div class="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-3.5">
       <div>
         <h2 class="text-[14px] font-semibold tracking-tight">{title}</h2>

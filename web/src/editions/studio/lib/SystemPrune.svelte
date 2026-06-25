@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { apiGet, startSystemPrune, fmt, registerEscape } from '../../../platform/index.js'
+  import { apiGet, startSystemPrune, fmt, registerEscape, trapFocus } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   let { onClose } = $props()
@@ -45,7 +45,7 @@
 </script>
 
 <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
-  <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+  <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Reclaim disk space" tabindex="-1" use:trapFocus>
     <div class="flex items-center gap-2.5 border-b border-[var(--border)] px-5 py-3.5">
       <div class="grid h-7 w-7 place-items-center rounded-lg bg-[var(--amber-tint)] text-[var(--amber)]"><Icon name="broom" size={15} /></div>
       <h2 class="text-[14px] font-semibold tracking-tight">Reclaim disk space</h2>

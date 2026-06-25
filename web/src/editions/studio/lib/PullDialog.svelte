@@ -1,5 +1,5 @@
 <script>
-  import { PullController, fmtStars, registerEscape } from '../../../platform/index.js'
+  import { PullController, fmtStars, registerEscape, trapFocus } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   let { onClose, initial = '' } = $props()
@@ -14,7 +14,7 @@
 </script>
 
 <div class="fixed inset-0 z-[70] flex items-start justify-center bg-black/45 p-4 pt-[10vh] backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && !pc.pulling && onClose()}>
-  <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+  <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Pull image" tabindex="-1" use:trapFocus>
     <div class="flex items-center gap-2.5 border-b border-[var(--border)] px-5 py-3.5">
       <Icon name="download" size={16} class="text-[var(--text-3)]" />
       <h2 class="text-[14px] font-semibold tracking-tight">Pull image</h2>

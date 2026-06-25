@@ -1,5 +1,5 @@
 <script>
-  import { outages, fmt, registerEscape } from '../../../platform/index.js'
+  import { outages, fmt, registerEscape, trapFocus } from '../../../platform/index.js'
 
   let open = $state(false)
   $effect(() => {
@@ -57,7 +57,7 @@
 
 {#if open}
   <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (open = false)}>
-    <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+    <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Outages" tabindex="-1" use:trapFocus>
       <div class="flex items-center justify-between border-b border-[var(--border)] px-5 py-3.5">
         <div class="flex items-center gap-2">
           <h2 class="text-[14px] font-semibold tracking-tight">Outage history</h2>

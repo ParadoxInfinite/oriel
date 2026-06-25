@@ -161,6 +161,14 @@
 .studio-root .btn:active { transform: translateY(0.5px); }
 .studio-root .btn:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--ring); }
 .studio-root .btn:disabled { opacity: 0.5; cursor: default; }
+/* Consistent keyboard-focus ring for interactive elements that lack .btn's own
+   (nav items, links, icon buttons), so focus is always clearly visible. */
+.studio-root a:focus-visible,
+.studio-root button:not(.btn):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
 
 .studio-root .btn-primary { background: var(--accent); color: var(--accent-text); box-shadow: var(--shadow-sm); }
 .studio-root .btn-primary:hover { background: var(--accent-hover); }

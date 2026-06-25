@@ -6,6 +6,7 @@
   import { fade, scale } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { compare } from './compare.svelte.js'
+  import { trapFocus } from '../focustrap.js'
 
   // Deep link: /#compare opens this straight away, so the README can point at it.
   onMount(() => {
@@ -117,6 +118,7 @@
       tabindex="-1"
       aria-modal="true"
       aria-label="Oriel compared to alternatives"
+      use:trapFocus
       in:scale={{ duration: 210, start: 0.97, opacity: 0, easing: cubicOut }}
       out:scale={{ duration: 130, start: 0.98, opacity: 0, easing: cubicOut }}
     >
