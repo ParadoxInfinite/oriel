@@ -16,7 +16,7 @@ func TestAuthMiddleware(t *testing.T) {
 			r.Header.Set("Authorization", authHeader)
 		}
 		w := httptest.NewRecorder()
-		authMiddleware(ok, token).ServeHTTP(w, r)
+		authMiddleware(ok, func() string { return token }).ServeHTTP(w, r)
 		return w.Code
 	}
 
@@ -50,7 +50,7 @@ func TestAuthMiddleware_ProxyBypass(t *testing.T) {
 			r.Header.Set("Authorization", auth)
 		}
 		w := httptest.NewRecorder()
-		authMiddleware(ok, "secret").ServeHTTP(w, r)
+		authMiddleware(ok, func() string { return "secret" }).ServeHTTP(w, r)
 		return w.Code
 	}
 	for _, h := range []string{"X-Forwarded-For", "X-Forwarded-Host", "Forwarded"} {
@@ -68,8 +68,41 @@ func TestAuthMiddleware_ProxyBypass(t *testing.T) {
 	r := httptest.NewRequest("POST", "/", nil)
 	r.RemoteAddr = "127.0.0.1:5555"
 	w := httptest.NewRecorder()
-	authMiddleware(ok, "secret").ServeHTTP(w, r)
+	authMiddleware(ok, func() string { return "secret" }).ServeHTTP(w, r)
 	if w.Code != http.StatusOK {
 		t.Errorf("direct loopback (no proxy): status=%d want 200", w.Code)
+	}
+}
+
+// TestAuthMiddleware_LiveTokenRotation: the token is read per request, so a
+// rotation (and especially a revocation by clearing) takes effect immediately on
+// a running server — no restart, no window where the old token still works.
+func TestAuthMiddleware_LiveTokenRotation(t *testing.T) {
+	ok := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
+	current := "old-secret"
+	h := authMiddleware(ok, func() string { return current })
+	call := func(auth string) int {
+		r := httptest.NewRequest("POST", "/", nil)
+		r.RemoteAddr = "10.0.0.2:5555" // remote — token required
+		if auth != "" {
+			r.Header.Set("Authorization", auth)
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		return w.Code
+	}
+	if call("Bearer old-secret") != http.StatusOK {
+		t.Fatal("old token should work before rotation")
+	}
+	current = "new-secret" // rotate
+	if call("Bearer old-secret") != http.StatusUnauthorized {
+		t.Error("old token must stop working immediately after rotation")
+	}
+	if call("Bearer new-secret") != http.StatusOK {
+		t.Error("new token should work immediately after rotation")
+	}
+	current = "" // revoke (clear) — but a remote caller is still gated by exposedAddr at bind time
+	if call("Bearer new-secret") != http.StatusOK {
+		t.Error("clearing the token disables the gate (loopback-only model); documented behavior")
 	}
 }
