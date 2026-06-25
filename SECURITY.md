@@ -9,9 +9,13 @@ or email the maintainer. We'll acknowledge within a few days.
 
 ## Trust model: read before exposing Oriel
 
-Oriel has **no authentication**. Its entire security model is the network
-boundary: by default it binds to **`127.0.0.1` only**, and it trusts anyone who
-can reach that port as the local user.
+By default Oriel has **no login**, and its baseline security model is the network
+boundary: it binds to **`127.0.0.1` only** and trusts anyone who can reach that
+port as the local user. There's an **optional bearer token** that gates
+non-loopback and MCP-over-HTTP access (off by default; see
+[Optional authentication](#optional-authentication)), but it's a single shared
+secret, not a multi-user login. Unless noted, the model below assumes the
+default: token off, loopback only.
 
 This is deliberate: it's a local tool meant to sit next to your container
 runtime. But it means **reaching Oriel is equivalent to root on the Docker
@@ -46,9 +50,34 @@ Suitable for a single trusted operator on a private network; **never** rely on i
 as a security boundary for untrusted users, regulated/government workloads, or
 public exposure without an independent audit and a hardened deployment.
 
+## Optional authentication
+
+Since v0.6.0 there's an opt-in bearer token that gates **non-loopback** `/api`
+and **MCP-over-HTTP** access:
+
+```sh
+oriel config auth-token --generate   # generate a 256-bit token (printed once)
+oriel config auth-token --clear      # turn the gate back off
+```
+
+What it does and doesn't do:
+
+- **Loopback is always exempt.** The token applies only to remote or proxied
+  callers; the local UI never needs it.
+- **It's one shared secret**, constant-time compared. There's no per-user
+  identity, login page, session, or RBAC (see [What Oriel is not](#what-oriel-is-not)).
+- **Plain HTTP.** The token rides in cleartext, so keep Oriel behind a
+  TLS-terminating reverse proxy on a private network. The token hardens that
+  setup; it doesn't replace it.
+- Changing or clearing the token takes effect on the next request, including on a
+  running `oriel mcp --http`.
+
+The network boundary is still the primary control. The token is defense-in-depth
+on top of it, not a license to expose Oriel to the public internet.
+
 ## Remote access (private networks only)
 
-Because there's no app-level password, **exposing Oriel safely means putting a
+The optional token helps, but **exposing Oriel safely still means putting a
 trusted network boundary in front of it.** Reach it over a **private overlay
 network / VPN ONLY**: **Tailscale**, **ZeroTier**, **WireGuard**, or a
 Nebula/Headscale-style mesh. The example below uses Tailscale, but the rule is
@@ -79,13 +108,15 @@ This is reasonably safe **if and only if**:
 - your tailnet ACLs restrict that port to devices/users you trust. Remember
   that *anyone who can reach Oriel has full host control*, so a shared node or a
   compromised tailnet device inherits that power;
-- you accept that **Tailscale is the authentication.** There is no second factor
-  inside Oriel.
+- you treat **the network (Tailscale) as the primary authentication.** Oriel's
+  optional token can add a second factor for non-loopback callers, but don't lean
+  on it alone.
 
 **Avoid:** binding to `0.0.0.0` or a LAN IP, port-forwarding through a router, or
-any reverse proxy without its own authentication. If you need auth in front of
-Oriel, terminate it at the proxy (e.g. Tailscale, or an authenticating reverse
-proxy on the same host). Oriel itself won't ask for a password.
+any reverse proxy without its own authentication. If you need strong auth in
+front of Oriel, terminate it at the proxy (e.g. Tailscale, or an authenticating
+reverse proxy on the same host). Oriel's own token is a single shared secret, not
+a substitute for that.
 
 When in doubt, run it locally and reach it over SSH port-forwarding
 (`ssh -L 4321:127.0.0.1:4321 host`), which keeps the same `127.0.0.1` trust model.
