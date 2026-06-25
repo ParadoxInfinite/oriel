@@ -12,17 +12,20 @@ import (
 )
 
 // ServeHTTP serves the MCP server over Streamable HTTP at addr until ctx is
-// cancelled. token gates non-loopback callers — a loopback client (the same
-// machine) is exempt, and an empty token disables the gate. Remote/hosted MCP
-// clients connect here with `Authorization: Bearer <token>`. The caller must
-// ensure a token is set before binding a non-loopback address (see mcp_cmd.go).
-func ServeHTTP(ctx context.Context, addr string, reg *tools.Registry, version string, include func(*tools.Tool) bool, token string) error {
+// cancelled. tokenFn supplies the gate token, read fresh per request — so a
+// rotation or clear (via the UI or `oriel config auth-token`, in the other
+// process) takes effect immediately, including revoking a leaked token without a
+// restart. A loopback, non-proxied client is exempt; an empty token disables the
+// gate. Remote/hosted clients connect with `Authorization: Bearer <token>`. The
+// caller must ensure a token is set before binding a non-loopback address (see
+// mcp_cmd.go).
+func ServeHTTP(ctx context.Context, addr string, reg *tools.Registry, version string, include func(*tools.Tool) bool, tokenFn func() string) error {
 	srv := newServer(reg, version, include)
 	mcpHandler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, nil)
 
 	httpSrv := &http.Server{
 		Addr:              addr,
-		Handler:           authMiddleware(mcpHandler, token),
+		Handler:           authMiddleware(mcpHandler, tokenFn),
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
@@ -38,11 +41,12 @@ func ServeHTTP(ctx context.Context, addr string, reg *tools.Registry, version st
 }
 
 // authMiddleware requires the bearer token for every caller except a genuinely
-// local, direct one. An empty token disables the gate. Reuses the single
-// constant-time compare in internal/settings.
-func authMiddleware(next http.Handler, token string) http.Handler {
+// local, direct one. The token is read via tokenFn on each request, so it always
+// reflects the current setting. An empty token disables the gate. Reuses the
+// single constant-time compare in internal/settings.
+func authMiddleware(next http.Handler, tokenFn func() string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !localDirect(r) && !settings.TokenOK(settings.Bearer(r.Header.Get("Authorization")), token) {
+		if !localDirect(r) && !settings.TokenOK(settings.Bearer(r.Header.Get("Authorization")), tokenFn()) {
 			http.Error(w, "unauthorized: missing or invalid bearer token", http.StatusUnauthorized)
 			return
 		}
