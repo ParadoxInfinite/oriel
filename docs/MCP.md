@@ -65,6 +65,30 @@ client:
 
 Use the full path to `oriel` for `"command"` if it isn't on the client's `PATH`.
 
+### Run in Docker
+
+No local install needed: an MCP client can run the published image instead, which
+speaks MCP over stdio against the host's Docker via the mounted socket.
+
+```json
+{
+  "mcpServers": {
+    "oriel": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm",
+               "-v", "/var/run/docker.sock:/var/run/docker.sock",
+               "ghcr.io/paradoxinfinite/oriel"]
+    }
+  }
+}
+```
+
+The image is `linux/amd64` + `linux/arm64`. Colima-specific tools are inert inside
+a container (there's no VM to control there); everything else (containers, images,
+volumes, networks, Compose) works through the socket. Mounting the Docker socket
+grants root-equivalent control of the host, the same trust the rest of Oriel
+assumes; see [SECURITY.md](../SECURITY.md).
+
 ### Destructive actions need a grant
 
 Read tools (`*.list`, `logs`, `inspect`, `status`) and reversible ones (`start` /
