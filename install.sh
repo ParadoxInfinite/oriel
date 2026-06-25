@@ -71,7 +71,11 @@ echo "Downloading ${asset}…"
 fetch "$BASE/$asset" "$tmp/oriel" || die "download failed"
 fetch "$BASE/SHA256SUMS.txt" "$tmp/sums" || die "could not fetch checksums"
 
-expected=$(grep " ${asset}\$" "$tmp/sums" | awk '{print $1}')
+# Match the checksum by exact filename column (field 2), not a line-suffix grep:
+# anchoring on the whole field avoids selecting a line where the asset name is
+# only a suffix of another entry. GoReleaser emits "<hex>  <name>" (optionally
+# "*<name>" for binary mode), so accept either form.
+expected=$(awk -v a="$asset" '$2==a || $2=="*"a {print $1; exit}' "$tmp/sums")
 [ -n "$expected" ] || die "no checksum for $asset in SHA256SUMS.txt"
 
 if command -v sha256sum >/dev/null 2>&1; then
