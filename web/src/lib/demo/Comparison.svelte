@@ -24,24 +24,24 @@
       title: 'Cost & licensing',
       rows: [
         { label: 'License', cells: ['Apache-2.0', 'Proprietary', 'Proprietary', 'Apache-2.0', 'MIT', 'zlib (CE) / paid (Business)'] },
-        { label: 'Free for commercial use', cells: ['y', 'Paid above ~250 staff / $10M', 'Paid for commercial', 'y', 'y', 'CE free; Business paid'] },
-        { label: 'Account / sign-in required', cells: ['n', '~ (pushed)', 'n', 'n', 'n', 'Server login (it has users)'] },
+        { label: 'Free for commercial use', cells: ['y', { v: '~', note: 'free under ~250 staff / $10M' }, { v: 'n', note: 'paid for commercial' }, 'y', 'y', { v: '~', note: 'CE free; Business paid' }] },
+        { label: 'Account / sign-in required', cells: ['n', { v: '~', note: 'increasingly pushed' }, 'n', 'n', 'n', { v: 'y', note: 'it has user logins' }] },
       ],
     },
     {
       title: 'Footprint & install',
       rows: [
-        { label: 'Distribution', cells: ['Single static binary', 'Installer', 'Installer', 'Installer', 'Single binary', 'Run a container'] },
-        { label: 'Size', cells: ['~13 MB', 'Hundreds of MB', '~tens of MB', 'Hundreds of MB', '~tens of MB', 'Container image'] },
-        { label: 'Idle RAM', cells: ['~15-30 MB', 'Heavy (Electron + VM)', 'Light (native)', 'Heavy (Electron + VM)', 'Light', '≥2 GB host'] },
-        { label: 'Bundles its own VM / engine', cells: ['No, uses yours', 'y', 'y', 'y (Podman machine)', 'n', 'n'] },
+        { label: 'Distribution', cells: ['Single static binary', 'Installer', 'Installer', 'Installer', 'Single binary', 'Container'] },
+        { label: 'Download / size', cells: ['~13 MB binary', '~600 MB → ~1.5 GB app', '~150 MB app', '~250 MB app', '~25 MB binary', '~300 MB image'] },
+        { label: 'Idle RAM *', cells: ['~15-30 MB', '~3-4 GB', { v: '~0.2-1 GB', note: 'dynamic' }, '~2 GB', '~tens of MB', '~200-300 MB'] },
+        { label: 'Bundles its own VM / engine', cells: [{ v: 'n', note: 'uses your engine' }, { v: 'y', note: 'lock-in' }, { v: 'y', note: 'lock-in' }, { v: 'y', note: 'Podman machine' }, 'n', 'n'] },
       ],
     },
     {
       title: 'Engine support',
       rows: [
-        { label: 'Bring-your-own engine', cells: ['Colima · Docker · OrbStack · Podman · remote', 'Bundled', 'Bundled', 'Podman (+ Docker compat)', 'Any Docker socket', 'Any Docker / K8s endpoint'] },
-        { label: 'Manages the VM lifecycle', cells: ['y (Colima start/stop)', 'y (its own)', 'y (its own)', 'y (Podman machine)', 'n', 'n'] },
+        { label: 'Bring-your-own engine', cells: [{ v: 'Any engine / socket', note: 'Colima · Docker · OrbStack · Podman · remote, no lock-in' }, { v: 'Bundled', note: 'lock-in' }, { v: 'Bundled', note: 'lock-in' }, { v: 'Podman', note: '+ Docker-compat socket' }, 'Any Docker socket', 'Any Docker / K8s endpoint'] },
+        { label: 'Manages the VM lifecycle', cells: [{ v: 'y', note: 'Colima start/stop' }, { v: 'y', note: 'its own' }, { v: 'y', note: 'its own' }, { v: 'y', note: 'Podman machine' }, 'n', 'n'] },
       ],
     },
     {
@@ -50,7 +50,7 @@
         { label: 'Type', cells: ['Web GUI', 'Desktop app', 'Native app', 'Desktop app', 'Terminal (TUI)', 'Web UI (server)'] },
         { label: 'Runs in the browser', cells: ['y', 'n', 'n', 'n', 'n', 'y'] },
         { label: 'Themes / swappable editions', cells: ['y', 'n', 'n', '~', 'n', '~'] },
-        { label: 'Command palette', cells: ['y (⌘K)', 'n', 'n', 'n', '~ (keys)', 'n'] },
+        { label: 'Command palette', cells: [{ v: 'y', note: '⌘K / Ctrl-K' }, 'n', 'n', 'n', { v: '~', note: 'keyboard-driven' }, 'n'] },
       ],
     },
     {
@@ -66,30 +66,29 @@
     {
       title: 'AI & automation',
       rows: [
-        { label: 'Built-in MCP server (drive via AI)', cells: ['y, safety-gated', 'MCP Toolkit (runs other servers)', 'n', 'n', 'n', 'n'] },
+        { label: 'Built-in MCP server (drive via AI)', cells: [{ v: 'y', note: 'safety-gated' }, { v: '~', note: 'MCP Toolkit runs other servers' }, 'n', 'n', 'n', 'n'] },
         { label: 'Secret masking + destructive grant', cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
-        { label: 'Headless / scriptable', cells: ['y (oriel mcp, CLI)', '~ (CLI)', '~ (CLI)', '~ (CLI)', 'n', 'API'] },
+        { label: 'Headless / scriptable', cells: [{ v: 'y', note: 'oriel mcp, CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, 'n', { v: 'y', note: 'HTTP API' }] },
       ],
     },
     {
       title: 'Access & security',
       rows: [
-        { label: 'Runs locally, no server', cells: ['y', 'y', 'y', 'y', 'y', 'No, it is the server'] },
-        { label: 'Remote access', cells: ['Reverse proxy + token (private net)', 'n', 'n', '~', 'n', 'y (built for it)'] },
+        { label: 'Runs locally, no server', cells: ['y', 'y', 'y', 'y', 'y', { v: 'n', note: 'it is the server' }] },
+        { label: 'Remote access', cells: [{ v: '~', note: 'reverse proxy + token, private net' }, 'n', 'n', '~', 'n', { v: 'y', note: 'built for it' }] },
       ],
     },
     {
       title: "Where Oriel is weaker, and what we'll do about it",
       honest: true,
       rows: [
-        { label: 'Windows', cells: [{ v: 'No', tag: 'demand' }, 'y', 'No (macOS only)', 'y', 'y', 'y (server)'] },
-        { label: 'Native desktop app', cells: [{ v: 'No', tag: 'design', note: 'web UI on purpose' }, 'y (Electron)', 'y (native)', 'y (Electron)', 'No (terminal)', 'No (web)'] },
-        { label: 'In-browser shell / exec', cells: [{ v: 'Not yet', tag: 'road' }, 'y', 'y', 'y', 'y', 'y'] },
-        { label: 'Kubernetes', cells: [{ v: 'No', tag: 'scope' }, 'y', 'y', 'y', 'n', 'y'] },
-        { label: 'Multi-host / clusters / teams', cells: [{ v: 'No', tag: 'design', note: 'single host by design' }, 'n', 'n', 'n', 'n', 'y'] },
-        { label: 'Per-user identity / RBAC for remote', cells: [{ v: 'Not yet', tag: 'road', note: 'richer auth planned' }, 'n', 'n', 'n', 'n', 'y'] },
-        { label: 'Audit log of AI/automation actions', cells: [{ v: 'Not yet', tag: 'road' }, 'n', 'n', 'n', 'n', '~'] },
-        { label: 'Maturity / ecosystem', cells: ['New (2025), small', 'Established', 'Established', 'Established', 'Established', 'Established'] },
+        { label: 'Windows', cells: [{ v: 'n', tag: 'demand' }, 'y', { v: 'n', note: 'macOS only' }, 'y', 'y', { v: 'y', note: 'server' }] },
+        { label: 'Native desktop app', cells: [{ v: 'n', tag: 'design', note: 'web UI on purpose' }, { v: 'y', note: 'Electron' }, { v: 'y', note: 'native' }, { v: 'y', note: 'Electron' }, { v: 'n', note: 'terminal' }, { v: 'n', note: 'web' }] },
+        { label: 'In-browser shell / exec', cells: [{ v: 'n', tag: 'road' }, 'y', 'y', 'y', 'y', 'y'] },
+        { label: 'Kubernetes', cells: [{ v: 'n', tag: 'scope' }, 'y', 'y', 'y', 'n', 'y'] },
+        { label: 'Multi-host / clusters / teams', cells: [{ v: 'n', tag: 'design', note: 'single-operator, single-host' }, 'n', 'n', 'n', 'n', 'y'] },
+        { label: 'Audit log of actions', cells: [{ v: 'n', tag: 'road' }, 'n', 'n', 'n', 'n', { v: '~', note: 'Business edition' }] },
+        { label: 'Maturity & ecosystem', cells: [{ v: 'New (2025)', note: 'small, moving fast' }, { v: 'Huge', note: 'industry default, extensions' }, { v: 'Growing', note: 'popular on Mac' }, { v: 'Red Hat-backed', note: 'extensions' }, { v: 'Popular OSS', note: 'big following' }, { v: 'Mature', note: 'large enterprise base' }] },
       ],
     },
   ]
@@ -144,15 +143,14 @@
                 <tr>
                   <td class="rowhead">{r.label}</td>
                   {#each r.cells as c, i}
+                    {@const cell = c && typeof c === 'object' ? c : { v: c }}
                     <td class:me={i === 0}>
-                      {#if c === 'y'}<span class="yes">✓</span>
-                      {:else if c === 'n'}<span class="no">✕</span>
-                      {:else if c === '~'}<span class="part">◐</span>
-                      {:else if typeof c === 'object'}
-                        <span class="txt">{c.v}</span>
-                        <span class="tag {TAGS[c.tag].cls}">{TAGS[c.tag].label}</span>
-                        {#if c.note}<span class="cellnote">{c.note}</span>{/if}
-                      {:else}<span class="txt">{c}</span>{/if}
+                      {#if cell.v === 'y'}<span class="yes">✓</span>
+                      {:else if cell.v === 'n'}<span class="no">✕</span>
+                      {:else if cell.v === '~'}<span class="part">◐</span>
+                      {:else}<span class="txt">{cell.v}</span>{/if}
+                      {#if cell.tag}<span class="tag {TAGS[cell.tag].cls}">{TAGS[cell.tag].label}</span>{/if}
+                      {#if cell.note}<span class="cellnote">{cell.note}</span>{/if}
                     </td>
                   {/each}
                 </tr>
@@ -161,6 +159,8 @@
           </tbody>
         </table>
       </div>
+
+      <p class="cmp-fn">* Idle RAM is the tool itself. Oriel, lazydocker, and Portainer drive the engine you already run (its RAM is separate); Docker Desktop, OrbStack, and Podman Desktop bundle a Linux VM, so theirs includes it. Figures are rough, vary by machine and settings, and drift over time.</p>
 
       <footer class="cmp-foot">
         <div class="legend">
@@ -251,6 +251,7 @@
   .txt { color: var(--text, #e7e7ea); }
   td.me .txt { font-weight: 600; }
   .cellnote { display: block; font-size: 10.5px; color: var(--text-3, #8a8a93); margin-top: 2px; }
+  .cmp-fn { margin: 0; padding: 10px 20px; font-size: 11px; line-height: 1.5; color: var(--text-3, #8a8a93); border-top: 1px solid color-mix(in srgb, var(--border, #34343a) 50%, transparent); }
   .tag {
     display: inline-block;
     margin-left: 5px;
