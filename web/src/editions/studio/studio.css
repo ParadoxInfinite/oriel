@@ -186,6 +186,17 @@
 .studio-root .btn-sm { padding: 5px 9px; font-size: 12px; border-radius: 7px; gap: 5px; }
 .studio-root .btn-icon { padding: 6px; }
 
+/* Touch devices: grow the dense, mouse-tuned hit areas to a comfortable tap size
+   (~44px) without touching the desktop look. Only matches a coarse pointer. */
+@media (pointer: coarse) {
+  .studio-root .btn { min-height: 44px; }
+  .studio-root .btn-sm { min-height: 40px; padding: 8px 12px; }
+  .studio-root .btn-icon { min-width: 44px; min-height: 44px; }
+  .studio-root .input { min-height: 44px; }
+  .studio-root .nav { min-height: 44px; }
+  .studio-root input[type='checkbox'] { width: 18px; height: 18px; }
+}
+
 /* ── Status pill ─────────────────────────────────────────────────────────── */
 .studio-root .pill {
   display: inline-flex;

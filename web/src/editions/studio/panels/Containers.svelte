@@ -147,7 +147,8 @@
       <p class="text-sm text-[var(--text-2)]">{containers.list.length ? 'No containers match your search.' : 'No containers yet.'}</p>
     </div>
   {:else}
-    <div class="rise card overflow-x-auto" style="animation-delay:40ms">
+    <!-- Table layout: sm and up -->
+    <div class="rise card hidden overflow-x-auto sm:block" style="animation-delay:40ms">
       <table class="w-full min-w-[720px] table-fixed border-collapse">
         <colgroup>
           <col style="width:42px" />
@@ -186,6 +187,30 @@
           {/if}
         </tbody>
       </table>
+    </div>
+
+    <!-- Card layout: below sm (phones). Same data, reflowed so nothing scrolls sideways. -->
+    <div class="rise flex flex-col gap-2.5 sm:hidden" style="animation-delay:40ms">
+      {#if groups}
+        {#each groups as g (g.name || '__solo__')}
+          {@const key = g.name || '__solo__'}
+          {@const open = !collapsed[key]}
+          <div>
+            <div class="flex items-center gap-2 px-1 py-1.5">
+              <button class="flex min-w-0 flex-1 items-center gap-2 text-left" onclick={() => (collapsed[key] = open)}>
+                <svg class="shrink-0 text-[var(--text-3)] transition-transform {open ? 'rotate-90' : ''}" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
+                <Icon name="layers" size={13} class="shrink-0 text-[var(--text-3)]" />
+                <span class="truncate text-[13px] font-semibold">{g.name || 'Standalone'}</span>
+                <span class="count">{g.items.length}</span>
+              </button>
+              <input type="checkbox" checked={groupAllSelected(g.items)} indeterminate={groupAnySelected(g.items) && !groupAllSelected(g.items)} onchange={(e) => toggleGroup(g.items, e)} class="h-4 w-4 shrink-0" style="accent-color:var(--accent)" aria-label="Select {g.name || 'standalone'} stack" />
+            </div>
+            {#if open}<div class="flex flex-col gap-2.5">{#each g.items as c (c.id)}{@render card(c)}{/each}</div>{/if}
+          </div>
+        {/each}
+      {:else}
+        {#each rows as c (c.id)}{@render card(c)}{/each}
+      {/if}
     </div>
   {/if}
 </div>
@@ -234,6 +259,50 @@
       </div>
     </td>
   </tr>
+{/snippet}
+
+{#snippet card(c)}
+  {@const running = c.state === 'running'}
+  {@const st = stats.byId[c.id]}
+  {@const code = exitCode(c.status)}
+  {@const ports = c.ports.filter((p) => p.public)}
+  <div class="card p-3 {selectedIds.has(c.id) ? 'border-[var(--accent)] bg-[var(--accent-tint)]' : ''}">
+    <div class="flex items-start gap-2.5">
+      <input type="checkbox" checked={selectedIds.has(c.id)} onchange={(e) => toggleOne(c.id, e)} class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:var(--accent)" aria-label="Select {c.name}" />
+      <button class="min-w-0 flex-1 text-left" onclick={() => (selected = c)}>
+        <div class="flex items-center gap-2">
+          <span class="truncate text-sm font-medium">{c.name}</span>
+          <span class="ml-auto flex shrink-0 items-center gap-1.5">
+            <StatusPill state={c.state} />
+            {#if code != null}<span class="mono text-[11px] font-medium {code === 0 ? 'text-[var(--text-3)]' : 'text-[var(--red)]'}">({code})</span>{/if}
+          </span>
+        </div>
+        <div class="mono truncate text-[11.5px] text-[var(--text-3)]">{c.image}</div>
+        {#if running && st}
+          <div class="mono tnum mt-2 flex gap-4 text-[12px] text-[var(--text-2)]">
+            <span>CPU {st.cpu.toFixed(1)}%</span>
+            <span>MEM {fmt.bytes(st.mem)}</span>
+          </div>
+        {:else if c.status}
+          <div class="mono mt-2 truncate text-[11px] text-[var(--text-3)]" title={c.status}>{c.status}</div>
+        {/if}
+        {#if ports.length}
+          <div class="mt-2 flex flex-wrap gap-1">
+            {#each ports as p}<span class="chip" title={`host ${p.public} → container ${p.private} · ${p.type}`}>{p.public}→{p.private}</span>{/each}
+          </div>
+        {/if}
+      </button>
+    </div>
+    <div class="mt-3 flex gap-2">
+      {#if running}
+        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.restart', 'Restarted')}><Icon name="restart" size={14} /> Restart</button>
+        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.stop', 'Stopped')}><Icon name="stop" size={14} /> Stop</button>
+      {:else}
+        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.start', 'Started')}><Icon name="play" size={14} /> Start</button>
+      {/if}
+      <button class="btn btn-danger btn-icon btn-sm" title="Remove" aria-label="Remove" onclick={(e) => act(e, c, 'container.remove', 'Removed')}><Icon name="trash" size={15} /></button>
+    </div>
+  </div>
 {/snippet}
 
 {#if selected}

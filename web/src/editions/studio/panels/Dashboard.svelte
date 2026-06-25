@@ -113,7 +113,7 @@
           {/if}
         </p>
       </div>
-      <div class="ml-auto flex gap-2">
+      <div class="flex flex-wrap gap-2 sm:ml-auto">
         <button class="btn btn-default" onclick={() => (showPrune = true)}><Icon name="broom" size={14} /> Reclaim space</button>
         {#if !isDocker}
           <button class="btn btn-default" onclick={() => lifecycle('restart')}><Icon name="restart" size={14} /> Restart</button>
