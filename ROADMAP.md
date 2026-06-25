@@ -9,13 +9,15 @@ way to push something up the list is to open an
 
 - **In-browser container shell.** An interactive `exec` terminal into a running
   container, straight from the UI, built on the existing exec-streaming seam.
-- **Self-hostable on a server (single admin).** v0.6.0 added the opt-in bearer
-  token. Next: let Oriel bind beyond loopback (refusing to start without a token)
-  and add a simple admin **login plus session**, so one operator can run it on a
-  home server or NAS and reach it from a browser over the LAN or a private network.
-  Single-operator by design, **not multi-user: no per-user accounts, no RBAC**
-  (that's a different product). An official Docker image follows after this lands.
-  (See [SECURITY.md](SECURITY.md).)
+- **Self-hostable on a server (single admin).** Oriel stays bound to `127.0.0.1`.
+  Reach it on a home server or NAS over a **private overlay network** (Tailscale,
+  ZeroTier, Netbird, WireGuard), which provides the access control and TLS.
+  `tailscale serve` proxies straight to loopback with no extra software; plain L3
+  meshes just need a small reverse proxy on the host, so Oriel never leaves
+  loopback. The optional bearer token adds a second factor; a login page stays an
+  optional nicety, not a requirement. **No non-loopback bind, no per-user accounts,
+  no RBAC.** An official Docker image (which revisits in-container binding) comes
+  later. (See [SECURITY.md](SECURITY.md).)
 - **Audit log of AI actions.** A durable record of every tool call an MCP client or
   assistant makes: what ran, with which arguments, and when, so you can always
   see what an AI did to your containers. Your own UI clicks aren't logged.
