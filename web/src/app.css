@@ -176,3 +176,16 @@ body {
 .rise {
   animation: rise 0.45s var(--ease-spring) both;
 }
+
+/* Honor the OS "reduce motion" setting: near-instant animations/transitions,
+   no looping (e.g. the VM beacon pulse), no smooth scroll. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

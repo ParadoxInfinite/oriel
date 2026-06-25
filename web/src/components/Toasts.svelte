@@ -8,13 +8,14 @@
   }
 </script>
 
-<div class="fixed bottom-4 right-4 z-[60] flex w-80 flex-col gap-2">
+<div class="fixed bottom-4 right-4 z-[60] flex w-80 flex-col gap-2" aria-live="polite" aria-atomic="false">
   {#each toasts.items as t (t.id)}
     <button
       class="rounded-[--radius] border bg-surface px-4 py-2.5 text-left text-sm shadow-lg {color[
         t.kind
       ] || color.info}"
       onclick={() => dismissToast(t.id)}
+      title="Dismiss"
     >
       {t.message}
     </button>

@@ -1,6 +1,7 @@
 <script>
   import { palette, closePalette } from '../lib/palette.svelte.js'
   import { registerEscape } from '../lib/modalStack.svelte.js'
+  import { trapFocus } from '../lib/focustrap.js'
   import { containers, refreshContainers } from '../lib/containers.svelte.js'
   import {
     images,
@@ -253,13 +254,16 @@
 {#if palette.open}
   <div
     class="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[12vh]"
-    onclick={closePalette}
+    onclick={(e) => { if (e.target === e.currentTarget) closePalette() }}
     role="presentation"
   >
     <div
       class="w-full max-w-lg overflow-hidden rounded-[var(--overlay-radius)] border border-border bg-surface shadow-[var(--overlay-shadow)]"
-      onclick={(e) => e.stopPropagation()}
-      role="presentation"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Command palette"
+      tabindex="-1"
+      use:trapFocus
     >
       <input
         bind:this={inputEl}

@@ -246,7 +246,7 @@
 
 {#if ia.usedByImage}
   <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (ia.usedByImage = null)}>
-    <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+    <div class="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Image used by" tabindex="-1" use:trapFocus>
       <div class="border-b border-[var(--border)] px-5 py-3.5">
         <h2 class="text-[14px] font-semibold tracking-tight">Used by {ia.usingContainers.length} container{ia.usingContainers.length === 1 ? '' : 's'}</h2>
         <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]">{ia.usedByImage.tags?.[0] && ia.usedByImage.tags[0] !== '<none>' ? ia.usedByImage.tags[0] : shortId(ia.usedByImage.id)}</p>
@@ -275,7 +275,7 @@
 
 {#if ia.tagImage}
   <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && (ia.tagImage = null)}>
-    <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]">
+    <div class="w-full max-w-md overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Tag image" tabindex="-1" use:trapFocus>
       <div class="border-b border-[var(--border)] px-5 py-3.5">
         <h2 class="text-[14px] font-semibold tracking-tight">Tag image</h2>
         <p class="mono mt-0.5 truncate text-[11px] text-[var(--text-3)]" title={ia.tagImage.tags?.[0]}>{shortId(ia.tagImage.id)}</p>

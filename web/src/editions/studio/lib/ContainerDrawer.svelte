@@ -1,6 +1,6 @@
 <script>
   import { tick } from 'svelte'
-  import { apiGet, fmt, LogsController, registerEscape } from '../../../platform/index.js'
+  import { apiGet, fmt, LogsController, registerEscape, trapFocus } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
   import StatusPill from './StatusPill.svelte'
 
@@ -101,7 +101,7 @@
 
 
 <div class="fixed inset-0 z-[60] flex justify-end bg-black/40 backdrop-blur-[1px]" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
-  <div class="flex h-full w-[760px] max-w-[95vw] flex-col border-l border-[var(--border)] bg-[var(--bg)] shadow-[var(--shadow-lg)]" role="presentation" onclick={(e) => e.stopPropagation()}>
+  <div class="flex h-full w-[760px] max-w-[95vw] flex-col border-l border-[var(--border)] bg-[var(--bg)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Container details" tabindex="-1" use:trapFocus>
     <div class="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-5 py-3">
       <div class="flex min-w-0 items-center gap-2.5">
         <StatusPill state={container.state} />

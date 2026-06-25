@@ -1,6 +1,7 @@
 <script>
   import { confirmState, resolveConfirm } from '../lib/confirm.svelte.js'
   import { registerEscape } from '../lib/modalStack.svelte.js'
+  import { trapFocus } from '../lib/focustrap.js'
 
   let confirmEl = $state(null)
 
@@ -38,6 +39,7 @@
       role="alertdialog"
       tabindex="-1"
       aria-modal="true"
+      use:trapFocus
     >
       <div class="px-5 pb-4 pt-5">
         <div class="flex items-center gap-2.5">

@@ -90,6 +90,10 @@ export { confirm } from '../lib/confirm.svelte.js'
  *  the top overlay. Wire to an overlay's lifetime in an $effect. */
 export { registerEscape } from '../lib/modalStack.svelte.js'
 
+/** `use:trapFocus` action for a modal: traps Tab inside it and restores focus on
+ *  close. Node needs tabindex="-1". */
+export { trapFocus } from '../lib/focustrap.js'
+
 /** Command-palette controls, shared across editions. */
 export { openPalette, togglePalette } from '../lib/palette.svelte.js'
 
