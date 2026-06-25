@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-25
+
+The UI works on a phone now, and the second built-in edition is gone.
+
+### Added
+
+- **Responsive, mobile-friendly UI.** Studio adapts to phones and tablets: the
+  sidebar becomes a slide-in drawer with a hamburger menu, wide tables scroll
+  cleanly within their card, and the dashboard, settings, and dialogs reflow for
+  narrow screens. Handy for reaching Oriel on a home server from your phone over a
+  private network.
+
+### Removed
+
+- **The Classic edition.** Oriel ships a single built-in UI (Studio) again.
+  Classic was a second, unmaintained interface that wasn't built for mobile, so it
+  was dropped (which also cut the frontend bundle by ~30%). The editions system
+  stays, so Classic, or any UI, can return as a drop-in theme. Anyone who had
+  Classic selected lands on Studio automatically.
+
+### Fixed
+
+- Corrected several out-of-date docs that predated v0.6.0: the optional auth token
+  (README and SECURITY.md still said "no authentication"), MCP over HTTP (the MCP
+  doc still read "stdio" only), `llms.txt` positioning, and the footprint figures
+  in the comparison.
+
 ## [0.6.0] - 2026-06-25
 
 The MCP server grows up. An AI client can now be scoped to read-only or a chosen
