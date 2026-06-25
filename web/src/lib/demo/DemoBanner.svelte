@@ -1,6 +1,7 @@
 <script>
   // Shown only in the VITE_DEMO (GitHub Pages) build. A small fixed pill making
   // clear nothing here is a real Docker host and that a refresh resets state.
+  import { compare } from './compare.svelte.js'
   let dismissed = $state(false)
 </script>
 
@@ -8,6 +9,7 @@
   <div class="demo-pill">
     <span class="dot"></span>
     <span class="txt"><strong>Demo</strong> · mock data, no real Docker — a refresh resets it.</span>
+    <button class="link" onclick={() => (compare.open = true)}>Compare</button>
     <a href="https://github.com/ParadoxInfinite/oriel" target="_blank" rel="noreferrer">GitHub ↗</a>
     <button aria-label="Dismiss" onclick={() => (dismissed = true)}>×</button>
   </div>
@@ -49,6 +51,19 @@
     flex: none;
   }
   a:hover { text-decoration: underline; }
+  .link {
+    flex: none;
+    width: auto;
+    height: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--accent, #6ea8fe);
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .link:hover { text-decoration: underline; background: transparent; }
   button {
     flex: none;
     width: 20px;

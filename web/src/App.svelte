@@ -14,6 +14,7 @@
   import ConfirmDialog from './components/ConfirmDialog.svelte'
   import Toasts from './components/Toasts.svelte'
   import DemoBanner from './lib/demo/DemoBanner.svelte'
+  import Comparison from './lib/demo/Comparison.svelte'
 
   // The host mounts one edition; the switcher swaps it live. Keying the render
   // on the id remounts cleanly so each edition starts from a fresh tree.
@@ -65,5 +66,6 @@
   <Toasts />
   {#if __ORIEL_DEMO__}
     <DemoBanner />
+    <Comparison />
   {/if}
 </div>
