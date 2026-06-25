@@ -97,7 +97,7 @@ The usual ways to run containers on a Mac or Linux box, and where Oriel fits. (F
 
 It's the only one here an AI can drive directly, through the same checks the UI gives you. Reach for it over Docker Desktop / OrbStack (no paid license, bundled VM, or menu-bar app), over lazydocker (a real graphical UI, not a terminal one), or over Portainer (a binary you run for yourself, not a server to deploy and lock down).
 
-> **Coming:** read-only & audited MCP access, Colima VM control, an in-browser shell, MCP over HTTP, and optional auth. [Roadmap](ROADMAP.md).
+> **Coming:** an in-browser shell, an audit log, richer remote auth (sessions / SSO), and a mobile-friendly UI. [Roadmap](ROADMAP.md).
 
 ## AI control (MCP)
 

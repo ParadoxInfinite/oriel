@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-25
+
+The MCP server grows up. An AI client can now be scoped to read-only or a chosen
+set of tools, reach Oriel over HTTP behind a token, attach logs and inspect as
+context, and start from a built-in diagnose prompt — plus Colima VM control and a
+Docker-env helper. The deprecated in-app natural-language resolver is gone; the
+MCP server replaced it.
+
+### Added
+
+- **Scoped MCP access.** `oriel mcp --read-only` exposes only reads; `--allow-tools`
+  is an exclusive allow-list and `--deny-tools` removes named tools (both
+  comma-separated). Hand an agent exactly the surface you intend, nothing more.
+- **MCP over HTTP.** `oriel mcp --http <addr>` serves the same tools over Streamable
+  HTTP for remote/hosted clients. A bearer token is required for any non-loopback
+  (or proxied) caller; binding a non-loopback address without one is refused.
+- **MCP resources & prompts.** A client can attach a container's logs or inspect
+  output as context (`oriel://container/{id}/logs`, `/inspect`), and start from
+  built-in prompts — `diagnose-container`, `fix-docker-connection`, `reclaim-disk`.
+- **Colima VM control over MCP.** `colima.start` / `stop` / `restart` (stop and
+  restart are destructive), alongside the existing `colima.status`.
+- **`docker.env` tool and `oriel env`.** Surface the Docker connection environment
+  (`DOCKER_HOST`, …) — from the CLI or to an agent — so a client can point other
+  tooling at the same daemon.
+- **Optional authentication.** A bearer token gates non-loopback `/api` and
+  MCP-over-HTTP access. Off by default (loopback stays open, as before). Manage it
+  with `oriel config auth-token [--generate | --clear | <token>]`; the generated
+  token is 256-bit and shown once.
+
+### Changed
+
+- **The README leads with the AI/engine-agnostic pitch.** Oriel is the local Docker
+  GUI an AI can drive, on any Docker engine (Colima, Docker, OrbStack, Podman,
+  remote) across macOS and Linux — not "a Colima UI for the Mac." Trimmed heavily,
+  with a concrete AI-driving demo near the top.
+- **Leaner `stacks.list`.** The MCP/read projection returns just what a client needs
+  to target a stack, not the full compose dump.
+
+### Removed
+
+- **The in-app natural-language resolver** (the "AI provider" seam), deprecated in
+  v0.5.0. The MCP server replaced it: same tools, same guardrails, and a model that
+  can reason across several steps instead of one sentence → one tool call. Gone:
+  the Settings → AI panel, the palette's "Interpret" mode, `/api/resolve` /
+  `/api/provider`, `ORIEL_PROVIDER_URL`, and the SDK `provider` exports. The
+  deterministic command palette is unchanged. See [DEPRECATIONS.md](docs/DEPRECATIONS.md).
+
+### Security
+
+- **Closed an auth bypass behind a reverse proxy.** A loopback `Host` header no
+  longer waves a *proxied* request past the host allow-list and token — a forwarded
+  request is treated as remote. The MCP-over-HTTP gate, which trusted the peer
+  address, likewise no longer exempts a forwarded request (a same-host proxy made
+  every caller look loopback). Token changes and allow-list edits are now
+  local-only, even for an authenticated remote caller.
+- **Token hardening.** Generation fails closed on an RNG error instead of emitting a
+  weak token; hand-set tokens must clear a minimum length; the MCP-over-HTTP server
+  reads the token per request, so rotating or clearing it revokes access live with
+  no restart.
+- **Honest posture.** SECURITY.md now states what Oriel is not (no per-user identity,
+  no audit log, not high-assurance) and warns against running it on shared,
+  multi-user, or CI hosts, where loopback trust is a local-privilege-escalation path.
+
 ## [0.5.1] - 2026-06-23
 
 Compose stacks are now drivable from ⌘K and from an agent, and renaming a stack in

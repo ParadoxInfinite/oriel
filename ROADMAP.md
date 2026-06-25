@@ -7,35 +7,23 @@ way to push something up the list is to open an
 
 ## Now
 
-- **Optional authentication.** Today Oriel binds to `127.0.0.1` and only guards
-  against DNS rebinding (host allow-list), and there's no login. Add an **opt-in**
-  token/password gate so Oriel (and MCP-over-HTTP) can be exposed safely beyond
-  loopback. Off by default; local use unchanged. (See [SECURITY.md](SECURITY.md).)
 - **In-browser container shell.** An interactive `exec` terminal into a running
   container, straight from the UI, built on the existing exec-streaming seam.
-- **MCP over HTTP (Streamable HTTP).** Reach Oriel's MCP server from remote clients
-  and hosted-AI connectors. Gated on optional authentication landing first.
-- **Read-only & scoped MCP access.** A `--read-only` mode and per-tool allow-lists,
-  so you can hand an MCP client a deliberately limited surface: logs and inspect
-  only, no lifecycle. Works alongside the destructive grant, so you
-  decide exactly what an AI can touch.
+- **Remote-ready authentication.** v0.6.0 added an opt-in bearer token for
+  non-loopback and MCP-over-HTTP access. Build past a single shared secret:
+  sessions or SSO/OIDC with per-user identity and revocation, and a "strict" mode
+  that can require the token even on loopback for headless, remote-only
+  deployments. (See [SECURITY.md](SECURITY.md).)
 - **Audit log of AI actions.** A durable record of every tool call an MCP client or
   assistant makes: what ran, with which arguments, and when, so you can always
   see what an AI did to your containers. Your own UI clicks aren't logged.
 
 ## Next
 
-- ~~**In-app natural-language assistant.**~~ **Dropped.** Driving the registry with
-  a model is the MCP server's job (local or hosted); a single-shot in-app resolver
-  just duplicates it with less capability. The existing provider seam is deprecated
-  and on its way out. See [DEPRECATIONS.md](docs/DEPRECATIONS.md).
-- **MCP resources & prompts.** Expose container logs, inspect output, and Compose
-  files as readable MCP **resources**, plus canned diagnostic **prompts**, so an
-  AI can read a crashing container's logs as context, not just call tools.
-- **Colima as a first-class MCP target.** Today an AI can only read `colima.status`.
-  Add gated tools to manage the VM itself: `colima.start` / `stop` / `restart`,
-  plus profiles and resources (CPU / memory / disk), so it can control the machine
-  your containers run on, not just the containers.
+- **Mobile-friendly, responsive UI.** Make the dashboard and the resource views
+  usable from a phone or tablet over the private network, not just a desktop browser.
+- **Accessibility & translations.** A keyboard/screen-reader pass and i18n so the
+  UI isn't English-only.
 
 ## Later
 
@@ -57,7 +45,10 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: **compose stacks drivable from ⌘K +
+See the [CHANGELOG](CHANGELOG.md). Highlights: **scoped & read-only MCP, MCP over
+HTTP behind a token, MCP resources & prompts, Colima VM control, a Docker-env
+helper, optional authentication, and removal of the in-app NL resolver** (v0.6.0);
+**compose stacks drivable from ⌘K +
 MCP (start/stop/restart/down/alias) and Oriel-side renaming on any stack** (v0.5.1);
 the **run-command palette across all resources + ⌘K navigation, a shared nav seam in
 the theme SDK, and deprecation of the in-app NL resolver** (v0.5.0); a **second
