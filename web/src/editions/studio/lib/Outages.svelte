@@ -15,6 +15,9 @@
   const has = $derived(outages.list.length > 0)
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- role + tabindex are set together only when `has` (it's a real button then);
+     the static analyzer can't correlate the two ternaries. -->
 <div
   class="mx-3 mb-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] p-3 shadow-[var(--shadow-sm)] transition-colors {has ? 'cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--panel-2)]' : ''}"
   role={has ? 'button' : undefined}

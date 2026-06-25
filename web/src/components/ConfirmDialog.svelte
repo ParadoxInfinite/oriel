@@ -30,13 +30,13 @@
 {#if confirmState.open}
   <div
     class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
-    onclick={() => resolveConfirm(false)}
+    onclick={(e) => { if (e.target === e.currentTarget) resolveConfirm(false) }}
     role="presentation"
   >
     <div
       class="w-full max-w-sm overflow-hidden rounded-[var(--overlay-radius)] border border-border bg-surface shadow-[var(--overlay-shadow)]"
-      onclick={(e) => e.stopPropagation()}
       role="alertdialog"
+      tabindex="-1"
       aria-modal="true"
     >
       <div class="px-5 pb-4 pt-5">
