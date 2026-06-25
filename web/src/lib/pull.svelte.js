@@ -4,8 +4,8 @@ import { REGISTRY_SOURCES, REGISTRY_HOSTS, searchRegistry, listImageTags } from 
 
 // Headless controller for the image-pull dialog: registry selection, live search,
 // tag suggestions, and the streaming pull, all the behaviour, none of the look.
-// Editions construct one and render its reactive state however they like, so the
-// Studio and Classic pull dialogs share a single source of truth.
+// Editions construct one and render its reactive state however they like, so any
+// edition's pull dialog shares a single source of truth.
 export class PullController {
   sourceId = $state('dockerhub')
   ref = $state('')

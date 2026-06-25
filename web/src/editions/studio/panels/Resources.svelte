@@ -36,7 +36,7 @@
   const shortId = (id) => (id || '').replace(/^sha256:/, '').slice(0, 12)
 
   // Per-kind schema: columns (with sort keys + colgroup widths), default sort,
-  // remove + prune behaviour. Mirrors Classic's resource views.
+  // remove + prune behaviour.
   const config = {
     images: {
       store: images,

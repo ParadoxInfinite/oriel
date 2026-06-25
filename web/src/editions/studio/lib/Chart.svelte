@@ -1,6 +1,6 @@
 <script>
-  // Compact, scrubbable CPU history, adapted from Classic's Heartbeat, themed
-  // for Studio. Time-axed so outages read correctly:
+  // Compact, scrubbable CPU history, themed for Studio. Time-axed so outages
+  // read correctly:
   //   • accent line, colima up; peak CPU per 15s window
   //   • red baseline, colima was DOWN while recording
   //   • dashed grey, Oriel itself was offline (a recording gap)

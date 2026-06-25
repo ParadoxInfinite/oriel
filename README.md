@@ -84,7 +84,7 @@ Needs any Docker Engine–compatible runtime + the `docker` CLI. [Colima](https:
 - **Compose:** manage stacks, plus discover & deploy projects from disk.
 - **Dashboard:** CPU history, memory, disk, uptime/outage tracking.
 - **Command palette** (`⌘K`): fuzzy-run any action or jump to any view.
-- **Editions & themes:** swap the whole UI (Studio / Classic), light/dark/system, custom accents.
+- **Editions & themes:** swap the whole UI (Studio, or drop in your own), light/dark/system, custom accents.
 - **Light & live:** ~15–30 MB RAM, one SSE stream (no polling), checksum-verified self-update.
 
 ## How it compares
@@ -123,11 +123,7 @@ Setup and the full tool list: [docs/MCP.md](docs/MCP.md).
 
 ## Editions & themes
 
-The UI is a swappable plugin on a stable platform SDK: **Studio** (default; light/dark/system) and **Classic** (dark teal). Recolor either, or drop in your own (see [docs/THEMES.md](docs/THEMES.md)).
-
-<p align="center">
-  <img src="docs/img/classic.png" alt="Oriel Classic edition" width="70%" />
-</p>
+The UI is a swappable plugin on a stable platform SDK: **Studio** (light/dark/system, custom accents). Recolor it, or drop in your own edition (see [docs/THEMES.md](docs/THEMES.md)).
 
 ## Security
 
