@@ -21,6 +21,13 @@ import (
 // mcp_cmd.go).
 func ServeHTTP(ctx context.Context, addr string, reg *tools.Registry, version string, include func(*tools.Tool) bool, tokenFn func() string) error {
 	srv := newServer(reg, version, include)
+	// nil options on purpose: it keeps the SDK's default browser protections ON,
+	// which we rely on alongside the token gate. Do NOT set DisableLocalhostProtection
+	// — that default 403s any request whose Host isn't loopback when we're bound to
+	// loopback (DNS-rebinding defense, keyed off the real socket address), and the
+	// default Content-Type: application/json requirement forces a CORS preflight a
+	// cross-origin page can't satisfy. Together with authMiddleware, that covers the
+	// remote-caller, rebinding, and cross-origin-POST vectors.
 	mcpHandler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return srv }, nil)
 
 	httpSrv := &http.Server{
