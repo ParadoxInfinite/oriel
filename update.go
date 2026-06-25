@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -80,7 +81,18 @@ func runUpdate(args []string) error {
 	fmt.Println("verified. Restarting the service…")
 	// Best-effort: the server restarts and drops this connection.
 	_, _ = postJSON[map[string]any](updateCheckClient, *port, "/api/update/restart")
-	return waitForVersion(*port, st.Current)
+	if err := waitForVersion(*port, st.Current); err != nil {
+		return err
+	}
+	// New checks ride along with a new binary. Surface a stale shell env now, in
+	// the same breath as the upgrade, rather than waiting for the user to run
+	// `oriel doctor` and wonder what changed.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if hint := dockerHostHint(ctx); hint != "" {
+		fmt.Printf("\nHeads up: %s\n", hint)
+	}
+	return nil
 }
 
 func getUpdateStatus(port int) (updateStatus, error) {
