@@ -124,19 +124,49 @@ server does and serves MCP over stdio.
 
 Mutations: `container.start` / `stop` / `restart` / `remove`, `image.remove` /
 `tag` / `prune`, `volume.remove` / `prune`, `network.remove`,
-`stack.start` / `stop` / `restart` / `down`, `stack.alias`. Stack actions run
-compose synchronously and return the collected output (the UI streams the same
-actions for live progress); `stack.down` is destructive. `stack.alias` is a
-display-only rename (sets the Oriel label for a project; the real compose name is
-unchanged) — handy for an agent to organize stacks for the user.
+`stack.start` / `stop` / `restart` / `down`, `stack.alias`,
+`colima.start` / `stop` / `restart`. Stack actions run compose synchronously and
+return the collected output (the UI streams the same actions for live progress);
+`stack.down` is destructive. `stack.alias` is a display-only rename (sets the
+Oriel label for a project; the real compose name is unchanged). `colima.stop` and
+`colima.restart` are destructive — they stop the VM your containers run on.
 
 Reads: `container.list` / `inspect` / `logs`, `image.list`, `volume.list`,
-`network.list`, `stacks.list`, `system.df`, `colima.status`. These let an AI see
-the current state and target things by description, instead of acting blind.
+`network.list`, `stacks.list`, `system.df`, `colima.status`, `docker.env`. These
+let an AI see the current state and target things by description, instead of
+acting blind. `docker.env` returns the Docker connection environment
+(`DOCKER_HOST`, …) so a client can point other tooling at the same daemon; the CLI
+exposes the same thing as `oriel env`.
 
-> Logs and inspect may also show up as MCP **resources** later (so a client can
-> attach "this container's logs" as context). That's additive; they stay tools
-> first.
+## Scoping which tools an agent gets
+
+By default `oriel mcp` exposes every tool. Narrow it to match the trust you're
+extending:
+
+```bash
+oriel mcp --read-only                       # reads only — no start/stop/remove/prune
+oriel mcp --allow-tools container.list,container.logs   # exclusive allow-list
+oriel mcp --deny-tools image.prune,system.df            # remove named tools
+```
+
+`--read-only` keeps only pure reads, `--allow-tools` is an exclusive whitelist
+(comma-separated names), and `--deny-tools` subtracts names. They compose —
+`--read-only --allow-tools container.list` is the intersection. The scope is
+enforced at the registry boundary, so a tool you didn't expose isn't callable at
+all.
+
+## Resources & prompts
+
+Beyond tools, the server offers **resources** (read-only context a client can
+attach) and **prompts** (ready-made starting points):
+
+- **Resources:** `oriel://container/{id}/logs` and `oriel://container/{id}/inspect`
+  — attach a specific container's logs or (masked) inspect output as context,
+  without the model having to call a tool for it.
+- **Prompts:** `diagnose-container` (why is it unhealthy / restarting?),
+  `fix-docker-connection` (the daemon/Colima isn't reachable), and `reclaim-disk`
+  (what's safe to prune?). They seed the conversation with the right tools and
+  framing.
 
 ## Safety: time-boxed destructive grant
 
@@ -165,10 +195,19 @@ or length is leaked.
 
 ## Transports
 
-- **v1 (stdio).** `oriel mcp`. Local, no network, no auth needed; the client
-  spawns it as a subprocess.
-- **Later (Streamable HTTP).** Reach the server from remote/hosted clients and the
-  hosted-AI MCP connectors. **Gated on the optional-auth tier landing first.**
+- **stdio.** `oriel mcp`. Local, no network, no auth needed; the client spawns it
+  as a subprocess. This is the default and what most desktop clients use.
+- **Streamable HTTP.** `oriel mcp --http <addr>` for remote/hosted clients and the
+  hosted-AI MCP connectors.
+  - A loopback, direct client is exempt; **every other caller must send
+    `Authorization: Bearer <token>`** (the same token as the GUI gate). Set one
+    with `oriel config auth-token --generate`.
+  - Binding a non-loopback address **without** a token is refused outright.
+  - The server speaks plain HTTP — the token rides in cleartext. On any untrusted
+    network, front it with a TLS-terminating reverse proxy (one that sets
+    `X-Forwarded-For`) rather than binding the open address directly. See
+    [REVERSE-PROXY.md](./REVERSE-PROXY.md) and [SECURITY.md](../SECURITY.md).
+  - Rotating or clearing the token takes effect on the next request — no restart.
 
 ## How it's built
 
@@ -181,5 +220,5 @@ that one path, not reimplemented; the adapter adds about 2 MB to the binary.
 ## Non-goals
 
 Oriel exposes Docker and Colima over MCP. It is not an MCP *client* (it doesn't
-consume other servers). Planned work (resources/prompts, MCP over HTTP) is on the
-[roadmap](../ROADMAP.md).
+consume other servers), and it ships no model of its own. See the
+[roadmap](../ROADMAP.md) for what's next.
