@@ -17,7 +17,7 @@ import (
 // ErrDestructiveLocked is returned when a Destructive tool is invoked by a
 // non-interactive caller (no consent) while no grant window is open. The message
 // tells an MCP client / assistant how to unlock.
-var ErrDestructiveLocked = errors.New("destructive action locked: open a grant window (`oriel ai allow-destructive --for 6h`) or run it from the Oriel UI")
+var ErrDestructiveLocked = errors.New("destructive action locked: open a grant window (`oriel ai allow-destructive --for 15m`) or run it from the Oriel UI")
 
 // consentKey marks a context as a trusted, human-initiated call (e.g. a UI/
 // palette action behind a confirm dialog). Such calls bypass the grant window;

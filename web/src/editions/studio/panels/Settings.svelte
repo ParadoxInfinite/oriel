@@ -249,7 +249,8 @@
         <button class="btn btn-sm btn-default" onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
       {:else}
         <span class="text-[13px] text-[var(--text-3)]">Destructive actions are <span class="font-medium text-[var(--text-2)]">locked</span> for automation.</span>
-        <button class="btn btn-sm btn-primary" onclick={() => requestGrant(6)} disabled={grant.busy}>Allow 6h</button>
+        <button class="btn btn-sm btn-primary" onclick={() => requestGrant(0.25)} disabled={grant.busy}>Allow 15m</button>
+        <button class="btn btn-sm btn-default" onclick={() => requestGrant(6)} disabled={grant.busy}>Allow 6h</button>
         <button class="btn btn-sm btn-default" onclick={() => requestGrant(24 * 6)} disabled={grant.busy}>Allow 6d</button>
       {/if}
     </div>

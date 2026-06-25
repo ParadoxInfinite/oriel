@@ -105,9 +105,9 @@ Read tools (`*.list`, `logs`, `inspect`, `status`) and reversible ones (`start` 
 `stack.down`) return a "locked" error until you open a time-boxed window:
 
 ```bash
-oriel ai allow-destructive --for 6h   # open the window
-oriel ai status                       # check what's open
-oriel ai lock                         # close it now
+oriel ai allow-destructive --for 15m   # open the window (default 15m)
+oriel ai status                        # check what's open
+oriel ai lock                          # close it now
 ```
 
 `--for` accepts a Go duration like `30s`, `90m`, `6h`, `1h30m`, or `1.5h` (units `s` /
@@ -207,7 +207,7 @@ attach) and **prompts** (ready-made starting points):
 
 - **Default:** read + reversible actions (`start`/`restart`/`stop`) allowed;
   `Destructive`-flagged tools (`remove`/`prune`/compose `down`) are **locked**.
-- **Grant:** `oriel ai allow-destructive --for 6h` (or a Settings toggle). Stored
+- **Grant:** `oriel ai allow-destructive --for 15m` (or a Settings toggle). Stored
   with an `ExpiresAt`; **auto-relocks** when the window lapses.
 - **Enforced once** on `tool.Destructive` inside the execution path, so it covers
   the MCP server and any non-interactive caller identically. Even a headless AI can
