@@ -1,11 +1,11 @@
 // The host renders the global overlays (command palette, confirm, toasts, op
-// progress) outside any edition, so they'd otherwise always wear Classic's
-// tokens. Each edition publishes an "overlay theme" here; the host applies it as
+// progress) outside any edition, so without this they'd wear the base palette.
+// Each edition publishes an "overlay theme" here; the host applies it as
 // CSS-variable overrides on the overlay wrapper so they match the active edition.
 //
-//   scheme 'classic' → no override (Classic's own @theme tokens)
+//   scheme 'base' → no override (the global app.css @theme palette)
 //   scheme 'light' | 'dark' → Studio-style neutrals + the edition's accent
-export const overlayTheme = $state({ scheme: 'classic', accent: '#2dd4bf' })
+export const overlayTheme = $state({ scheme: 'base', accent: '#2dd4bf' })
 
 export function setOverlayTheme(scheme, accent) {
   overlayTheme.scheme = scheme
@@ -18,21 +18,21 @@ const SCHEMES = {
 }
 
 // Overlay shape per scheme (radius + shadow), so shared overlays adopt each
-// edition's modal language, not just its palette, classic keeps the old hardcoded
-// look; light/dark match Studio's rounded-xl + --shadow-lg.
+// edition's modal language, not just its palette. The base scheme keeps the
+// app.css look; light/dark match Studio's rounded-xl + --shadow-lg.
 const SHAPE = {
-  classic: { radius: '0.625rem', shadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)' },
+  base: { radius: '0.625rem', shadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)' },
   light: { radius: '0.75rem', shadow: '0 12px 32px -8px rgba(18,22,31,0.16)' },
   dark: { radius: '0.75rem', shadow: '0 18px 44px -14px rgba(0,0,0,0.7)' },
 }
 
 // Build the inline `style` string applied to the overlay wrapper: always the
-// shape tokens, plus a full --color-* remap for non-classic editions.
+// shape tokens, plus a full --color-* remap for the light/dark schemes.
 export function overlayVars(t) {
-  const scheme = t?.scheme || 'classic'
-  const shape = SHAPE[scheme] || SHAPE.classic
+  const scheme = t?.scheme || 'base'
+  const shape = SHAPE[scheme] || SHAPE.base
   const out = [`--overlay-radius:${shape.radius}`, `--overlay-shadow:${shape.shadow}`]
-  if (scheme === 'classic') return out.join(';')
+  if (scheme === 'base') return out.join(';')
 
   const s = SCHEMES[scheme] || SCHEMES.dark
   out.push(

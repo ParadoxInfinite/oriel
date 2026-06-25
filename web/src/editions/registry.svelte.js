@@ -1,4 +1,3 @@
-import Classic from './Classic.svelte'
 import Studio from './studio/Studio.svelte'
 import { apiGet } from '../lib/api.js'
 
@@ -11,7 +10,6 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, '')
 // onto `window.__orielThemes` before mount (see editions/README.md).
 const BUILTIN = [
   { id: 'studio', name: 'Studio', tagline: 'Clean, native-feel control panel', accent: '#5b5bd6', component: Studio },
-  { id: 'classic', name: 'Classic', tagline: 'Calm teal control panel', accent: '#2dd4bf', component: Classic },
 ]
 
 // Disk-installed themes: drop a built bundle (an ES module default-exporting

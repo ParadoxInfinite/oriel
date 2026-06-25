@@ -137,7 +137,8 @@ export { PullController, fmtStars } from '../lib/pull.svelte.js'
 export { LogsController } from '../lib/logs.svelte.js'
 
 /** Tell the host how to theme the global overlays for this edition:
- *  setOverlayTheme('classic' | 'light' | 'dark', accent?). */
+ *  setOverlayTheme('base' | 'light' | 'dark', accent?). 'base' applies no
+ *  override (the global app.css palette). */
 export { setOverlayTheme } from '../lib/overlayTheme.svelte.js'
 
 /** Compose discovery: find/configure/deploy compose projects on disk. `discovery`

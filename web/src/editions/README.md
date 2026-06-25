@@ -9,7 +9,6 @@ Two ship in the box:
 | id        | look                                                  |
 | --------- | ----------------------------------------------------- |
 | `studio`  | Clean, native-feel light/dark control panel (default) |
-| `classic` | Calm teal dark control panel                          |
 
 ## The one rule
 

@@ -19,7 +19,6 @@ Two editions ship in the box:
 | id        | look                                              |
 | --------- | ------------------------------------------------- |
 | `studio`  | Clean, native-feel; light/dark/system (default)   |
-| `classic` | Calm dark teal control panel                      |
 
 ## The contract: the platform SDK
 
@@ -73,7 +72,7 @@ Refreshers: `refreshContainers`, `refreshImages`, `refreshVolumes`,
 | `openPalette()` / `togglePalette()` | command palette. |
 | `navigate(view, target?)` | switch the active view; pass a `target` to deep-open an entity at the destination. See [Navigation](#navigation). |
 | `takeTarget(view)` | claim + clear a pending intent addressed to `view` (e.g. open a container's logs). |
-| `setOverlayTheme(scheme, accent)` | tell the host how to theme the global overlays for your edition: `'classic'` (no override), or `'light'`/`'dark'` + an accent. |
+| `setOverlayTheme(scheme, accent)` | tell the host how to theme the global overlays for your edition: `'base'` (no override, the global palette), or `'light'`/`'dark'` + an accent. |
 
 ### Helpers
 
@@ -150,8 +149,8 @@ A manifest is `{ id, name, tagline, accent, component }`. Switch to it from
 **Settings → Editions**.
 
 **Scope your CSS.** Each edition nests everything under a root class (Studio uses
-`.studio-root`, Classic uses Tailwind theme tokens) so themes never leak into one
-another. Pick a unique root class and prefix your styles with it.
+`.studio-root`) so themes never leak into one another. Pick a unique root class
+and prefix your styles with it.
 
 ## Installed themes
 
