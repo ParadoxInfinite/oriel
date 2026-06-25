@@ -69,11 +69,42 @@ func (s *Server) staticHandler() http.Handler {
 		}
 
 		cacheControl(w, name)
+		securityHeaders(w)
 		// Zero modtime so ServeContent skips Last-Modified/If-Modified-Since; we
 		// drive freshness with the Cache-Control header set above. It still sets
 		// the correct Content-Type by extension and honors Range requests.
 		http.ServeContent(w, r, name, time.Time{}, bytes.NewReader(assets[name]))
 	})
+}
+
+// contentSecurityPolicy is a conservative, same-origin-only CSP for the SPA. It
+// is a defense-in-depth backstop: Svelte auto-escapes interpolation so the app
+// is XSS-clean today, but this caps the blast radius of any future sink (a
+// stray {@html}, a malicious theme bundle). Everything is 'self': the Vite chunk
+// and the theme modules are both served same-origin (theme bundles come from
+// /api/themes, not external URLs). 'unsafe-inline' is granted to styles only,
+// Svelte injects them at runtime; scripts get no inline allowance, so an
+// injected <script>/inline handler won't run.
+const contentSecurityPolicy = "default-src 'self'; " +
+	"script-src 'self'; " +
+	"style-src 'self' 'unsafe-inline'; " +
+	"img-src 'self' data:; " +
+	"font-src 'self'; " +
+	"connect-src 'self'; " +
+	"object-src 'none'; " +
+	"base-uri 'self'; " +
+	"form-action 'self'; " +
+	"frame-ancestors 'none'"
+
+// securityHeaders sets the SPA's defense-in-depth response headers: a strict CSP,
+// MIME-sniffing off, clickjacking blocked (frame-ancestors + the legacy
+// X-Frame-Options), and a tight referrer policy.
+func securityHeaders(w http.ResponseWriter) {
+	h := w.Header()
+	h.Set("Content-Security-Policy", contentSecurityPolicy)
+	h.Set("X-Content-Type-Options", "nosniff")
+	h.Set("X-Frame-Options", "DENY")
+	h.Set("Referrer-Policy", "same-origin")
 }
 
 // cacheControl applies long-lived caching to fingerprinted assets and no-cache
