@@ -30,9 +30,10 @@ host.** Through the API you can:
 
 Two more powers worth calling out:
 
-- **External themes** (`Settings → Themes → Load external theme`) dynamically
-  `import()` a URL and run it as part of the app. Only load themes you trust.
-  it's third-party JavaScript executing in your browser session.
+- **Installed themes are JavaScript.** A theme is an ES-module bundle you drop
+  into Oriel's themes directory; Oriel serves it same-origin and runs it as part
+  of the app (there is no load-from-URL path). It's still third-party JavaScript
+  executing in your browser session, so only install themes you trust.
 
 - **Shared / multi-user hosts:** because anything that can reach the loopback
   port is trusted as the local user, **do not run Oriel on a shared, multi-user,

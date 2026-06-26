@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-06-26
+
+Docker networks land in the UI and over MCP, the MCP server gets an official
+registry listing and a container image, and a round of security work redacts
+secrets from container logs and hardens the loopback server.
+
+### Added
+
+- **Docker networks.** Create a user-defined network, inspect its detail (subnet,
+  gateway, attached containers), and connect or disconnect containers, in the UI
+  and over MCP (`network.create` / `network.inspect` / `network.connect` /
+  `network.disconnect`).
+- **Official MCP registry listing + container image.** Oriel is published on the
+  MCP registry as `io.github.ParadoxInfinite/oriel`, and a multi-arch image
+  (`ghcr.io/paradoxinfinite/oriel`) runs `oriel mcp` with the Docker socket
+  mounted, so a client can run the server with no local install.
+- **Accessibility pass.** Focus management across overlays and dialogs, ARIA live
+  regions for async updates, and reduced-motion support.
+- **`doctor` version currency.** `oriel doctor` now reports whether a newer
+  release is available.
+
+### Changed
+
+- **Responsive polish** across the UI, from phones to ultrawide displays.
+- **The destructive-grant window defaults to 15 minutes** (was 6 hours).
+- After an update, Oriel nudges you when `DOCKER_HOST` points at a socket the
+  update moved, so the CLI doesn't silently talk to the wrong daemon.
+- Clarified the "prune dangling" copy: it removes untagged layers, not unused
+  images.
+
+### Security
+
+- **Container logs are secret-masked.** `container.logs` redacts secret-shaped
+  values (tokens, bearer headers, connection strings, JWTs) before they reach the
+  UI or an MCP client. A Settings → Secrets toggle controls the local UI; the
+  MCP/agent path is always at least redacted and can't be turned off. Best-effort
+  over free-form text.
+- **Cross-origin API requests are rejected.** An Origin check now backs the
+  Fetch-Metadata guard, so a browser that omits `Sec-Fetch-Site` can't drive
+  state-changing requests against the loopback server (CSRF defense-in-depth).
+- **A strict same-origin Content-Security-Policy** and security headers
+  (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`) on the served UI.
+- **Destructive tools can't ship unflagged.** A registration-time guard plus a
+  test ensure a new destructive tool can't inherit the ungated default and run for
+  an MCP client without a grant.
+
+### Fixed
+
+- Cleared the compiler-flagged accessibility warnings.
+- File-reveal on macOS opens a `.app`/bundle's parent in Finder instead of
+  launching it.
+- Self-update removes its temporary `.bak` backup after a successful replace.
+- `oriel env` shell-quotes its output so it's safe to `eval`.
+- `install.sh` matches the release checksum by exact filename.
+
 ## [0.7.0] - 2026-06-25
 
 The UI works on a phone now, and the second built-in edition is gone.
@@ -522,5 +577,25 @@ with a swappable, themeable front end.
   NL provider all route through `tools.Registry.Execute`, which checks arguments
   against each tool's schema and verifies referenced entities exist.
 
-[Unreleased]: https://github.com/ParadoxInfinite/oriel/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ParadoxInfinite/oriel/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.5.1...v0.6.0
+[0.5.1]: https://github.com/ParadoxInfinite/oriel/compare/v0.5.0...v0.5.1
+[0.5.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.4.2...v0.5.0
+[0.4.2]: https://github.com/ParadoxInfinite/oriel/compare/v0.4.1...v0.4.2
+[0.4.1]: https://github.com/ParadoxInfinite/oriel/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.3.3...v0.4.0
+[0.3.3]: https://github.com/ParadoxInfinite/oriel/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/ParadoxInfinite/oriel/compare/v0.3.1...v0.3.2
+[0.3.1]: https://github.com/ParadoxInfinite/oriel/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.2.4...v0.3.0
+[0.2.4]: https://github.com/ParadoxInfinite/oriel/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/ParadoxInfinite/oriel/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/ParadoxInfinite/oriel/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/ParadoxInfinite/oriel/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.1.3...v0.2.0
+[0.1.3]: https://github.com/ParadoxInfinite/oriel/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/ParadoxInfinite/oriel/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/ParadoxInfinite/oriel/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/ParadoxInfinite/oriel/releases/tag/v0.1.0

@@ -24,11 +24,8 @@ way to push something up the list is to open an
 
 ## Next
 
-- **Accessibility & translations.** A keyboard/screen-reader pass and i18n so the
-  UI isn't English-only.
-- **Deeper container networking.** Create networks, inspect their detail (subnet,
-  gateway, attached containers), and connect/disconnect containers, in the UI and
-  over MCP. Engine-level config (proxies, subnets) stays on your engine.
+- **Translations (i18n).** The keyboard/screen-reader accessibility pass has
+  shipped; localization is the remaining half, so the UI isn't English-only.
 
 ## Later
 
@@ -50,8 +47,11 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: **a responsive, mobile-friendly UI
-and removal of the second (Classic) edition** (v0.7.0); **scoped & read-only MCP,
+See the [CHANGELOG](CHANGELOG.md). Highlights: **Docker networks
+(create/inspect/connect/disconnect, in the UI and over MCP), a keyboard/screen-reader
+accessibility pass, container-log secret redaction, CSRF + CSP hardening, and the
+official MCP registry listing plus a multi-arch GHCR image** (v0.8.0); **a
+responsive, mobile-friendly UI and removal of the second (Classic) edition** (v0.7.0); **scoped & read-only MCP,
 MCP over HTTP behind a token, MCP resources & prompts, Colima VM control, a
 Docker-env helper, optional authentication, and removal of the in-app NL
 resolver** (v0.6.0);

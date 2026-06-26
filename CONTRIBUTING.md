@@ -17,8 +17,8 @@ make build     # full build → ./oriel  (frontend embedded)
 make test      # Go unit tests
 ```
 
-Work against **http://localhost:5173** for live reload. The AI runtime-config
-endpoint needs the Go binary, so for that flow run `./oriel` directly.
+Work against **http://localhost:5173** for live reload. For anything that needs
+the embedded UI or a real server response, run `./oriel` directly.
 
 ## Project layout
 
@@ -30,20 +30,22 @@ internal/
   actions/               wires Docker/Colima ops into the registry
   docker/                Docker Engine API DTOs + calls
   colima/                colima CLI wrapper
-  provider/              the dormant NL/AI seam
+  mcp/                   the MCP server (stdio + HTTP) over the tool registry
+  secrets/               env/log secret masking
+  grant/                 the time-boxed destructive-action grant
   service/               launchd / systemd install
 web/src/
   platform/index.js      the platform SDK, the stable contract for editions
   lib/                   shared stores, helpers (sort, format, registry, api)
   components/            host-level global overlays (palette, confirm, toasts…)
-  editions/              the swappable UIs (studio, classic) + registry
+  editions/              the swappable UIs (studio) + registry
 ```
 
 ## Where changes go
 
 - **New backend capability** → add a tool in `internal/actions`/`tools` (so it's
-  validated and reachable from buttons, the palette, and the NL seam alike), or a
-  new HTTP handler in `internal/server` for read/stream endpoints.
+  validated and reachable from buttons, the palette, and the MCP server alike), or
+  a new HTTP handler in `internal/server` for read/stream endpoints.
 - **Frontend logic used by more than one edition** → put it behind the platform
   SDK (`web/src/platform` / `web/src/lib`), not inside an edition. Editions should
   be presentation, not behavior.
