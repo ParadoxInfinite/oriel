@@ -8,8 +8,14 @@ import (
 	"time"
 )
 
+// Fixed knobs so tests don't read the dev machine's real settings.json.
+var (
+	testTTL  = func() time.Duration { return defaultSessionTTL }
+	testFree = func() int { return defaultLoginFreeAttempts }
+)
+
 func TestSessionStore(t *testing.T) {
-	st := newSessionStore()
+	st := newSessionStore(testTTL)
 	id, err := st.create()
 	if err != nil {
 		t.Fatalf("create: %v", err)
@@ -46,7 +52,7 @@ func TestSessionStore(t *testing.T) {
 }
 
 func TestSessionSlidesExpiry(t *testing.T) {
-	st := newSessionStore()
+	st := newSessionStore(testTTL)
 	id, _ := st.create()
 	st.mu.Lock()
 	st.sessions[id] = time.Now().Add(time.Minute) // about to expire
@@ -57,15 +63,15 @@ func TestSessionSlidesExpiry(t *testing.T) {
 	st.mu.Lock()
 	exp := st.sessions[id]
 	st.mu.Unlock()
-	if time.Until(exp) < sessionTTL-time.Hour {
+	if time.Until(exp) < defaultSessionTTL-time.Hour {
 		t.Errorf("valid() should have slid the expiry to ~now+TTL, got %v out", time.Until(exp))
 	}
 }
 
 func TestLoginThrottle(t *testing.T) {
-	tr := &loginThrottle{}
-	// The first loginFreeAttempts are allowed even as they fail.
-	for i := 0; i < loginFreeAttempts; i++ {
+	tr := newLoginThrottle(testFree)
+	// The first defaultLoginFreeAttempts are allowed even as they fail.
+	for i := 0; i < defaultLoginFreeAttempts; i++ {
 		if !tr.allowed() {
 			t.Fatalf("attempt %d should be allowed (within the free window)", i+1)
 		}
@@ -82,12 +88,12 @@ func TestLoginThrottle(t *testing.T) {
 
 func TestAuthed(t *testing.T) {
 	// Auth off: always authed, regardless of cookie/header.
-	off := &Server{auth: &authGate{token: ""}, sessions: newSessionStore()}
+	off := &Server{auth: &authGate{token: ""}, sessions: newSessionStore(testTTL)}
 	if !off.authed(httptest.NewRequest("GET", "/api/x", nil)) {
 		t.Error("auth off must be authed")
 	}
 
-	st := newSessionStore()
+	st := newSessionStore(testTTL)
 	s := &Server{auth: &authGate{token: "s3cr3t-token-1234"}, sessions: st}
 
 	if s.authed(httptest.NewRequest("GET", "/api/x", nil)) {
@@ -115,12 +121,12 @@ func TestAuthed(t *testing.T) {
 }
 
 func TestAllowAPI_LoginCarveout(t *testing.T) {
-	st := newSessionStore()
+	st := newSessionStore(testTTL)
 	s := &Server{
 		guard:    &hostGuard{hosts: map[string]bool{"oriel.example": true}},
 		auth:     &authGate{token: "s3cr3t-token-1234"},
 		sessions: st,
-		loginRL:  &loginThrottle{},
+		loginRL:  newLoginThrottle(testFree),
 	}
 	req := func(method, path, host string) *http.Request {
 		r := httptest.NewRequest(method, path, nil)
@@ -149,8 +155,8 @@ func TestAllowAPI_LoginCarveout(t *testing.T) {
 }
 
 func TestHandleLogin(t *testing.T) {
-	st := newSessionStore()
-	s := &Server{auth: &authGate{token: "s3cr3t-token-1234"}, sessions: st, loginRL: &loginThrottle{}, base: "/"}
+	st := newSessionStore(testTTL)
+	s := &Server{auth: &authGate{token: "s3cr3t-token-1234"}, sessions: st, loginRL: newLoginThrottle(testFree), base: "/"}
 
 	// Wrong token → 401, no cookie, and a recorded failure.
 	rec := httptest.NewRecorder()
@@ -185,8 +191,29 @@ func TestHandleLogin(t *testing.T) {
 	}
 }
 
+func TestEffectiveKnobs(t *testing.T) {
+	if got := effectiveSessionTTL(settings{}); got != defaultSessionTTL {
+		t.Errorf("unset TTL = %v, want default %v", got, defaultSessionTTL)
+	}
+	if got := effectiveSessionTTL(settings{SessionTTLMinutes: 30}); got != 30*time.Minute {
+		t.Errorf("TTL 30min = %v, want 30m", got)
+	}
+	if got := effectiveSessionTTL(settings{SessionTTLMinutes: -5}); got != defaultSessionTTL {
+		t.Errorf("negative TTL = %v, want default", got)
+	}
+	if got := effectiveLoginFreeAttempts(settings{}); got != defaultLoginFreeAttempts {
+		t.Errorf("unset free = %d, want default %d", got, defaultLoginFreeAttempts)
+	}
+	if got := effectiveLoginFreeAttempts(settings{LoginFreeAttempts: 3}); got != 3 {
+		t.Errorf("free 3 = %d, want 3", got)
+	}
+	if got := effectiveLoginFreeAttempts(settings{LoginFreeAttempts: 0}); got != defaultLoginFreeAttempts {
+		t.Errorf("zero free = %d, want default", got)
+	}
+}
+
 func TestHandleLogin_AuthOff(t *testing.T) {
-	s := &Server{auth: &authGate{token: ""}, sessions: newSessionStore(), loginRL: &loginThrottle{}, base: "/"}
+	s := &Server{auth: &authGate{token: ""}, sessions: newSessionStore(testTTL), loginRL: newLoginThrottle(testFree), base: "/"}
 	rec := httptest.NewRecorder()
 	s.handleLogin(rec, httptest.NewRequest("POST", "/api/login", strings.NewReader(`{}`)))
 	if rec.Code != http.StatusOK {

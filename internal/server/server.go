@@ -55,8 +55,8 @@ func New(web fs.FS, version string) *Server {
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),
 		auth:     newAuthGate(),
-		sessions: newSessionStore(),
-		loginRL:  &loginThrottle{},
+		sessions: newSessionStore(settingsSessionTTL),
+		loginRL:  newLoginThrottle(settingsFreeAttempts),
 		grant:    grant.New(),
 	}
 	// Destructive tools are locked for non-interactive callers (MCP) unless a

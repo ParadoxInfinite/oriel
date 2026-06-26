@@ -27,20 +27,41 @@ import (
 
 const (
 	sessionCookieName = "oriel_session"
-	// sessionTTL is an idle timeout: a session slides forward on each use, so an
-	// active operator stays logged in and an abandoned one lapses. In-memory by
-	// design (single operator, low stakes), so a restart just asks for a fresh
-	// login.
-	sessionTTL = 7 * 24 * time.Hour
+	// defaultSessionTTL is the idle timeout when settings.SessionTTLMinutes is
+	// unset. A session slides forward on each use, so an active operator stays
+	// logged in and an abandoned one lapses. In-memory by design (single operator,
+	// low stakes), so a restart just asks for a fresh login.
+	defaultSessionTTL = 7 * 24 * time.Hour
+	minSessionTTL     = time.Minute
 )
+
+// effectiveSessionTTL is the sliding idle timeout: settings.SessionTTLMinutes
+// (hot-reloaded) with a 7-day default and a 1-minute floor.
+func effectiveSessionTTL(cfg settings) time.Duration {
+	if cfg.SessionTTLMinutes <= 0 {
+		return defaultSessionTTL
+	}
+	if d := time.Duration(cfg.SessionTTLMinutes) * time.Minute; d >= minSessionTTL {
+		return d
+	}
+	return minSessionTTL
+}
+
+// settingsSessionTTL / settingsFreeAttempts read the live settings; passed to the
+// store and throttle so a settings.json edit takes effect without a restart.
+func settingsSessionTTL() time.Duration { return effectiveSessionTTL(loadSettings()) }
+func settingsFreeAttempts() int         { return effectiveLoginFreeAttempts(loadSettings()) }
 
 // sessionStore is the in-memory set of live browser sessions: random id → expiry.
 type sessionStore struct {
 	mu       sync.Mutex
 	sessions map[string]time.Time
+	ttl      func() time.Duration // sliding idle timeout, read per use so settings hot-reload
 }
 
-func newSessionStore() *sessionStore { return &sessionStore{sessions: map[string]time.Time{}} }
+func newSessionStore(ttl func() time.Duration) *sessionStore {
+	return &sessionStore{sessions: map[string]time.Time{}, ttl: ttl}
+}
 
 // create mints a session and returns its id. crypto/rand, 256-bit; it returns the
 // error rather than a weak id, a session token must never be best-effort.
@@ -53,7 +74,7 @@ func (s *sessionStore) create() (string, error) {
 	now := time.Now()
 	s.mu.Lock()
 	s.prune(now)
-	s.sessions[id] = now.Add(sessionTTL)
+	s.sessions[id] = now.Add(s.ttl())
 	s.mu.Unlock()
 	return id, nil
 }
@@ -72,7 +93,7 @@ func (s *sessionStore) valid(id string) bool {
 		delete(s.sessions, id) // no-op if absent
 		return false
 	}
-	s.sessions[id] = now.Add(sessionTTL)
+	s.sessions[id] = now.Add(s.ttl())
 	return true
 }
 
@@ -95,26 +116,39 @@ func (s *sessionStore) prune(now time.Time) {
 }
 
 const (
-	loginFreeAttempts = 5               // failures before backoff starts
-	loginBackoffBase  = 2 * time.Second // doubles per failure past the free window
-	loginBackoffMax   = 15 * time.Minute
+	defaultLoginFreeAttempts = 5               // failures before backoff starts
+	loginBackoffBase         = 2 * time.Second // doubles per failure past the free window
+	loginBackoffMax          = 15 * time.Minute
 )
+
+// effectiveLoginFreeAttempts is settings.LoginFreeAttempts (hot-reloaded) with a
+// default of 5 and a floor of 1.
+func effectiveLoginFreeAttempts(cfg settings) int {
+	if cfg.LoginFreeAttempts < 1 {
+		return defaultLoginFreeAttempts
+	}
+	return cfg.LoginFreeAttempts
+}
 
 // loginThrottle is a single global brute-force guard on /api/login. One counter
 // suffices for a single-admin tool (a per-IP map would key on the proxy anyway).
-// The first few failures are free; after that each imposes an exponentially
-// growing cooldown, reset on any success.
+// The first `free()` failures are unthrottled; after that each imposes an
+// exponentially growing cooldown, reset on any success. The backoff base and cap
+// stay fixed; the free-attempt count comes from settings.
 type loginThrottle struct {
 	mu    sync.Mutex
 	fails int
 	last  time.Time
+	free  func() int // unthrottled attempts before backoff, read per use
 }
+
+func newLoginThrottle(free func() int) *loginThrottle { return &loginThrottle{free: free} }
 
 // allowed reports whether an attempt may proceed now (the cooldown has elapsed).
 func (t *loginThrottle) allowed() bool {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.fails < loginFreeAttempts {
+	if t.fails < t.free() {
 		return true
 	}
 	return time.Since(t.last) >= t.cooldown()
@@ -122,7 +156,7 @@ func (t *loginThrottle) allowed() bool {
 
 // cooldown is the wait imposed by the current failure count. Caller holds the lock.
 func (t *loginThrottle) cooldown() time.Duration {
-	d := loginBackoffBase << (t.fails - loginFreeAttempts)
+	d := loginBackoffBase << (t.fails - t.free())
 	if d <= 0 || d > loginBackoffMax { // <=0 catches the shift overflowing int64
 		return loginBackoffMax
 	}
@@ -194,7 +228,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not start a session"})
 		return
 	}
-	http.SetCookie(w, s.sessionCookie(r, id, sessionTTL))
+	http.SetCookie(w, s.sessionCookie(r, id, effectiveSessionTTL(loadSettings())))
 	writeJSON(w, http.StatusOK, map[string]any{"authenticated": true})
 }
 
