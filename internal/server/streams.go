@@ -4,7 +4,16 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/ParadoxInfinite/oriel/internal/secrets"
 )
+
+// logMaskMode is the masking applied to log lines streamed to the UI. It honours
+// the operator's maskLogs setting (default: redact secrets); "off" shows raw
+// lines. The MCP/agent path is floored separately and can never be "off".
+func (s *Server) logMaskMode() secrets.Mode {
+	return secrets.ParseLogMode(loadSettings().MaskLogs)
+}
 
 // handleEvents streams docker events as SSE so the UI can refresh lists live.
 func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
@@ -128,8 +137,9 @@ func (s *Server) handleContainerLogs(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	mode := s.logMaskMode()
 	err := s.docker.StreamLogs(r.Context(), id, 100, true, "", func(stream, ts, line string) {
-		sse.send("log", map[string]string{"stream": stream, "ts": ts, "line": line})
+		sse.send("log", map[string]string{"stream": stream, "ts": ts, "line": secrets.MaskLine(line, mode)})
 	})
 	if err != nil && r.Context().Err() == nil {
 		sse.send("error", errorBody(err))
@@ -154,8 +164,9 @@ func (s *Server) handleContainerLogsBefore(w http.ResponseWriter, r *http.Reques
 		Line   string `json:"line"`
 	}
 	lines := []logLine{}
+	mode := s.logMaskMode()
 	err := s.docker.StreamLogs(r.Context(), id, limit, false, until, func(stream, ts, line string) {
-		lines = append(lines, logLine{Stream: stream, TS: ts, Line: line})
+		lines = append(lines, logLine{Stream: stream, TS: ts, Line: secrets.MaskLine(line, mode)})
 	})
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))

@@ -22,6 +22,7 @@ type selfStats struct {
 	Goroutines int    `json:"goroutines"`
 	HeapAlloc  int64  `json:"heapAlloc"` // Go heap in use, bytes
 	MaskEnv    string `json:"maskEnv"`   // inspect env masking: "all" | "sensitive" | "off"
+	MaskLogs   string `json:"maskLogs"`  // UI log masking: "sensitive" | "off"
 	EnvReveal  string `json:"envReveal"` // reveal policy: "off" | "local" | "remote"
 }
 
@@ -39,6 +40,7 @@ func (s *Server) currentSelf(ctx context.Context) selfStats {
 		Goroutines: runtime.NumGoroutine(),
 		HeapAlloc:  int64(m.HeapAlloc),
 		MaskEnv:    string(secrets.ParseMode(cfg.MaskEnv)),
+		MaskLogs:   string(secrets.ParseLogMode(cfg.MaskLogs)),
 		EnvReveal:  normReveal(cfg.EnvReveal),
 	}
 }

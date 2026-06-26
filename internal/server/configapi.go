@@ -27,6 +27,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		BasePath  *string `json:"basePath"`
 		MaskEnv   *string `json:"maskEnv"`   // "all" | "sensitive" | "off"
+		MaskLogs  *string `json:"maskLogs"`  // "sensitive" | "off" (UI only; MCP is always >= sensitive)
 		EnvReveal *string `json:"envReveal"` // "off" | "local" | "remote"
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
@@ -46,6 +47,9 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		if body.MaskEnv != nil && oneOf(*body.MaskEnv, "all", "sensitive", "off") {
 			c.MaskEnv = *body.MaskEnv
 		}
+		if body.MaskLogs != nil && oneOf(*body.MaskLogs, "sensitive", "off") {
+			c.MaskLogs = *body.MaskLogs
+		}
 		if body.EnvReveal != nil && oneOf(*body.EnvReveal, "off", "local", "remote") {
 			c.EnvReveal = *body.EnvReveal
 		}
@@ -60,6 +64,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"basePath":   normalizeBase(cur.BasePath),
 		"maskEnv":    string(secrets.ParseMode(cur.MaskEnv)),
+		"maskLogs":   string(secrets.ParseLogMode(cur.MaskLogs)),
 		"envReveal":  normReveal(cur.EnvReveal),
 		"restarting": restarting,
 	})

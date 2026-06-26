@@ -14,12 +14,15 @@ import (
 // safe to expose to an assistant or MCP client without a grant.
 //
 // container.inspect masks env, plus sensitive command/label values, through
-// envMask(), the same settings knob the HTTP inspect handler honours. A
-// non-consented caller (an MCP client / automated agent) gets a hard floor:
-// even when the human set masking to "off" for the local UI, secrets are never
-// returned raw on that path. The dedicated `oriel mcp` process masks all (it
-// passes MaskAll); only interactive UI calls, which carry consent, honour "off".
-func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.Mode) {
+// envMask(); container.logs redacts secret-shaped tokens through logMask(). Both
+// honour the same settings knobs the HTTP handlers use. A non-consented caller
+// (an MCP client / automated agent) gets a hard floor: even when the human set
+// masking to "off" for the local UI, env and logs are never returned raw on that
+// path, "off" is floored up to MaskSensitive. The dedicated `oriel mcp` process
+// passes MaskSensitive for both, so a secret-shaped value is redacted while
+// benign context (NODE_ENV, log levels) stays visible; only interactive UI
+// calls, which carry consent, honour "off".
+func registerReads(r *tools.Registry, dc *docker.Client, envMask, logMask func() secrets.Mode) {
 	// Every tool here is a pure read, mark it ReadOnly so `oriel mcp --read-only`
 	// and the MCP read-only hint are accurate (Destructive:false isn't enough,
 	// since start/stop mutate without being destructive).
@@ -77,9 +80,16 @@ func registerReads(r *tools.Registry, dc *docker.Client, envMask func() secrets.
 				TS     string `json:"ts"`
 				Line   string `json:"line"`
 			}
+			mode := logMask()
+			// Floor: a non-consented caller (MCP / agent) never gets raw log
+			// output, even when the human turned log masking off for the local UI.
+			// Logs are free-form, so masking is best-effort secret redaction.
+			if mode == secrets.MaskOff && !tools.HasConsent(ctx) {
+				mode = secrets.MaskSensitive
+			}
 			lines := []line{}
 			err := dc.StreamLogs(ctx, a["id"].(string), tail, false, "", func(stream, ts, l string) {
-				lines = append(lines, line{stream, ts, l})
+				lines = append(lines, line{stream, ts, secrets.MaskLine(l, mode)})
 			})
 			if err != nil {
 				return nil, err

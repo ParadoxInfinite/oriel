@@ -12,10 +12,13 @@ import (
 	"github.com/ParadoxInfinite/oriel/internal/tools"
 )
 
-// New builds the registry with all builtin tools registered. envMask supplies
-// the current env-masking mode (from settings) so container.inspect can mask
-// secrets in its output; it is read per call, not captured once.
-func New(dc *docker.Client, envMask func() secrets.Mode) *tools.Registry {
+// New builds the registry with all builtin tools registered. envMask and logMask
+// supply the current masking modes (from settings) so container.inspect and
+// container.logs can redact secrets in their output; both are read per call, not
+// captured once. A non-consented (agent / MCP) caller is floored to at least
+// MaskSensitive regardless of the setting, so an automated client never receives
+// fully-raw env or logs.
+func New(dc *docker.Client, envMask, logMask func() secrets.Mode) *tools.Registry {
 	r := tools.NewRegistry(resolver{dc})
 	registerContainers(r, dc)
 	registerImages(r, dc)
@@ -23,7 +26,7 @@ func New(dc *docker.Client, envMask func() secrets.Mode) *tools.Registry {
 	registerNetworks(r, dc)
 	registerStacks(r, dc)
 	registerColima(r)
-	registerReads(r, dc, envMask)
+	registerReads(r, dc, envMask, logMask)
 	return r
 }
 

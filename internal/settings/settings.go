@@ -25,6 +25,7 @@ type Settings struct {
 	Discovery    discovery.Config `json:"discovery"`
 	AllowedHosts []string         `json:"allowedHosts"` // non-loopback Hosts allowed to reach /api
 	MaskEnv      string           `json:"maskEnv"`      // inspect env masking: "all" (default) | "sensitive" | "off"
+	MaskLogs     string           `json:"maskLogs"`     // UI log masking: "sensitive" (default, redact secrets) | "off". The MCP/agent path is always at least "sensitive".
 	EnvReveal    string           `json:"envReveal"`    // where "reveal values" works: "local" (default) | "remote" | "off"
 	AuthToken    string           `json:"authToken"`    // opt-in bearer token required for non-loopback /api ("" = off)
 }

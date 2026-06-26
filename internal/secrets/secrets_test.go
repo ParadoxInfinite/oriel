@@ -112,6 +112,41 @@ func TestMaskLabels(t *testing.T) {
 	}
 }
 
+func TestMaskLine(t *testing.T) {
+	const m = masked
+	cases := []struct {
+		in   string
+		mode Mode
+		want string
+	}{
+		// KEY=value pairs: sensitive by name or value shape.
+		{"starting up DB_PASSWORD=hunter2 port=5432", MaskSensitive, "starting up DB_PASSWORD=" + m + " port=5432"},
+		{"connecting token=abc123 retries=3", MaskSensitive, "connecting token=" + m + " retries=3"},
+		{"loaded API_KEY=sk-live-1234567890 ok", MaskSensitive, "loaded API_KEY=" + m + " ok"},
+		// Benign structured fields stay visible.
+		{"level=info msg=ready environment=production port=3000", MaskSensitive, "level=info msg=ready environment=production port=3000"},
+		// Authorization header with a scheme word.
+		{"GET /v1 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig 200", MaskSensitive, "GET /v1 Authorization: Bearer " + m + " 200"},
+		// Labelled value in the next token.
+		{"auth failed password: hunter2 for user bob", MaskSensitive, "auth failed password: " + m + " for user bob"},
+		// JSON / logfmt single token.
+		{`{"token":"sk-secret-value","level":"info"}`, MaskSensitive, `{"token":"` + m + `","level":"info"}`},
+		// Bare token by shape: connection string with credentials, and a JWT.
+		{"dialing postgres://user:pass@db:5432/app now", MaskSensitive, "dialing " + m + " now"},
+		{"issued eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.body.sig", MaskSensitive, "issued " + m},
+		// Off is a pass-through.
+		{"token=abc123 secret stuff", MaskOff, "token=abc123 secret stuff"},
+		// Nothing sensitive: returned unchanged (and spacing preserved).
+		{"request completed in 42ms  status=200", MaskSensitive, "request completed in 42ms  status=200"},
+		{"", MaskSensitive, ""},
+	}
+	for _, c := range cases {
+		if got := MaskLine(c.in, c.mode); got != c.want {
+			t.Errorf("MaskLine(%q,%v)=%q want %q", c.in, c.mode, got, c.want)
+		}
+	}
+}
+
 func TestParseMode(t *testing.T) {
 	for in, want := range map[string]Mode{
 		"all": MaskAll, "sensitive": MaskSensitive, "off": MaskOff, "": MaskAll, "bogus": MaskAll,

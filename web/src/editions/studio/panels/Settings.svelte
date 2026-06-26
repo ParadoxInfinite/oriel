@@ -17,11 +17,12 @@
   onMount(loadGrant)
   // Secret-masking + reveal policy (Settings → Secrets), saved via /api/config.
   async function saveSecret(patch) {
-    const prev = { maskEnv: self.maskEnv, envReveal: self.envReveal }
+    const prev = { maskEnv: self.maskEnv, maskLogs: self.maskLogs, envReveal: self.envReveal }
     Object.assign(self, patch) // optimistic
     try {
       const d = await apiPut('/api/config', patch)
       if (d?.maskEnv) self.maskEnv = d.maskEnv
+      if (d?.maskLogs) self.maskLogs = d.maskLogs
       if (d?.envReveal) self.envReveal = d.envReveal
     } catch (e) {
       Object.assign(self, prev)
@@ -209,7 +210,7 @@
   <section class="rise card p-5" style="animation-delay:90ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Secrets</h2>
     <p class="mt-1 text-[13px] text-[var(--text-2)]">
-      Mask environment-variable values in the container inspect panel so API keys don't leak from screenshots or screen-shares. Masking is enforced server-side.
+      Mask environment-variable values in the container inspect panel, and redact secret-shaped tokens from container logs, so API keys don't leak from screenshots or screen-shares. Masking is enforced server-side.
     </p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <label class="block">
@@ -228,9 +229,16 @@
           <option value="off">Never (locked)</option>
         </select>
       </label>
+      <label class="block">
+        <span class="text-[13px] font-medium">Mask log secrets</span>
+        <select class="input mt-2 w-full" value={self.maskLogs} onchange={(e) => saveSecret({ maskLogs: e.currentTarget.value })}>
+          <option value="sensitive">Redact secrets</option>
+          <option value="off">Show raw</option>
+        </select>
+      </label>
     </div>
     <p class="mt-2 text-[12px] text-[var(--text-3)]">
-      Reveal is gated server-side: <span class="mono">Local only</span> unmasks just on <span class="mono">127.0.0.1</span>; <span class="mono">Local &amp; remote</span> also allows it from allowed hosts; <span class="mono">Never</span> is a kill-switch.
+      Reveal is gated server-side: <span class="mono">Local only</span> unmasks just on <span class="mono">127.0.0.1</span>; <span class="mono">Local &amp; remote</span> also allows it from allowed hosts; <span class="mono">Never</span> is a kill-switch. Log redaction is best-effort (free-form text); an AI client over MCP always gets at least secret redaction, regardless of this setting.
     </p>
   </section>
 
