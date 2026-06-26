@@ -89,7 +89,7 @@
         { label: 'Kubernetes', cells: [{ v: 'n', tag: 'scope' }, 'y', 'y', 'y', 'n', 'y'] },
         { label: 'Multi-host / clusters / teams', cells: [{ v: 'n', tag: 'design', note: 'single-operator, single-host' }, 'n', 'n', 'n', 'n', 'y'] },
         { label: 'Audit log of actions', cells: [{ v: 'n', tag: 'road' }, 'n', 'n', 'n', 'n', { v: '~', note: 'Business edition' }] },
-        { label: 'Maturity & ecosystem', cells: [{ v: 'New (2025)', note: 'small, moving fast' }, { v: 'Huge', note: 'industry default, extensions' }, { v: 'Growing', note: 'popular on Mac' }, { v: 'Red Hat-backed', note: 'extensions' }, { v: 'Popular OSS', note: 'big following' }, { v: 'Mature', note: 'large enterprise base' }] },
+        { label: 'Maturity & ecosystem', cells: [{ v: 'New (2026)', note: 'small, moving fast' }, { v: 'Huge', note: 'industry default, extensions' }, { v: 'Growing', note: 'popular on Mac' }, { v: 'Red Hat-backed', note: 'extensions' }, { v: 'Popular OSS', note: 'big following' }, { v: 'Mature', note: 'large enterprise base' }] },
       ],
     },
   ]
