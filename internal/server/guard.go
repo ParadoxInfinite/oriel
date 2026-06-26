@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -57,9 +58,11 @@ func (g *hostGuard) allows(host string) bool {
 // allowAPI decides whether an /api request may proceed.
 func (s *Server) allowAPI(r *http.Request) bool {
 	// Cross-site requests (CSRF / drive-by) are never allowed. same-origin,
-	// same-site, and none (direct navigation) are fine. A missing header (older
-	// browsers, curl) falls through to the Host check.
-	if r.Header.Get("Sec-Fetch-Site") == "cross-site" {
+	// same-site, and none (direct navigation) are fine. Fetch Metadata is the
+	// primary signal, but a browser/context that omits Sec-Fetch-Site would
+	// otherwise fall through to the Host check, so back it with an Origin check:
+	// a present, cross-origin Origin is a CSRF attempt regardless of the header.
+	if r.Header.Get("Sec-Fetch-Site") == "cross-site" || s.crossOrigin(r) {
 		return false
 	}
 	host := r.Host
@@ -81,6 +84,30 @@ func (s *Server) allowAPI(r *http.Request) bool {
 		return false
 	}
 	return s.auth.ok(r)
+}
+
+// crossOrigin reports whether the request carries an Origin header from a
+// different origin than the server itself. Browsers attach Origin to every
+// state-changing cross-origin request (fetch, XHR, and form POSTs), so a present
+// Origin whose host is neither loopback, nor this request's own Host, nor an
+// allow-listed remote host is a cross-site (CSRF) attempt, even when the browser
+// omitted Sec-Fetch-Site. An absent Origin (a non-browser client like curl, or a
+// same-origin navigation) is not treated as cross-origin; those still face the
+// Host check and, for remote callers, the token.
+func (s *Server) crossOrigin(r *http.Request) bool {
+	o := r.Header.Get("Origin")
+	if o == "" {
+		return false
+	}
+	u, err := url.Parse(o)
+	if err != nil || u.Host == "" {
+		return true // unparseable / opaque Origin: treat as hostile
+	}
+	oh := normHost(u.Hostname())
+	if isLoopbackHost(oh) || oh == normHost(hostOnly(r.Host)) {
+		return false // loopback UI or genuinely same-origin
+	}
+	return !s.guard.allows(oh) // an allow-listed remote origin is legitimate
 }
 
 // forwarded reports whether the request arrived through a reverse proxy, by the

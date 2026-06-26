@@ -269,19 +269,23 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 		httpError(w, http.StatusInternalServerError, "could not set permissions: "+err.Error())
 		return
 	}
-	// Back up the current binary by copying it to <exe>.bak (for rollback), then
-	// atomically replace exe in a single rename. os.Rename swaps the destination
-	// in one step, so there is never a moment when exe has no binary, a kill or
-	// reboot mid-update leaves either the old or the new binary, never neither.
+	// Back up the current binary to <exe>.bak, then atomically replace exe in a
+	// single rename. os.Rename swaps the destination in one step, so there is
+	// never a moment when exe has no binary, a kill or reboot mid-update leaves
+	// either the old or the new binary, never neither. The backup guards only this
+	// window: if the rename fails, exe is untouched (so we discard the backup); on
+	// success we remove it rather than leave an orphaned, executable copy on disk.
 	bak := exe + ".bak"
 	if err := copyFile(exe, bak); err != nil {
 		httpError(w, http.StatusInternalServerError, "could not back up current binary: "+err.Error())
 		return
 	}
 	if err := os.Rename(tmp, exe); err != nil {
+		os.Remove(bak)
 		httpError(w, http.StatusInternalServerError, "could not install update: "+err.Error())
 		return
 	}
+	os.Remove(bak)
 	// Refresh the cached check so the UI reflects the new state.
 	updateMu.Lock()
 	updateCache = nil

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ParadoxInfinite/oriel/internal/colima"
@@ -25,9 +26,19 @@ func runEnv(_ []string) error {
 	}
 	host := "unix://" + socket
 
-	fmt.Printf("export DOCKER_HOST=%q\n", host)
-	fmt.Printf("export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=%q\n", socket)
+	// This output is meant to be run as `eval "$(oriel env)"`, so quote with POSIX
+	// single quotes, not Go's %q. %q produces a double-quoted string in which a
+	// `$`, backtick, or `"` in the path would still be expanded by the shell;
+	// single-quoting (with the '\'' escape for an embedded quote) is literal.
+	fmt.Printf("export DOCKER_HOST=%s\n", shellQuote(host))
+	fmt.Printf("export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=%s\n", shellQuote(socket))
 	fmt.Println(`# Point your shell at colima's docker:  eval "$(oriel env)"`)
 	fmt.Println("# (many tools default to /var/run/docker.sock and miss colima's socket)")
 	return nil
+}
+
+// shellQuote wraps s in POSIX single quotes so it survives `eval` literally, with
+// any embedded single quote rendered as the standard '\” sequence.
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }

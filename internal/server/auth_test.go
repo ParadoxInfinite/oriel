@@ -66,6 +66,46 @@ func TestAllowAPI_Auth(t *testing.T) {
 	}
 }
 
+// TestAllowAPI_CrossOrigin covers the Origin fallback that backs Sec-Fetch-Site:
+// a present cross-origin Origin is rejected even without the Fetch-Metadata
+// header, while the loopback UI's own Origin and an allow-listed remote origin
+// still pass.
+func TestAllowAPI_CrossOrigin(t *testing.T) {
+	mk := func(token string) *Server {
+		return &Server{
+			guard: &hostGuard{hosts: map[string]bool{"oriel.example": true}},
+			auth:  &authGate{token: token},
+		}
+	}
+	req := func(host, origin, authHdr string) *http.Request {
+		r, _ := http.NewRequest("POST", "/api/x", nil)
+		r.Host = host
+		if origin != "" {
+			r.Header.Set("Origin", origin)
+		}
+		if authHdr != "" {
+			r.Header.Set("Authorization", authHdr)
+		}
+		return r // deliberately no Sec-Fetch-Site, to exercise the Origin fallback
+	}
+	for _, c := range []struct {
+		name, token, host, origin, authHdr string
+		want                               bool
+	}{
+		{"loopback, no origin (curl/native)", "", "127.0.0.1:4321", "", "", true},
+		{"loopback, own loopback origin", "", "127.0.0.1:4321", "http://127.0.0.1:4321", "", true},
+		{"loopback, localhost origin", "", "127.0.0.1:4321", "http://localhost:4321", "", true},
+		{"loopback, evil cross-origin denied", "", "127.0.0.1:4321", "https://evil.com", "", false},
+		{"loopback, malformed origin denied", "", "127.0.0.1:4321", "://nope", "", false},
+		{"remote allowed, same origin + token", "secret", "oriel.example", "https://oriel.example", "Bearer secret", true},
+		{"remote allowed, evil origin denied", "secret", "oriel.example", "https://evil.com", "Bearer secret", false},
+	} {
+		if got := mk(c.token).allowAPI(req(c.host, c.origin, c.authHdr)); got != c.want {
+			t.Errorf("%s: allowAPI=%v want %v", c.name, got, c.want)
+		}
+	}
+}
+
 // TestAllowAPI_ForwardedLoopback closes the proxy bypass: behind a reverse proxy
 // the Host is attacker-controlled, so a forged `Host: 127.0.0.1` must NOT inherit
 // the local-UI exemption, the forwarding header the proxy adds gives it away.
