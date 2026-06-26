@@ -1,0 +1,239 @@
+package server
+
+import (
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
+	"net/http"
+	"strings"
+	"sync"
+	"time"
+)
+
+// Browser login (session cookies)
+//
+// The bearer token gates non-loopback callers, but a browser can't present it:
+// there's no way to attach an Authorization header to a top-level navigation, and
+// EventSource (which drives the whole live UI) can't send headers at all. A
+// cookie is the only credential both fetch and EventSource carry automatically.
+//
+// So the GUI authenticates by logging in once with the same token (POST
+// /api/login), which mints a server-side session and sets an HttpOnly cookie;
+// every later request carries it. MCP/programmatic clients keep using the token
+// as a bearer header. One secret, two transports. This applies only on the
+// non-loopback (overlay) path; local access stays exempt and the bind is
+// unchanged. It is defense-in-depth on top of the network boundary, not a
+// replacement for it, and remains a single shared secret (no per-user identity).
+
+const (
+	sessionCookieName = "oriel_session"
+	// sessionTTL is an idle timeout: a session slides forward on each use, so an
+	// active operator stays logged in and an abandoned one lapses. In-memory by
+	// design (single operator, low stakes), so a restart just asks for a fresh
+	// login.
+	sessionTTL = 7 * 24 * time.Hour
+)
+
+// sessionStore is the in-memory set of live browser sessions: random id → expiry.
+type sessionStore struct {
+	mu       sync.Mutex
+	sessions map[string]time.Time
+}
+
+func newSessionStore() *sessionStore { return &sessionStore{sessions: map[string]time.Time{}} }
+
+// create mints a session and returns its id. crypto/rand, 256-bit; it returns the
+// error rather than a weak id, a session token must never be best-effort.
+func (s *sessionStore) create() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	id := hex.EncodeToString(b)
+	now := time.Now()
+	s.mu.Lock()
+	s.prune(now)
+	s.sessions[id] = now.Add(sessionTTL)
+	s.mu.Unlock()
+	return id, nil
+}
+
+// valid reports whether id is a live session, sliding its expiry forward on a hit
+// so an active operator isn't logged out mid-use. An expired id is dropped.
+func (s *sessionStore) valid(id string) bool {
+	if id == "" {
+		return false
+	}
+	now := time.Now()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	exp, ok := s.sessions[id]
+	if !ok || !now.Before(exp) {
+		delete(s.sessions, id) // no-op if absent
+		return false
+	}
+	s.sessions[id] = now.Add(sessionTTL)
+	return true
+}
+
+func (s *sessionStore) delete(id string) {
+	if id == "" {
+		return
+	}
+	s.mu.Lock()
+	delete(s.sessions, id)
+	s.mu.Unlock()
+}
+
+// prune drops expired sessions. Caller holds the lock.
+func (s *sessionStore) prune(now time.Time) {
+	for id, exp := range s.sessions {
+		if !now.Before(exp) {
+			delete(s.sessions, id)
+		}
+	}
+}
+
+const (
+	loginFreeAttempts = 5               // failures before backoff starts
+	loginBackoffBase  = 2 * time.Second // doubles per failure past the free window
+	loginBackoffMax   = 15 * time.Minute
+)
+
+// loginThrottle is a single global brute-force guard on /api/login. One counter
+// suffices for a single-admin tool (a per-IP map would key on the proxy anyway).
+// The first few failures are free; after that each imposes an exponentially
+// growing cooldown, reset on any success.
+type loginThrottle struct {
+	mu    sync.Mutex
+	fails int
+	last  time.Time
+}
+
+// allowed reports whether an attempt may proceed now (the cooldown has elapsed).
+func (t *loginThrottle) allowed() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.fails < loginFreeAttempts {
+		return true
+	}
+	return time.Since(t.last) >= t.cooldown()
+}
+
+// cooldown is the wait imposed by the current failure count. Caller holds the lock.
+func (t *loginThrottle) cooldown() time.Duration {
+	d := loginBackoffBase << (t.fails - loginFreeAttempts)
+	if d <= 0 || d > loginBackoffMax { // <=0 catches the shift overflowing int64
+		return loginBackoffMax
+	}
+	return d
+}
+
+func (t *loginThrottle) fail() {
+	t.mu.Lock()
+	t.fails++
+	t.last = time.Now()
+	t.mu.Unlock()
+}
+
+func (t *loginThrottle) reset() {
+	t.mu.Lock()
+	t.fails = 0
+	t.mu.Unlock()
+}
+
+// authed reports whether r is authenticated for the API. Auth-off is always
+// authed (loopback-only as before); otherwise a valid bearer token (programmatic
+// / MCP) or a live session cookie (the browser GUI, post-login) passes.
+func (s *Server) authed(r *http.Request) bool {
+	if !s.auth.enabled() {
+		return true
+	}
+	if s.auth.ok(r) { // bearer token in the Authorization header
+		return true
+	}
+	if c, err := r.Cookie(sessionCookieName); err == nil {
+		return s.sessions.valid(c.Value)
+	}
+	return false
+}
+
+// isLoginRequest is the one /api path reachable before authentication.
+func isLoginRequest(r *http.Request) bool {
+	return r.Method == http.MethodPost && r.URL.Path == "/api/login"
+}
+
+// handleLogin validates the configured token from the request body and, on a
+// match, starts a browser session (an HttpOnly cookie). The host guard and
+// cross-origin check still gate it (see allowAPI); brute force is throttled.
+func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
+	// Auth off: nothing to log into, the GUI already works.
+	if !s.auth.enabled() {
+		writeJSON(w, http.StatusOK, map[string]any{"authenticated": true})
+		return
+	}
+	if !s.loginRL.allowed() {
+		writeJSON(w, http.StatusTooManyRequests, map[string]string{"error": "too many attempts; wait a bit and try again"})
+		return
+	}
+	var body struct {
+		Token string `json:"token"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
+		return
+	}
+	if !s.auth.matches(strings.TrimSpace(body.Token)) {
+		s.loginRL.fail()
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "incorrect token"})
+		return
+	}
+	s.loginRL.reset()
+	id, err := s.sessions.create()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not start a session"})
+		return
+	}
+	http.SetCookie(w, s.sessionCookie(r, id, sessionTTL))
+	writeJSON(w, http.StatusOK, map[string]any{"authenticated": true})
+}
+
+// handleLogout ends the current session and clears the cookie.
+func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
+	if c, err := r.Cookie(sessionCookieName); err == nil {
+		s.sessions.delete(c.Value)
+	}
+	http.SetCookie(w, s.sessionCookie(r, "", -1))
+	writeJSON(w, http.StatusOK, map[string]any{"authenticated": false})
+}
+
+// sessionCookie builds the session cookie. HttpOnly + SameSite=Lax always;
+// Secure only when the request reached us over HTTPS, a plain-HTTP reverse proxy
+// on a private mesh can't send a Secure cookie, and forcing it would break login
+// there. Path is the configured base so a subpath mount scopes correctly. A
+// non-positive ttl produces a deletion cookie.
+func (s *Server) sessionCookie(r *http.Request, value string, ttl time.Duration) *http.Cookie {
+	path := s.base
+	if path == "" {
+		path = "/"
+	}
+	maxAge := int(ttl / time.Second)
+	if ttl <= 0 {
+		maxAge = -1
+	}
+	return &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    value,
+		Path:     path,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Secure:   requestIsHTTPS(r),
+		MaxAge:   maxAge,
+	}
+}
+
+// requestIsHTTPS reports whether the request reached us over TLS, directly or via
+// a terminating proxy that set X-Forwarded-Proto.
+func requestIsHTTPS(r *http.Request) bool {
+	return r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
+}

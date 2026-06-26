@@ -79,11 +79,18 @@ func (s *Server) allowAPI(r *http.Request) bool {
 		return true
 	}
 	// Non-loopback (or proxied): must be an allowed Host (anti-rebinding) AND, when
-	// a token is configured, carry it (real access control for remote access).
+	// a token is configured, be authenticated, a bearer token (MCP/programmatic) or
+	// a live session cookie (the browser GUI, after logging in with the token).
 	if !s.guard.allows(host) {
 		return false
 	}
-	return s.auth.ok(r)
+	// The login endpoint is the one /api path reachable pre-auth: it's still
+	// host-guarded and cross-origin-checked above, and the handler validates the
+	// token (throttled) before minting a session.
+	if isLoginRequest(r) {
+		return true
+	}
+	return s.authed(r)
 }
 
 // crossOrigin reports whether the request carries an Origin header from a

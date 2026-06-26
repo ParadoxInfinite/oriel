@@ -28,6 +28,8 @@ type Server struct {
 	jobs     *jobManager
 	guard    *hostGuard
 	auth     *authGate
+	sessions *sessionStore
+	loginRL  *loginThrottle
 	grant    *grant.Store
 	cancel   context.CancelFunc
 }
@@ -53,6 +55,8 @@ func New(web fs.FS, version string) *Server {
 		jobs:     newJobManager(),
 		guard:    newHostGuard(),
 		auth:     newAuthGate(),
+		sessions: newSessionStore(),
+		loginRL:  &loginThrottle{},
 		grant:    grant.New(),
 	}
 	// Destructive tools are locked for non-interactive callers (MCP) unless a
@@ -114,6 +118,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("PUT /api/remote", s.handlePutRemote)
 	s.mux.HandleFunc("GET /api/auth", s.handleGetAuth)
 	s.mux.HandleFunc("PUT /api/auth", s.handlePutAuth)
+	s.mux.HandleFunc("POST /api/login", s.handleLogin)
+	s.mux.HandleFunc("POST /api/logout", s.handleLogout)
 	s.mux.HandleFunc("PUT /api/config", s.handlePutConfig)
 	s.mux.HandleFunc("GET /api/themes", s.handleListThemes)
 	s.mux.HandleFunc("GET /api/themes/{file}", s.handleServeTheme)
