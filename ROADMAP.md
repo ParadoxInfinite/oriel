@@ -5,7 +5,7 @@ way to push something up the list is to open an
 [issue](https://github.com/ParadoxInfinite/oriel/issues) or a
 [discussion](https://github.com/ParadoxInfinite/oriel/discussions).
 
-## Now
+## Up next
 
 - **In-browser container shell.** An interactive `exec` terminal into a running
   container, straight from the UI, built on the existing exec-streaming seam.
@@ -23,12 +23,12 @@ way to push something up the list is to open an
   assistant makes: what ran, with which arguments, and when, so you can always
   see what an AI did to your containers. Your own UI clicks aren't logged.
 
-## Next
+## After that
 
 - **Translations (i18n).** The keyboard/screen-reader accessibility pass has
   shipped; localization is the remaining half, so the UI isn't English-only.
 
-## Later
+## Further out
 
 - **homebrew-core submission**: `brew install oriel` with no tap, once the
   project clears Homebrew's notability bar.
