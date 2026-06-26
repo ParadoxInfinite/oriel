@@ -105,7 +105,7 @@ It's the only one here an AI can drive directly, through the same checks the UI 
 
 For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-host, in-browser shell), see the <a href="https://paradoxinfinite.github.io/oriel/#compare" target="_blank" rel="noopener">exhaustive comparison in the live demo</a>.
 
-> **Coming:** an in-browser shell, an audit log, deeper container networking, and accessibility + translations. [Roadmap](ROADMAP.md).
+> **Coming:** an in-browser shell, an audit log, and UI translations (i18n). [Roadmap](ROADMAP.md).
 
 ## AI control (MCP)
 

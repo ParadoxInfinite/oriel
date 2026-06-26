@@ -16,8 +16,9 @@ self-updates. Two settings matter for a proxy:
 | `basePath` | `oriel config base-path <path>` | Serve every asset + API under a sub-path, e.g. `/oriel`. Restarts a managed service to apply. |
 
 > [!CAUTION]
-> Allowing a host exposes a root-equivalent, **unauthenticated** Docker UI to
-> anyone who can send that `Host` header. Only allow hosts on a network you trust
+> Allowing a host exposes a root-equivalent Docker UI (**unauthenticated unless
+> you set a bearer token**) to anyone who can send that `Host` header. Only allow
+> hosts on a network you trust
 > (a private VPN/tailnet, or a proxy that adds TLS **and** a login). **Never expose
 > Oriel directly to the public internet.**
 
@@ -82,7 +83,7 @@ Set `oriel config base-path /oriel` to match the `location`, and
 The same requirements apply:
 
 1. **Forward the public `Host`** (must match `allowedHosts`), not a loopback Host.
-2. **Set a forwarding header** (`X-Forwarded-For` or `Forwarded`). Oriel uses it to
+2. **Set a forwarding header** (`X-Forwarded-For`, `X-Forwarded-Host`, or `Forwarded`). Oriel uses it to
    tell proxied traffic from the local UI: a proxied request never inherits the
    loopback "no token needed" trust, so it always has to pass `allowedHosts` + the
    token. Every proxy above does this by default; don't strip it.

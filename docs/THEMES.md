@@ -14,7 +14,7 @@ There are three levels of customization, from cheapest to deepest:
 3. **Built-in edition**: add a first-class edition to the source tree. See
    [Add a built-in edition](#add-a-built-in-edition).
 
-Two editions ship in the box:
+One edition ships in the box:
 
 | id        | look                                              |
 | --------- | ------------------------------------------------- |
