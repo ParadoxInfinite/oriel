@@ -16,8 +16,9 @@ way to push something up the list is to open an
   meshes just need a small reverse proxy on the host, so Oriel never leaves
   loopback. The optional bearer token adds a second factor; a login page stays an
   optional nicety, not a requirement. **No non-loopback bind, no per-user accounts,
-  no RBAC.** An official Docker image (which revisits in-container binding) comes
-  later. (See [SECURITY.md](SECURITY.md).)
+  no RBAC.** An official Docker image for the GUI (which revisits in-container
+  binding) comes later; the MCP server already ships as a container image
+  (`ghcr.io/paradoxinfinite/oriel`). (See [SECURITY.md](SECURITY.md).)
 - **Audit log of AI actions.** A durable record of every tool call an MCP client or
   assistant makes: what ran, with which arguments, and when, so you can always
   see what an AI did to your containers. Your own UI clicks aren't logged.
