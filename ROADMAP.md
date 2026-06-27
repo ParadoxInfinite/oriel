@@ -9,19 +9,6 @@ way to push something up the list is to open an
 
 - **In-browser container shell.** An interactive `exec` terminal into a running
   container, straight from the UI, built on the existing exec-streaming seam.
-- **Self-hostable on a server (single admin).** Oriel stays bound to `127.0.0.1`.
-  Reach it on a home server or NAS over a **private overlay network** (Tailscale,
-  ZeroTier, Netbird, WireGuard), which provides the access control and TLS.
-  `tailscale serve` proxies straight to loopback with no extra software; plain L3
-  meshes just need a small reverse proxy on the host, so Oriel never leaves
-  loopback. The optional bearer token adds a second factor; a login page stays an
-  optional nicety, not a requirement. **No non-loopback bind, no per-user accounts,
-  no RBAC.** An official Docker image for the GUI (which revisits in-container
-  binding) comes later; the MCP server already ships as a container image
-  (`ghcr.io/paradoxinfinite/oriel`). (See [SECURITY.md](SECURITY.md).)
-- **Audit log of AI actions.** A durable record of every tool call an MCP client or
-  assistant makes: what ran, with which arguments, and when, so you can always
-  see what an AI did to your containers. Your own UI clicks aren't logged.
 
 ## After that
 
@@ -48,7 +35,10 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 ## Recently shipped
 
-See the [CHANGELOG](CHANGELOG.md). Highlights: **Docker networks
+See the [CHANGELOG](CHANGELOG.md). Highlights: **browser login for remote access
+(a session cookie over your private overlay), stable/edge update channels, the GUI
+as a loopback-only Linux container, and an audit log of AI actions** (v0.9.0);
+**Docker networks
 (create/inspect/connect/disconnect, in the UI and over MCP), a keyboard/screen-reader
 accessibility pass, container-log secret redaction, CSRF + CSP hardening, and the
 official MCP registry listing plus a multi-arch GHCR image** (v0.8.0); **a

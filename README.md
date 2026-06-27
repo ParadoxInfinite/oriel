@@ -105,7 +105,7 @@ It's the only one here an AI can drive directly, through the same checks the UI 
 
 For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-host, in-browser shell), see the <a href="https://paradoxinfinite.github.io/oriel/#compare" target="_blank" rel="noopener">exhaustive comparison in the live demo</a>.
 
-> **Coming:** an in-browser shell, an audit log, and UI translations (i18n). [Roadmap](ROADMAP.md).
+> **Coming:** an in-browser shell and UI translations (i18n). [Roadmap](ROADMAP.md).
 
 ## AI control (MCP)
 
@@ -113,6 +113,7 @@ For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-
 
 - **Secrets stay masked.** `container.inspect` and `container.logs` redact secret-shaped values before they reach a model; an MCP client never gets fully-raw env or logs (the "off" setting applies only to the local UI). Log redaction is best-effort over free-form text.
 - **Destructive actions are locked** until you open a short, time-boxed window (`oriel ai allow-destructive --for 15m`). Reads always work; remove/prune don't, until you say so.
+- **Every action is logged.** An audit log records each tool call an assistant makes: what ran, with which arguments, and when (Settings → AI activity). Your own clicks aren't.
 - **No model in the binary.** Your client brings the model, so Oriel stays vendor-neutral.
 
 Point any MCP client at it. With Oriel installed:
