@@ -56,6 +56,10 @@ export { DashboardStats } from '../lib/dashboard.svelte.js'
 /** The Oriel backend's own footprint + build version: `{ version, rss, goroutines, heapAlloc }`. */
 export { self } from '../lib/self.svelte.js'
 
+/** GUI auth: `auth` state `{ checked, enabled, authenticated, localAdmin }` plus
+ *  `logout()`. The token gate + browser session login (see SECURITY.md). */
+export { auth, logout } from '../lib/auth.svelte.js'
+
 /** Remote-access allow-list (non-loopback Hosts permitted to reach /api).
  *  `RemoteHostForm` is the headless "add a host" input both editions render. */
 export { remote, loadRemote, addRemoteHost, removeRemoteHost, RemoteHostForm } from '../lib/remote.svelte.js'

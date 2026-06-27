@@ -29,6 +29,11 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		MaskEnv   *string `json:"maskEnv"`   // "all" | "sensitive" | "off"
 		MaskLogs  *string `json:"maskLogs"`  // "sensitive" | "off" (UI only; MCP is always >= sensitive)
 		EnvReveal *string `json:"envReveal"` // "off" | "local" | "remote"
+		// Auth behavior knobs. Settable by any authenticated session (not local-only
+		// like the token), since holding a session already implies full control; a
+		// 0 means "use the default". The server clamps the effective values.
+		SessionTTLMinutes *int `json:"sessionTTLMinutes"`
+		LoginFreeAttempts *int `json:"loginFreeAttempts"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
@@ -53,6 +58,12 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		if body.EnvReveal != nil && oneOf(*body.EnvReveal, "off", "local", "remote") {
 			c.EnvReveal = *body.EnvReveal
 		}
+		if body.SessionTTLMinutes != nil && *body.SessionTTLMinutes >= 0 {
+			c.SessionTTLMinutes = *body.SessionTTLMinutes // 0 = default; effective value clamped server-side
+		}
+		if body.LoginFreeAttempts != nil && *body.LoginFreeAttempts >= 0 {
+			c.LoginFreeAttempts = *body.LoginFreeAttempts // 0 = default
+		}
 		cur = *c
 	}); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
@@ -62,11 +73,13 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	// otherwise the caller must restart by hand to apply a base-path change.
 	restarting := baseChanged && service.IsManaged()
 	writeJSON(w, http.StatusOK, map[string]any{
-		"basePath":   normalizeBase(cur.BasePath),
-		"maskEnv":    string(secrets.ParseMode(cur.MaskEnv)),
-		"maskLogs":   string(secrets.ParseLogMode(cur.MaskLogs)),
-		"envReveal":  normReveal(cur.EnvReveal),
-		"restarting": restarting,
+		"basePath":          normalizeBase(cur.BasePath),
+		"maskEnv":           string(secrets.ParseMode(cur.MaskEnv)),
+		"maskLogs":          string(secrets.ParseLogMode(cur.MaskLogs)),
+		"envReveal":         normReveal(cur.EnvReveal),
+		"sessionTTLMinutes": cur.SessionTTLMinutes,
+		"loginFreeAttempts": cur.LoginFreeAttempts,
+		"restarting":        restarting,
 	})
 	if restarting {
 		go func() {

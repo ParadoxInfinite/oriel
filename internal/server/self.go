@@ -24,6 +24,9 @@ type selfStats struct {
 	MaskEnv    string `json:"maskEnv"`   // inspect env masking: "all" | "sensitive" | "off"
 	MaskLogs   string `json:"maskLogs"`  // UI log masking: "sensitive" | "off"
 	EnvReveal  string `json:"envReveal"` // reveal policy: "off" | "local" | "remote"
+
+	SessionTTLMinutes int `json:"sessionTTLMinutes"` // GUI session idle timeout (0 = default); raw setting, for the UI input
+	LoginFreeAttempts int `json:"loginFreeAttempts"` // login tries before backoff (0 = default)
 }
 
 // currentSelf samples this process's footprint. Shared by the REST handler and
@@ -33,15 +36,17 @@ func (s *Server) currentSelf(ctx context.Context) selfStats {
 	runtime.ReadMemStats(&m)
 	cfg := loadSettings()
 	return selfStats{
-		Version:    s.version,
-		BasePath:   s.base,
-		OS:         runtime.GOOS,
-		RSS:        processRSS(ctx),
-		Goroutines: runtime.NumGoroutine(),
-		HeapAlloc:  int64(m.HeapAlloc),
-		MaskEnv:    string(secrets.ParseMode(cfg.MaskEnv)),
-		MaskLogs:   string(secrets.ParseLogMode(cfg.MaskLogs)),
-		EnvReveal:  normReveal(cfg.EnvReveal),
+		Version:           s.version,
+		BasePath:          s.base,
+		OS:                runtime.GOOS,
+		RSS:               processRSS(ctx),
+		Goroutines:        runtime.NumGoroutine(),
+		HeapAlloc:         int64(m.HeapAlloc),
+		MaskEnv:           string(secrets.ParseMode(cfg.MaskEnv)),
+		MaskLogs:          string(secrets.ParseLogMode(cfg.MaskLogs)),
+		EnvReveal:         normReveal(cfg.EnvReveal),
+		SessionTTLMinutes: cfg.SessionTTLMinutes,
+		LoginFreeAttempts: cfg.LoginFreeAttempts,
 	}
 }
 

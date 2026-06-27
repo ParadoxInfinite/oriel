@@ -23,10 +23,21 @@ async function parseError(res) {
   }
 }
 
+// On a 401 (lapsed session) the auth store re-shows the login screen. A hook, not
+// a direct import, so this low-level module stays decoupled from the store.
+let onUnauthorized = null
+export function setOnUnauthorized(fn) {
+  onUnauthorized = fn
+}
+async function raise(res) {
+  if (res.status === 401) onUnauthorized?.()
+  throw new Error(await parseError(res))
+}
+
 export async function apiGet(path) {
   if (DEMO) return demo.demoGet(path)
   const res = await fetch(url(path))
-  if (!res.ok) throw new Error(await parseError(res))
+  if (!res.ok) return raise(res)
   return res.json()
 }
 
@@ -37,7 +48,7 @@ export async function apiPost(path, body) {
     headers: body ? { 'Content-Type': 'application/json' } : {},
     body: body ? JSON.stringify(body) : undefined,
   })
-  if (!res.ok) throw new Error(await parseError(res))
+  if (!res.ok) return raise(res)
   return res.json().catch(() => null)
 }
 
@@ -48,14 +59,14 @@ export async function apiPut(path, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(await parseError(res))
+  if (!res.ok) return raise(res)
   return res.json().catch(() => null)
 }
 
 export async function apiDelete(path) {
   if (DEMO) return demo.demoDelete(path)
   const res = await fetch(url(path), { method: 'DELETE' })
-  if (!res.ok) throw new Error(await parseError(res))
+  if (!res.ok) return raise(res)
   return res.json().catch(() => null)
 }
 
@@ -64,7 +75,7 @@ export async function apiDelete(path) {
 export async function streamPost(path, { onEvent, signal } = {}) {
   if (DEMO) return demo.demoStreamPost(path, { onEvent, signal })
   const res = await fetch(url(path), { method: 'POST', signal })
-  if (!res.ok) throw new Error(await parseError(res))
+  if (!res.ok) return raise(res)
   if (!res.body) throw new Error('empty response stream')
   const reader = res.body.getReader()
   const decoder = new TextDecoder()
