@@ -6,7 +6,7 @@ export const confirmState = $state({
   title: '',
   message: '',
   confirmLabel: 'Confirm',
-  danger: true,
+  tone: 'danger', // 'danger' (red) | 'warn' (amber) | 'accent'; drives icon + button color
   checkbox: null, // label string, or null for the plain boolean form
   checked: false,
 })
@@ -24,7 +24,9 @@ export function confirm(opts = {}) {
   confirmState.title = opts.title ?? 'Are you sure?'
   confirmState.message = opts.message ?? ''
   confirmState.confirmLabel = opts.confirmLabel ?? 'Confirm'
-  confirmState.danger = opts.danger ?? true
+  // `tone` is the source of truth; `danger:false` stays supported as a shorthand
+  // for the neutral accent tone (back-compat with existing call sites).
+  confirmState.tone = opts.tone ?? (opts.danger === false ? 'accent' : 'danger')
   confirmState.checkbox = opts.checkbox ?? null
   confirmState.checked = opts.checked ?? false
   confirmState.open = true
