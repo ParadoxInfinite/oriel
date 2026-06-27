@@ -201,6 +201,9 @@ func TestEffectiveKnobs(t *testing.T) {
 	if got := effectiveSessionTTL(settings{SessionTTLMinutes: -5}); got != defaultSessionTTL {
 		t.Errorf("negative TTL = %v, want default", got)
 	}
+	if got := effectiveSessionTTL(settings{SessionTTLMinutes: 90 * 24 * 60}); got != maxSessionTTL {
+		t.Errorf("90-day TTL = %v, want cap %v", got, maxSessionTTL)
+	}
 	if got := effectiveLoginFreeAttempts(settings{}); got != defaultLoginFreeAttempts {
 		t.Errorf("unset free = %d, want default %d", got, defaultLoginFreeAttempts)
 	}

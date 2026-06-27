@@ -33,18 +33,28 @@ const (
 	// low stakes), so a restart just asks for a fresh login.
 	defaultSessionTTL = 7 * 24 * time.Hour
 	minSessionTTL     = time.Minute
+	// maxSessionTTL caps the configured idle timeout. A long session is a
+	// convenience; an unbounded one would let a stolen cookie persist
+	// indefinitely, so even an authenticated caller (who can set this knob) can't
+	// turn a session into a permanent foothold.
+	maxSessionTTL = 30 * 24 * time.Hour
 )
 
 // effectiveSessionTTL is the sliding idle timeout: settings.SessionTTLMinutes
-// (hot-reloaded) with a 7-day default and a 1-minute floor.
+// (hot-reloaded) with a 7-day default, clamped to [1 minute, 30 days].
 func effectiveSessionTTL(cfg settings) time.Duration {
 	if cfg.SessionTTLMinutes <= 0 {
 		return defaultSessionTTL
 	}
-	if d := time.Duration(cfg.SessionTTLMinutes) * time.Minute; d >= minSessionTTL {
+	d := time.Duration(cfg.SessionTTLMinutes) * time.Minute
+	switch {
+	case d < minSessionTTL:
+		return minSessionTTL
+	case d > maxSessionTTL:
+		return maxSessionTTL
+	default:
 		return d
 	}
-	return minSessionTTL
 }
 
 // settingsSessionTTL / settingsFreeAttempts read the live settings; passed to the
