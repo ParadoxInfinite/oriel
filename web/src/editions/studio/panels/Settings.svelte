@@ -387,7 +387,7 @@
           <button class="btn btn-sm btn-default" onclick={() => setToken({ clear: true }, 'Could not clear token')} disabled={tokenBusy}>Clear</button>
         {/if}
       {:else}
-        <span class="text-[13px] text-[var(--text-3)]">No token — loopback-only access.</span>
+        <span class="text-[13px] text-[var(--text-3)]">No token, loopback-only access.</span>
         {#if auth.localAdmin}
           <button class="btn btn-sm btn-primary" onclick={() => setToken({ generate: true }, 'Could not set token')} disabled={tokenBusy}>Generate token</button>
         {/if}
@@ -400,7 +400,7 @@
 
     {#if revealedToken}
       <div class="mt-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3">
-        <p class="text-[12px] text-[var(--text-2)]">Copy this now — it won't be shown again:</p>
+        <p class="text-[12px] text-[var(--text-2)]">Copy this now, it won't be shown again:</p>
         <code class="mono mt-1 block break-all text-[12px] text-[var(--text)]">{revealedToken}</code>
       </div>
     {/if}
