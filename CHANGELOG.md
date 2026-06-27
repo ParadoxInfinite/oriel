@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-27
+
+Self-hosting grows up: log into the GUI from a browser over your private network,
+run it as a container, choose your update channel, and see an audit log of
+everything an AI does.
+
+### Added
+
+- **Browser login for remote access.** With an access token set, the GUI shows a
+  login screen for non-loopback callers and rides an `HttpOnly` session cookie
+  afterward, because a browser can't send the token as a header (so "token on" used
+  to break the remote GUI). Manage it in **Settings → Authentication**: generate or
+  clear the token, set the session idle timeout, and the failed-login backoff.
+  Loopback stays exempt and the `127.0.0.1` bind is unchanged.
+- **Stable / edge update channels.** Default **stable** tracks confirmed releases;
+  opt into **edge** to get the newest builds first, including pre-releases. On edge
+  you stay on a build until the next stable catches up, and switching back never
+  downgrades you. Set it in Settings → Updates, or with `ORIEL_CHANNEL=edge` in the
+  installer.
+- **Run the GUI as a container** (Linux). The published image
+  (`ghcr.io/paradoxinfinite/oriel`) runs the GUI under `--network host`, so Oriel
+  stays loopback-only and is reached over your overlay exactly like the binary. See
+  [docs/DAEMONS.md](docs/DAEMONS.md).
+- **Audit log of AI actions.** Every tool call an MCP client or assistant makes is
+  recorded (time, tool, secret-masked arguments, outcome) and shown in
+  **Settings → AI activity**. Your own UI clicks are not recorded.
+- **Installer upgrades.** `install.sh` takes `ORIEL_CHANNEL`, detects an existing
+  install and upgrades it in place (and refuses to clobber a Homebrew install,
+  pointing you at `brew upgrade`), and supports `ORIEL_UNINSTALL=1`.
+
+### Changed
+
+- `make build` now strips and trim-paths the binary, matching the release: a local
+  build is the same lean size and carries no build-machine paths.
+
+### Fixed
+
+- `oriel doctor` reports an instance as "not running" with how to start it, instead
+  of the alarming "none reachable".
+
+### Security
+
+- The audit log gives you accountability for what an AI did. Browser login is a
+  single shared secret (not per-user identity), defense-in-depth on top of the
+  network boundary, and the container GUI keeps the loopback-only posture rather
+  than adding a non-loopback bind. See [SECURITY.md](SECURITY.md).
+
 ## [0.8.0] - 2026-06-26
 
 Docker networks land in the UI and over MCP, the MCP server gets an official
@@ -577,7 +624,8 @@ with a swappable, themeable front end.
   NL provider all route through `tools.Registry.Execute`, which checks arguments
   against each tool's schema and verifies referenced entities exist.
 
-[Unreleased]: https://github.com/ParadoxInfinite/oriel/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/ParadoxInfinite/oriel/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/ParadoxInfinite/oriel/compare/v0.5.1...v0.6.0

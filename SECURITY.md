@@ -44,9 +44,9 @@ Two more powers worth calling out:
 ### What Oriel is not
 
 It is **not a high-assurance, audited, or multi-tenant system, and must not be
-treated as one.** There is no per-user identity, no audit log, no general request
-rate limiting (beyond a login backoff), and no least-privilege scoping for remote
-callers. Reaching the API at all means
+treated as one.** There's an audit log of AI/MCP actions, but no per-user
+identity, no general request rate limiting (beyond a login backoff), and no
+least-privilege scoping for remote callers. Reaching the API at all means
 root-equivalent host control. It has had no independent security assessment.
 Suitable for a single trusted operator on a private network; **never** rely on it
 as a security boundary for untrusted users, regulated/government workloads, or

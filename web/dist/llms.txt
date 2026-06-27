@@ -7,10 +7,10 @@
 - License: Apache-2.0 (free and open source)
 - Platforms: macOS (Apple Silicon + Intel), Linux (amd64 + arm64)
 - Footprint: ~13 MB static binary, ~15-30 MB RAM, no Electron, no account
-- AI control (MCP): `oriel mcp` runs Oriel as a Model Context Protocol server over stdio or Streamable HTTP (`--http`), so an MCP client can manage Docker/Colima. Same validated, secret-masked tools as the UI; destructive actions stay locked behind a time-boxed grant; access can be scoped read-only or to named tools. No model ships in the binary; the client brings its own.
+- AI control (MCP): `oriel mcp` runs Oriel as a Model Context Protocol server over stdio or Streamable HTTP (`--http`), so an MCP client can manage Docker/Colima. Same validated, secret-masked tools as the UI; destructive actions stay locked behind a time-boxed grant; access can be scoped read-only or to named tools; every action is recorded in an audit log. No model ships in the binary; the client brings its own.
 - Engines: brings your own, no lock-in. Colima (first-class, with VM start/stop), Docker Engine, OrbStack, Podman, and remote daemons.
 - Install: `brew install ParadoxInfinite/oriel/oriel` · a checksum-verified curl script · or `go install github.com/ParadoxInfinite/oriel@latest`
-- Security: no login by default; an optional bearer token gates non-loopback and MCP-over-HTTP access. Driving Docker is root-equivalent, so run on 127.0.0.1 or a private network only, never the public internet.
+- Security: no login by default; an optional access token gates non-loopback and MCP-over-HTTP access, and the browser GUI logs in with it (a session cookie) for remote use. Driving Docker is root-equivalent, so run on 127.0.0.1 or a private network only, never the public internet.
 - Repository: https://github.com/ParadoxInfinite/oriel
 
 ## Docs
