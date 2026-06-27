@@ -187,10 +187,14 @@ func (t *loginThrottle) reset() {
 }
 
 // authed reports whether r is authenticated for the API. Auth-off is always
-// authed (loopback-only as before); otherwise a valid bearer token (programmatic
-// / MCP) or a live session cookie (the browser GUI, post-login) passes.
+// authed; direct loopback is exempt (same rule as the API guard, so the local UI
+// is never asked to log in); otherwise a valid bearer token (programmatic / MCP)
+// or a live session cookie (the browser GUI, post-login) passes.
 func (s *Server) authed(r *http.Request) bool {
 	if !s.auth.enabled() {
+		return true
+	}
+	if isLoopbackHost(hostOnly(r.Host)) && !forwarded(r) {
 		return true
 	}
 	if s.auth.ok(r) { // bearer token in the Authorization header
@@ -202,9 +206,17 @@ func (s *Server) authed(r *http.Request) bool {
 	return false
 }
 
-// isLoginRequest is the one /api path reachable before authentication.
-func isLoginRequest(r *http.Request) bool {
-	return r.Method == http.MethodPost && r.URL.Path == "/api/login"
+// preAuthEndpoint lists the /api paths reachable before authentication: the login
+// POST, and the GET /api/auth the GUI polls to learn whether it must log in. Both
+// are still host-guarded and cross-origin-checked by allowAPI.
+func preAuthEndpoint(r *http.Request) bool {
+	if r.URL.Path == "/api/login" && r.Method == http.MethodPost {
+		return true
+	}
+	if r.URL.Path == "/api/auth" && r.Method == http.MethodGet {
+		return true
+	}
+	return false
 }
 
 // handleLogin validates the configured token from the request body and, on a

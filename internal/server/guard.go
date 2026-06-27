@@ -84,10 +84,10 @@ func (s *Server) allowAPI(r *http.Request) bool {
 	if !s.guard.allows(host) {
 		return false
 	}
-	// The login endpoint is the one /api path reachable pre-auth: it's still
-	// host-guarded and cross-origin-checked above, and the handler validates the
-	// token (throttled) before minting a session.
-	if isLoginRequest(r) {
+	// A couple of /api paths are reachable pre-auth (login, and the auth-status
+	// the GUI polls to decide whether to show a login screen): still host-guarded
+	// and cross-origin-checked above.
+	if preAuthEndpoint(r) {
 		return true
 	}
 	return s.authed(r)
