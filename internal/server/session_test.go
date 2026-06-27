@@ -118,6 +118,21 @@ func TestAuthed(t *testing.T) {
 	if s.authed(bad) {
 		t.Error("forged session cookie must not be authed")
 	}
+
+	// Direct loopback is exempt even with the token on, so the local UI is never
+	// shown a login screen.
+	lb := httptest.NewRequest("GET", "/api/x", nil)
+	lb.Host = "127.0.0.1:4321"
+	if !s.authed(lb) {
+		t.Error("direct loopback must be authed (exempt) with the token on")
+	}
+	// ...but a proxied request wearing a loopback Host is not exempt.
+	proxied := httptest.NewRequest("GET", "/api/x", nil)
+	proxied.Host = "127.0.0.1"
+	proxied.Header.Set("X-Forwarded-For", "9.9.9.9")
+	if s.authed(proxied) {
+		t.Error("a proxied forged-loopback Host must not be exempt")
+	}
 }
 
 func TestAllowAPI_LoginCarveout(t *testing.T) {
@@ -136,6 +151,10 @@ func TestAllowAPI_LoginCarveout(t *testing.T) {
 	// Login is reachable on an allowed host without being authenticated.
 	if !s.allowAPI(req("POST", "/api/login", "oriel.example")) {
 		t.Error("POST /api/login must be reachable pre-auth on an allowed host")
+	}
+	// So is GET /api/auth, so the GUI can discover it must log in.
+	if !s.allowAPI(req("GET", "/api/auth", "oriel.example")) {
+		t.Error("GET /api/auth must be reachable pre-auth on an allowed host")
 	}
 	// But it's still host-guarded: an un-allowed host is denied.
 	if s.allowAPI(req("POST", "/api/login", "evil.example")) {

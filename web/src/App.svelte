@@ -9,6 +9,8 @@
 
   import { activeEdition, loadDiskThemes } from './editions/registry.svelte.js'
   import { overlayTheme, overlayVars } from './lib/overlayTheme.svelte.js'
+  import { auth, checkAuth } from './lib/auth.svelte.js'
+  import LoginScreen from './components/LoginScreen.svelte'
   import OpOverlay from './components/OpOverlay.svelte'
   import CommandPalette from './components/CommandPalette.svelte'
   import ConfirmDialog from './components/ConfirmDialog.svelte'
@@ -32,7 +34,12 @@
     }
   }
 
-  onMount(() => {
+  // Start the app's data flows once, only after auth clears, so a gated client
+  // doesn't 401-spam the live stream before the user logs in.
+  let started = false
+  function startApp() {
+    if (started) return
+    started = true
     // One live stream feeds status/self/outages/stats/history; docker events drive
     // list refreshes. No polling loops.
     startLive()
@@ -41,33 +48,48 @@
     startUpdateChecks() // checks now, then re-checks every few hours while open
     loadDiskThemes()
     resumeOps() // re-attach to any prune still running from before a refresh
+  }
+
+  onMount(async () => {
+    await checkAuth()
+    if (!auth.enabled || auth.authenticated) startApp()
+  })
+  // After a successful login (authenticated flips true), bring the app up.
+  $effect(() => {
+    if (auth.checked && auth.authenticated) startApp()
   })
   onDestroy(() => {
     stopLive()
     stopUpdateChecks()
   })
+
+  const gated = $derived(auth.checked && auth.enabled && !auth.authenticated)
 </script>
 
 <svelte:window onkeydown={onKeydown} />
 
-{#key active.id}
-  <Edition />
-{/key}
+{#if gated}
+  <LoginScreen />
+{:else if auth.checked}
+  {#key active.id}
+    <Edition />
+  {/key}
 
-{#if !connection.ok}
-  <div role="status" style="position:fixed;top:0;left:0;right:0;z-index:60;padding:5px 12px;text-align:center;font-size:12px;font-weight:500;background:#b45309;color:#fff;">
-    Live connection lost, reconnecting…
+  {#if !connection.ok}
+    <div role="status" style="position:fixed;top:0;left:0;right:0;z-index:60;padding:5px 12px;text-align:center;font-size:12px;font-weight:500;background:#b45309;color:#fff;">
+      Live connection lost, reconnecting…
+    </div>
+  {/if}
+
+  <div style={overlayStyle}>
+    <OpOverlay />
+    <CommandPalette />
+    <ConfirmDialog />
+    <Toasts />
+    {#if __ORIEL_DEMO__}
+      <DemoBanner />
+      <CompareButton />
+      <Comparison />
+    {/if}
   </div>
 {/if}
-
-<div style={overlayStyle}>
-  <OpOverlay />
-  <CommandPalette />
-  <ConfirmDialog />
-  <Toasts />
-  {#if __ORIEL_DEMO__}
-    <DemoBanner />
-    <CompareButton />
-    <Comparison />
-  {/if}
-</div>

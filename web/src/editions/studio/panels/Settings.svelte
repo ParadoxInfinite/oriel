@@ -5,6 +5,7 @@
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
   import { grant, loadGrant, requestGrant, lockGrant, fmtRemaining } from '../../../platform/index.js'
+  import { auth, logout } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -24,6 +25,34 @@
       if (d?.maskEnv) self.maskEnv = d.maskEnv
       if (d?.maskLogs) self.maskLogs = d.maskLogs
       if (d?.envReveal) self.envReveal = d.envReveal
+    } catch (e) {
+      Object.assign(self, prev)
+      toast(e?.message || 'Could not save', 'error')
+    }
+  }
+
+  // Authentication: the token is local-machine-only (PUT /api/auth); the session
+  // knobs are settable by any authenticated session (PUT /api/config).
+  let tokenBusy = $state(false)
+  let revealedToken = $state('') // shown once, right after generating
+  async function setToken(body, msg) {
+    tokenBusy = true
+    try {
+      const d = await apiPut('/api/auth', body)
+      auth.enabled = !!d?.enabled
+      revealedToken = d?.token || ''
+    } catch (e) {
+      toast(e?.message || msg, 'error')
+    }
+    tokenBusy = false
+  }
+  async function saveAuthKnob(patch) {
+    const prev = { sessionTTLMinutes: self.sessionTTLMinutes, loginFreeAttempts: self.loginFreeAttempts }
+    Object.assign(self, patch) // optimistic
+    try {
+      const d = await apiPut('/api/config', patch)
+      if (d?.sessionTTLMinutes != null) self.sessionTTLMinutes = d.sessionTTLMinutes
+      if (d?.loginFreeAttempts != null) self.loginFreeAttempts = d.loginFreeAttempts
     } catch (e) {
       Object.assign(self, prev)
       toast(e?.message || 'Could not save', 'error')
@@ -304,11 +333,62 @@
     </div>
   </section>
 
+  <!-- Authentication -->
+  <section class="rise card p-5" style="animation-delay:110ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Authentication</h2>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">
+      An optional access token gates non-loopback and MCP-over-HTTP access. Local use never needs it; with it on, the browser logs in once over your private network.
+    </p>
+
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      {#if auth.enabled}
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-tint-2)] px-2.5 py-1 text-[12px] font-medium text-[var(--accent)]">Token set · remote login required</span>
+        {#if auth.localAdmin}
+          <button class="btn btn-sm btn-default" onclick={() => setToken({ generate: true }, 'Could not regenerate token')} disabled={tokenBusy}>Regenerate</button>
+          <button class="btn btn-sm btn-default" onclick={() => setToken({ clear: true }, 'Could not clear token')} disabled={tokenBusy}>Clear</button>
+        {/if}
+      {:else}
+        <span class="text-[13px] text-[var(--text-3)]">No token — loopback-only access.</span>
+        {#if auth.localAdmin}
+          <button class="btn btn-sm btn-primary" onclick={() => setToken({ generate: true }, 'Could not set token')} disabled={tokenBusy}>Generate token</button>
+        {/if}
+      {/if}
+    </div>
+
+    {#if !auth.localAdmin}
+      <p class="mt-2 text-[12px] text-[var(--text-3)]">The token is set on the machine running Oriel: <span class="mono">oriel config auth-token</span>.</p>
+    {/if}
+
+    {#if revealedToken}
+      <div class="mt-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3">
+        <p class="text-[12px] text-[var(--text-2)]">Copy this now — it won't be shown again:</p>
+        <code class="mono mt-1 block break-all text-[12px] text-[var(--text)]">{revealedToken}</code>
+      </div>
+    {/if}
+
+    {#if auth.enabled}
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <label class="block">
+          <span class="text-[13px] font-medium">Session timeout <span class="font-normal text-[var(--text-3)]">(minutes)</span></span>
+          <input type="number" min="1" class="input mt-2 w-full" value={self.sessionTTLMinutes || ''} placeholder="10080 · 7 days" onchange={(e) => saveAuthKnob({ sessionTTLMinutes: Number(e.currentTarget.value) || 0 })} />
+        </label>
+        <label class="block">
+          <span class="text-[13px] font-medium">Login attempts before backoff</span>
+          <input type="number" min="1" class="input mt-2 w-full" value={self.loginFreeAttempts || ''} placeholder="5" onchange={(e) => saveAuthKnob({ loginFreeAttempts: Number(e.currentTarget.value) || 0 })} />
+        </label>
+      </div>
+      <p class="mt-2 text-[12px] text-[var(--text-3)]">Blank = default. The session timeout is a sliding idle window (capped at 30 days); after the free attempts, failed logins back off exponentially.</p>
+      {#if auth.authenticated}
+        <button class="btn btn-sm btn-default mt-4" onclick={() => logout()}>Sign out</button>
+      {/if}
+    {/if}
+  </section>
+
   <!-- Remote access -->
   <section class="rise card p-5" style="animation-delay:120ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Remote access</h2>
     <p class="mt-0.5 text-[12px] text-[var(--text-3)]">By default Oriel only answers on <span class="mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
-    <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel has no login and controls Docker. Only add hosts you reach over a trusted private network, never expose it to the public internet.</p>
+    <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel controls Docker. Only add hosts you reach over a trusted private network, never expose it to the public internet. Set an access token above to require a login for remote access.</p>
 
     {#if remote.hosts.length}
       <div class="mt-3 flex flex-col gap-1.5">

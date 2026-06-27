@@ -87,6 +87,7 @@ func (s *Server) handleGetAuth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"enabled":       s.auth.enabled(),
 		"authenticated": s.authed(r),
+		"localAdmin":    s.localAdmin(r), // may this caller change the token here?
 	})
 }
 

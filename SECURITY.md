@@ -44,8 +44,9 @@ Two more powers worth calling out:
 ### What Oriel is not
 
 It is **not a high-assurance, audited, or multi-tenant system, and must not be
-treated as one.** There is no per-user identity, no audit log, no rate limiting,
-and no least-privilege scoping for remote callers. Reaching the API at all means
+treated as one.** There is no per-user identity, no audit log, no general request
+rate limiting (beyond a login backoff), and no least-privilege scoping for remote
+callers. Reaching the API at all means
 root-equivalent host control. It has had no independent security assessment.
 Suitable for a single trusted operator on a private network; **never** rely on it
 as a security boundary for untrusted users, regulated/government workloads, or
@@ -65,8 +66,16 @@ What it does and doesn't do:
 
 - **Loopback is always exempt.** The token applies only to remote or proxied
   callers; the local UI never needs it.
-- **It's one shared secret**, constant-time compared. There's no per-user
-  identity, login page, session, or RBAC (see [What Oriel is not](#what-oriel-is-not)).
+- **It's one shared secret**, constant-time compared. It's a single-operator
+  credential, not per-user identity or RBAC (see [What Oriel is not](#what-oriel-is-not)).
+- **Browser login.** With a token set, the GUI shows a login screen for remote
+  (non-loopback) access: you sign in once with the token and ride an `HttpOnly`
+  session cookie afterward, because a browser can't attach the token to page
+  loads or the live `EventSource` stream. Sessions are a sliding idle window
+  (default 7 days, capped at 30) and repeated bad logins back off exponentially;
+  tune both in **Settings → Authentication** or via `sessionTTLMinutes` /
+  `loginFreeAttempts` in `settings.json`. The **token** is changeable only from
+  the local machine; the **session knobs** from any signed-in session.
 - **Plain HTTP.** The token rides in cleartext, so keep Oriel behind a
   TLS-terminating reverse proxy on a private network. The token hardens that
   setup; it doesn't replace it.
