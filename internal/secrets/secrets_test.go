@@ -30,7 +30,7 @@ func TestIsSensitive(t *testing.T) {
 		{"CALLBACK", "postgres://localhost/db", false},                // dsn, no creds
 		{"FOO", "https://host/long/path@version/segment", false},      // '@' in path, not userinfo
 		{"PATH", "/usr/local/bin:/usr/bin:/bin", false},               // path (has ':')
-		{"HOME", "/Users/apple/some/long/path/to/a/file/here", false}, // path (leading '/')
+		{"HOME", "/home/user/some/long/path/to/a/file/here", false}, // path (leading '/')
 		{"PORT", "3000", false},
 		{"GREETING", "hello world this is a long but spaced sentence", false},
 	}
