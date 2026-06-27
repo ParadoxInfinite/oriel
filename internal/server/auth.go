@@ -52,6 +52,16 @@ func (a *authGate) ok(r *http.Request) bool {
 	return settingspkg.TokenOK(settingspkg.Bearer(r.Header.Get("Authorization")), token)
 }
 
+// matches reports whether provided equals the configured token (constant-time).
+// Used by the GUI login, where the secret arrives in the request body rather than
+// an Authorization header. False when auth is off, there's no secret to log into.
+func (a *authGate) matches(provided string) bool {
+	a.mu.RLock()
+	token := a.token
+	a.mu.RUnlock()
+	return token != "" && settingspkg.TokenOK(provided, token)
+}
+
 // randomToken returns a 256-bit hex token from the OS CSPRNG. It returns the
 // error rather than emitting on failure: a security token must never be
 // best-effort, a short read or RNG failure must abort, not install a weak token.
@@ -70,9 +80,14 @@ func hostOnly(host string) string {
 	return host
 }
 
-// handleGetAuth reports whether the token gate is on. Never returns the token.
+// handleGetAuth reports whether the token gate is on and whether this request is
+// already authenticated (so the GUI knows to show a login screen). Never returns
+// the token.
 func (s *Server) handleGetAuth(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusOK, map[string]any{"enabled": s.auth.enabled()})
+	writeJSON(w, http.StatusOK, map[string]any{
+		"enabled":       s.auth.enabled(),
+		"authenticated": s.authed(r),
+	})
 }
 
 // handlePutAuth sets, generates, or clears the token. Local-only: who may
