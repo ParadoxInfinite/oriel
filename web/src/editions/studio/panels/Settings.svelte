@@ -59,6 +59,19 @@
     }
   }
 
+  // Self-update channel (Settings → Updates). Switching re-checks against it.
+  async function setChannel(channel) {
+    const prev = self.updateChannel
+    self.updateChannel = channel
+    try {
+      await apiPut('/api/config', { updateChannel: channel })
+      checkNow() // re-check against the new channel
+    } catch (e) {
+      self.updateChannel = prev
+      toast(e?.message || 'Could not change channel', 'error')
+    }
+  }
+
   // Accent is per-theme; reflect the base that's actually showing.
   const base = $derived(appearance.mode === 'system' ? (systemPref.dark ? 'dark' : 'light') : appearance.mode)
   const activeAccent = $derived(appearance.accents[base])
@@ -330,6 +343,19 @@
         </div>
       {/if}
       {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}
+    </div>
+
+    <div class="mt-5 border-t border-[var(--border)] pt-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="text-[13px] font-medium">Release channel</span>
+        <div class="seg">
+          <button class="seg-btn {self.updateChannel === 'stable' ? 'on' : ''}" onclick={() => setChannel('stable')}>Stable</button>
+          <button class="seg-btn {self.updateChannel === 'edge' ? 'on' : ''}" onclick={() => setChannel('edge')}>Edge</button>
+        </div>
+      </div>
+      <p class="mt-2 text-[12px] text-[var(--text-3)]">
+        <span class="mono">Stable</span> tracks confirmed releases. <span class="mono">Edge</span> gets the newest builds first, including pre-releases, to test before they're promoted.
+      </p>
     </div>
   </section>
 

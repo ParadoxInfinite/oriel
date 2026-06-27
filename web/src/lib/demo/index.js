@@ -24,6 +24,7 @@ const db = {
   sessionTTLMinutes: 0, // 0 = default; Settings → Authentication
   loginFreeAttempts: 0,
   authToken: '', // demo token (truthy once "generated")
+  updateChannel: 'stable', // Settings → Updates
   grantExpiresMs: 0, // destructive-grant window expiry (epoch ms); 0 = locked
 }
 
@@ -70,7 +71,7 @@ export async function demoGet(path) {
     case '/api/stacks': return seed.makeStacks(db.containers)
     case '/api/system/df': return seed.makeDf(db.containers, db.images, db.volumes)
     case '/api/colima/status': return clone(db.colima)
-    case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal, sessionTTLMinutes: db.sessionTTLMinutes, loginFreeAttempts: db.loginFreeAttempts }
+    case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal, sessionTTLMinutes: db.sessionTTLMinutes, loginFreeAttempts: db.loginFreeAttempts, updateChannel: db.updateChannel }
     case '/api/auth': return { enabled: !!db.authToken, authenticated: true, localAdmin: true }
     case '/api/grant': return grantStatus()
     case '/api/update': return clone(seed.update)
@@ -230,7 +231,8 @@ export async function demoPut(path, body) {
     if (body?.envReveal) db.envReveal = body.envReveal
     if (body?.sessionTTLMinutes != null) db.sessionTTLMinutes = body.sessionTTLMinutes
     if (body?.loginFreeAttempts != null) db.loginFreeAttempts = body.loginFreeAttempts
-    return { maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal, sessionTTLMinutes: db.sessionTTLMinutes, loginFreeAttempts: db.loginFreeAttempts, restarting: false }
+    if (body?.updateChannel) db.updateChannel = body.updateChannel
+    return { maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal, sessionTTLMinutes: db.sessionTTLMinutes, loginFreeAttempts: db.loginFreeAttempts, updateChannel: db.updateChannel, restarting: false }
   }
   if (path === '/api/auth') {
     if (body?.clear) db.authToken = ''

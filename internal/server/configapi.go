@@ -32,8 +32,9 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		// Auth behavior knobs. Settable by any authenticated session (not local-only
 		// like the token), since holding a session already implies full control; a
 		// 0 means "use the default". The server clamps the effective values.
-		SessionTTLMinutes *int `json:"sessionTTLMinutes"`
-		LoginFreeAttempts *int `json:"loginFreeAttempts"`
+		SessionTTLMinutes *int    `json:"sessionTTLMinutes"`
+		LoginFreeAttempts *int    `json:"loginFreeAttempts"`
+		UpdateChannel     *string `json:"updateChannel"` // "stable" | "edge"
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
@@ -43,6 +44,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 	// assets at boot); the masking settings hot-reload (read per inspect request).
 	var cur settings
 	baseChanged := false
+	channelChanged := false
 	if err := updateSettings(func(c *settings) {
 		if body.BasePath != nil {
 			nb := strings.TrimSpace(*body.BasePath)
@@ -64,10 +66,21 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		if body.LoginFreeAttempts != nil && *body.LoginFreeAttempts >= 0 {
 			c.LoginFreeAttempts = *body.LoginFreeAttempts // 0 = default
 		}
+		if body.UpdateChannel != nil && oneOf(*body.UpdateChannel, "stable", "edge") {
+			channelChanged = *body.UpdateChannel != c.UpdateChannel
+			c.UpdateChannel = *body.UpdateChannel
+		}
 		cur = *c
 	}); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
 		return
+	}
+	// A channel switch invalidates the cached update check (it was for the old
+	// channel), so the next check re-fetches against the new one.
+	if channelChanged {
+		updateMu.Lock()
+		updateCache = nil
+		updateMu.Unlock()
 	}
 	// Self-restart only if the base path changed and we're a managed service;
 	// otherwise the caller must restart by hand to apply a base-path change.
@@ -79,6 +92,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		"envReveal":         normReveal(cur.EnvReveal),
 		"sessionTTLMinutes": cur.SessionTTLMinutes,
 		"loginFreeAttempts": cur.LoginFreeAttempts,
+		"updateChannel":     normChannel(cur.UpdateChannel),
 		"restarting":        restarting,
 	})
 	if restarting {
