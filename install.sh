@@ -39,6 +39,26 @@ confirm() { # confirm PROMPT  → 0 if yes
   case "$_c" in y | Y | yes | YES) return 0 ;; *) return 1 ;; esac
 }
 
+# --- options ---------------------------------------------------------------
+# Flags work when piped, e.g.  curl … | sh -s -- --edge
+# (the env vars above only reach the script if set on `sh`, not on `curl`).
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --edge) ORIEL_CHANNEL=edge ;;
+    --stable) ORIEL_CHANNEL=stable ;;
+    --channel) shift; ORIEL_CHANNEL="${1:-}" ;;
+    --channel=*) ORIEL_CHANNEL="${1#*=}" ;;
+    --uninstall) ORIEL_UNINSTALL=1 ;;
+    --service) ORIEL_SERVICE=1 ;;
+    --no-service) ORIEL_SERVICE=0 ;;
+    -h | --help)
+      echo "usage: install.sh [--edge|--stable|--channel C] [--uninstall] [--service|--no-service]"
+      exit 0 ;;
+    *) die "unknown option: $1 (try --help)" ;;
+  esac
+  shift
+done
+
 # --- pick a downloader -----------------------------------------------------
 if command -v curl >/dev/null 2>&1; then
   fetch() { curl -fSL "$1" -o "$2"; }   # to a file
