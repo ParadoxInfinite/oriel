@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ParadoxInfinite/oriel/internal/actions"
+	"github.com/ParadoxInfinite/oriel/internal/audit"
 	"github.com/ParadoxInfinite/oriel/internal/docker"
 	"github.com/ParadoxInfinite/oriel/internal/grant"
 	"github.com/ParadoxInfinite/oriel/internal/secrets"
@@ -62,6 +63,8 @@ func New(web fs.FS, version string) *Server {
 	// Destructive tools are locked for non-interactive callers (MCP) unless a
 	// grant window is open; the UI/palette pass consent instead.
 	s.tools.SetDestructiveWindow(s.grant.Active)
+	// Record agent tool calls (not the operator's own UI clicks) to the audit log.
+	s.tools.SetAuditLog(audit.Record)
 	// Always-on metrics recorder for the live stream + 30-min history buffer.
 	ctx, cancel := context.WithCancel(context.Background())
 	s.cancel = cancel
@@ -134,6 +137,7 @@ func (s *Server) routes() {
 	// Tool registry, the canonical action layer.
 	s.mux.HandleFunc("GET /api/tools", s.handleTools)
 	s.mux.HandleFunc("POST /api/invoke", s.handleInvoke)
+	s.mux.HandleFunc("GET /api/audit", s.handleAudit)
 
 	// Destructive-grant window (unlocks Destructive tools for MCP / the assistant).
 	s.mux.HandleFunc("GET /api/grant", s.handleGrantStatus)

@@ -78,6 +78,8 @@ type Registry struct {
 	// windowOpen reports whether a destructive grant window is currently open.
 	// nil means "never open", destructive calls then require consent.
 	windowOpen func() bool
+	// audit, if set, records each non-consented (agent / MCP) call. nil = off.
+	audit func(name string, args map[string]any, err error)
 }
 
 func NewRegistry(resolver EntityResolver) *Registry {
@@ -87,6 +89,10 @@ func NewRegistry(resolver EntityResolver) *Registry {
 // SetDestructiveWindow injects the grant-window check used to authorize
 // Destructive tools for non-interactive callers.
 func (r *Registry) SetDestructiveWindow(open func() bool) { r.windowOpen = open }
+
+// SetAuditLog injects a recorder for agent tool calls. Consented (UI) calls are
+// never recorded; the operator's own clicks aren't audited.
+func (r *Registry) SetAuditLog(fn func(name string, args map[string]any, err error)) { r.audit = fn }
 
 func (r *Registry) windowActive() bool { return r.windowOpen != nil && r.windowOpen() }
 
@@ -125,10 +131,21 @@ func (r *Registry) List() []*Tool {
 	return out
 }
 
-// Execute gates, validates, and runs a single tool call: it locks destructive
-// tools without consent or an open grant window, schema-validates args, and
-// checks entity existence before invoking the handler.
+// Execute gates, validates, and runs a single tool call, then records it to the
+// audit log when the caller is an agent (non-consented). The operator's own
+// UI/palette calls carry consent and are not recorded.
 func (r *Registry) Execute(ctx context.Context, name string, args map[string]any) (any, error) {
+	res, err := r.execute(ctx, name, args)
+	if r.audit != nil && !consented(ctx) {
+		r.audit(name, args, err) // every agent call: success, gate-block, or error
+	}
+	return res, err
+}
+
+// execute is the gate/validate/run path: it locks destructive tools without
+// consent or an open grant window, schema-validates args, and checks entity
+// existence before invoking the handler.
+func (r *Registry) execute(ctx context.Context, name string, args map[string]any) (any, error) {
 	t, ok := r.tools[name]
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownTool, name)

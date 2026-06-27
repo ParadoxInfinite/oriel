@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/ParadoxInfinite/oriel/internal/actions"
+	"github.com/ParadoxInfinite/oriel/internal/audit"
 	"github.com/ParadoxInfinite/oriel/internal/docker"
 	"github.com/ParadoxInfinite/oriel/internal/grant"
 	"github.com/ParadoxInfinite/oriel/internal/mcp"
@@ -50,6 +51,7 @@ func runMCP(args []string) error {
 		func() secrets.Mode { return secrets.MaskSensitive },
 		func() secrets.Mode { return secrets.MaskSensitive })
 	reg.SetDestructiveWindow(grant.New().Active)
+	reg.SetAuditLog(audit.Record) // record every call this MCP client makes
 	include := toolFilter(*readOnly, *allow, *deny)
 
 	if *httpAddr != "" {

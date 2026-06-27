@@ -40,6 +40,24 @@ func TestRegisterDestructiveNameTripwire(t *testing.T) {
 	}
 }
 
+// TestAuditRecordsAgentCallsOnly verifies the audit hook fires for agent (no
+// consent) calls and not for the operator's own consented UI/palette calls.
+func TestAuditRecordsAgentCallsOnly(t *testing.T) {
+	r, _ := newTestRegistry()
+	var logged []string
+	r.SetAuditLog(func(name string, _ map[string]any, _ error) { logged = append(logged, name) })
+
+	if _, err := r.Execute(context.Background(), "container.stop", map[string]any{"id": "web"}); err != nil {
+		t.Fatalf("agent call: %v", err)
+	}
+	if _, err := r.Execute(WithConsent(context.Background()), "container.stop", map[string]any{"id": "web"}); err != nil {
+		t.Fatalf("consented call: %v", err)
+	}
+	if len(logged) != 1 || logged[0] != "container.stop" {
+		t.Fatalf("audit should record only the agent call, got %v", logged)
+	}
+}
+
 // fakeResolver reports existence from a fixed set of "kind/id" keys.
 type fakeResolver struct{ known map[string]bool }
 
