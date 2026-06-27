@@ -52,6 +52,12 @@ brew install ParadoxInfinite/oriel/oriel
 curl -fsSL https://raw.githubusercontent.com/ParadoxInfinite/oriel/main/install.sh | sh
 ```
 
+Add `-s -- --edge` to track pre-releases (newest builds first), or `-s -- --uninstall` to remove it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ParadoxInfinite/oriel/main/install.sh | sh -s -- --edge
+```
+
 > ⚠️ **Piping a script to `sh` runs code from the internet on your machine.** [Read `install.sh`](https://github.com/ParadoxInfinite/oriel/blob/main/install.sh) before you run it, or download a binary from [releases](https://github.com/ParadoxInfinite/oriel/releases/latest) instead.
 
 <details>
