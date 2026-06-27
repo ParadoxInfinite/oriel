@@ -35,10 +35,16 @@ everything an AI does.
   **Settings → AI activity**. Your own UI clicks are not recorded.
 - **Installer upgrades.** `install.sh` takes `ORIEL_CHANNEL`, detects an existing
   install and upgrades it in place (and refuses to clobber a Homebrew install,
-  pointing you at `brew upgrade`), and supports `ORIEL_UNINSTALL=1`.
+  pointing you at `brew upgrade`), and supports `ORIEL_UNINSTALL=1`. Channel and
+  uninstall are also flags, so they survive a pipe: `curl … | sh -s -- --edge`
+  (or `--uninstall`), since env vars set before `curl` never reach the script.
 
 ### Changed
 
+- **Settings page reorganized.** Cards auto-balance across two columns in priority
+  order instead of piling into one lopsided column. Compose discovery and the AI
+  activity log each open in a roomy dialog rather than a cramped card, and opting
+  into the edge channel now carries an amber caution treatment.
 - `make build` now strips and trim-paths the binary, matching the release: a local
   build is the same lean size and carries no build-machine paths.
 
