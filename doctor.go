@@ -68,7 +68,7 @@ func runDoctor(args []string) error {
 	// --- Running instance + its live config ---
 	self, err := fetchSelf(*port)
 	if err != nil {
-		doctorLine("○", "Instance", fmt.Sprintf("none reachable on 127.0.0.1:%d, pass --port if it listens elsewhere", *port))
+		doctorLine("○", "Instance", fmt.Sprintf("not running on 127.0.0.1:%d. Start it with `oriel`, or `oriel service install` to run on login; pass --port if it listens elsewhere", *port))
 	} else {
 		doctorLine("✓", "Instance", fmt.Sprintf("running on 127.0.0.1:%d, version %s", *port, self.Version))
 		if version != "dev" && self.Version != "" && self.Version != version {
