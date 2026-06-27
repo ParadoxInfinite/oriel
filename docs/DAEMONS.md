@@ -52,3 +52,34 @@ DOCKER_HOST=unix://$(podman info -f '{{.Host.RemoteSocket.Path}}') ./oriel
 # Remote daemon over SSH
 DOCKER_HOST=ssh://user@host ./oriel
 ```
+
+## Run the GUI in a container (Linux)
+
+The published image (`ghcr.io/paradoxinfinite/oriel`) can run the GUI, not just the
+MCP server. It's meant for **Linux** hosts (a NAS, Unraid, a Pi):
+
+```sh
+docker run -d --network host --name oriel \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  ghcr.io/paradoxinfinite/oriel --no-open
+```
+
+Key points:
+
+- **`--network host` is deliberate, and keeps Oriel loopback-only.** Oriel always
+  binds `127.0.0.1`; sharing the host's network namespace makes that the host's
+  own `127.0.0.1:4321`. It is **never** published with `-p`, so the container can't
+  expose Docker to your LAN by accident.
+- **Reaching it from another machine is the same as the binary:** put it behind a
+  private overlay (`tailscale serve --bg 4321`, or a reverse proxy on a mesh IP).
+  See [REVERSE-PROXY.md](REVERSE-PROXY.md) and the trust model in
+  [SECURITY.md](../SECURITY.md).
+- **Mount the Docker socket** (`-v /var/run/docker.sock:...`); the image ships the
+  `docker` CLI + Compose plugin. Colima-specific controls are inert in a container,
+  and Compose discovery only sees directories you mount in.
+- **Updates:** pull a new image and recreate the container (`docker pull …` then
+  `docker rm -f oriel` and re-run); the in-app self-update is disabled in a
+  container, and the Updates panel says so.
+
+`--network host` is a Linux feature; on macOS run the native binary or Homebrew
+install instead.

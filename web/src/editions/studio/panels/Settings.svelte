@@ -339,6 +339,8 @@
         </div>
       {:else if update.packageManager === 'homebrew'}
         <p class="text-[13px] text-[var(--text-3)]">Installed via Homebrew, update with <span class="mono">brew upgrade oriel</span>.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+      {:else if update.packageManager === 'container'}
+        <p class="text-[13px] text-[var(--text-3)]">Running in a container, update with <span class="mono">docker pull ghcr.io/paradoxinfinite/oriel</span> and recreate it.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
       {:else if !update.managed}
         <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
       {:else if update.available}
