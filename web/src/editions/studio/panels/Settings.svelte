@@ -1,26 +1,36 @@
 <script>
   import { onMount } from 'svelte'
   import { toast, confirm } from '../../../platform/index.js'
-  import { discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm, THEMES_DOC_URL } from '../../../platform/index.js'
+  import { discovery, ensureDiscovery, rootResult, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
   import { grant, loadGrant, requestGrant, lockGrant, fmtRemaining } from '../../../platform/index.js'
   import { auth, logout } from '../../../platform/index.js'
   import { audit, loadAudit } from '../../../platform/index.js'
+  import { takeTarget } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
-  import PathInput from '../lib/PathInput.svelte'
+  import ComposeDiscoveryDialog from '../lib/ComposeDiscoveryDialog.svelte'
+  import AuditLogDialog from '../lib/AuditLogDialog.svelte'
 
   ensureDiscovery()
-  const df = new DiscoveryForm()
   const hostForm = new RemoteHostForm()
   onMount(loadRemote)
   onMount(loadGrant)
   onMount(loadAudit)
 
-  // AI-activity rendering helpers.
-  const argStr = (args) => Object.entries(args || {}).map(([k, v]) => `${k}=${v}`).join('  ')
+  // Compose discovery + AI activity moved to their own dialogs; these cards show
+  // a compact summary and open the full view.
+  let showDiscovery = $state(false)
+  let showAudit = $state(false)
+  // Deep link: Stacks → "Compose discovery" opens the dialog straight away.
+  $effect(() => {
+    const t = takeTarget('Settings')
+    if (t?.kind === 'discovery') showDiscovery = true
+  })
+  const enabledRoots = $derived(discovery.config.roots.filter((r) => r.enabled).length)
+  const totalProjects = $derived(discovery.config.roots.reduce((n, r) => n + (rootResult(r.id)?.found ?? 0), 0))
   function fmtTime(iso) {
     try {
       return new Date(iso).toLocaleString()
@@ -28,6 +38,7 @@
       return iso
     }
   }
+
   // Secret-masking + reveal policy (Settings → Secrets), saved via /api/config.
   async function saveSecret(patch) {
     const prev = { maskEnv: self.maskEnv, maskLogs: self.maskLogs, envReveal: self.envReveal }
@@ -72,8 +83,9 @@
   }
 
   // Self-update channel (Settings → Updates). Opting into edge is gated by a
-  // confirm so the "you stay on a build until the next stable catches up" behavior
-  // is explicit; switching back to stable is the safe direction and isn't gated.
+  // warn-toned confirm so the "you stay on a build until the next stable catches
+  // up" behavior is explicit; switching back to stable is the safe direction and
+  // isn't gated.
   async function setChannel(channel) {
     if (channel === self.updateChannel) return
     if (channel === 'edge') {
@@ -82,7 +94,7 @@
         message:
           "Edge gets the newest builds first, including pre-releases that are less tested. You stay on a build until the next stable release catches up; switching back to Stable doesn't downgrade you, it just waits for stable to reach you. Use Edge to help test; keep Stable for everyday use.",
         confirmLabel: 'Switch to Edge',
-        danger: false,
+        tone: 'warn',
       })
       if (!ok) return
     }
@@ -108,7 +120,7 @@
   ]
   const swatches = $derived([...ACCENTS, ...appearance.custom])
 
-  const verLabel = $derived(self.version || ', ')
+  const verLabel = $derived(self.version || 'unknown')
 
   // Custom accent form.
   let newColor = $state('#22c55e')
@@ -119,10 +131,11 @@
   }
 </script>
 
-<div class="mx-auto grid max-w-5xl grid-cols-1 gap-4 pb-4 md:grid-cols-2 md:items-start">
-  <div class="flex flex-col gap-4">
+<!-- Cards auto-balance across two columns (CSS multi-column); each is kept whole
+     with break-inside-avoid. Order top-to-bottom is priority order. -->
+<div class="mx-auto max-w-5xl columns-1 gap-4 pb-4 [column-fill:balance] md:columns-2">
   <!-- Appearance -->
-  <section class="rise card p-5">
+  <section class="rise card mb-4 break-inside-avoid p-5">
     <h2 class="text-[14px] font-semibold tracking-tight">Appearance</h2>
     <p class="mt-0.5 text-[13px] text-[var(--text-2)]">How Studio looks. Saved to this browser.</p>
 
@@ -170,7 +183,7 @@
   </section>
 
   <!-- Editions & themes -->
-  <section class="rise card p-5" style="animation-delay:40ms">
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:40ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Editions &amp; themes</h2>
     <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Switch the whole interface, or drop a theme bundle on disk.</p>
 
@@ -213,68 +226,33 @@
     </div>
   </section>
 
-  <!-- Compose discovery -->
-  <section class="rise card p-5" style="animation-delay:60ms">
-    <h2 class="text-[14px] font-semibold tracking-tight">Compose discovery</h2>
-    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">Find Docker Compose projects on disk so you can deploy them from the Stacks tab.</p>
-
-    {#if discovery.config.roots.length}
-      <div class="mt-4 flex flex-col gap-2">
-        {#each discovery.config.roots as root (root.id)}
-          {@const rr = rootResult(root.id)}
-          <div class="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2.5">
-            <input type="checkbox" checked={root.enabled} onchange={() => updateRoot(root.id, { enabled: !root.enabled })} class="h-4 w-4 shrink-0" style="accent-color:var(--accent)" title="Enabled" />
-            <div class="min-w-0 flex-1">
-              <div class="mono truncate text-[13px] {root.enabled ? 'text-[var(--text)]' : 'text-[var(--text-3)] line-through'}">{root.path}</div>
-              <div class="mt-0.5 text-[11px]">
-                {#if rr?.error}<span class="text-[var(--red)]">{rr.error}</span>
-                {:else if root.enabled}<span class="text-[var(--text-3)]">{rr?.found ?? 0} project{(rr?.found ?? 0) === 1 ? '' : 's'}</span>
-                {:else}<span class="text-[var(--text-3)]">disabled</span>{/if}
-              </div>
-            </div>
-            <label class="flex shrink-0 cursor-pointer items-center gap-1.5 text-[12px] text-[var(--text-2)]" title="Walk subdirectories recursively">
-              <input type="checkbox" checked={root.traverse} onchange={() => updateRoot(root.id, { traverse: !root.traverse })} class="h-3.5 w-3.5" style="accent-color:var(--accent)" /> Traverse
-            </label>
-            <button class="btn btn-ghost btn-icon btn-sm" title="Remove" aria-label="Remove directory" onclick={() => removeRoot(root.id)}><Icon name="trash" size={14} /></button>
-          </div>
-        {/each}
-      </div>
-    {/if}
-
-    <div class="mt-3 flex gap-2">
-      <PathInput field={df.pathField} onEnter={() => df.addDir()} placeholder="Add a directory…  /Users/you/projects" />
-      <button class="btn btn-default btn-sm" onclick={() => df.addDir()} disabled={!df.pathField.value.trim()}>Add</button>
-    </div>
-    <p class="mt-1.5 text-[11px] text-[var(--text-3)]">Turn on <span class="font-medium text-[var(--text-2)]">Traverse</span> to scan subdirectories; off treats the directory itself as one project.</p>
-
-    <div class="mt-5 border-t border-[var(--border)] pt-4">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <span class="text-[13px] font-medium">Filter <span class="font-normal text-[var(--text-3)]">· discovered stacks only</span></span>
-        <div class="seg">
-          {#each FILTER_MODES as [m, label]}
-            <button class="seg-btn {discovery.config.filter.mode === m ? 'on' : ''}" onclick={() => setFilter({ mode: m })}>{label}</button>
-          {/each}
-        </div>
-      </div>
-      {#if discovery.config.filter.mode !== 'off'}
-        <div class="mt-3 flex flex-wrap gap-1.5">
-          {#each discovery.config.filter.patterns as p (p)}
-            <span class="mono inline-flex items-center gap-1 rounded-md border border-[var(--border-strong)] bg-[var(--panel-2)] px-2 py-1 text-[11.5px] text-[var(--text-2)]">{p}<button class="text-[var(--text-3)] hover:text-[var(--red)]" aria-label="Remove pattern" onclick={() => removePattern(p)}>×</button></span>
-          {/each}
-        </div>
-        <div class="mt-2 flex gap-2">
-          <input bind:value={df.pattern} placeholder="web-*  ·  My App  ·  ~/lab/**" class="input mono min-w-0 flex-1" onkeydown={(e) => e.key === 'Enter' && df.addPattern()} />
-          <button class="btn btn-default btn-sm" onclick={() => df.addPattern()} disabled={!df.pattern.trim()}>Add</button>
-        </div>
-        <p class="mt-1.5 text-[11px] text-[var(--text-3)]">Matches a project name, its Oriel name, or a directory path (globs &amp; <span class="mono">**</span> allowed). Running stacks are never hidden.</p>
+  <!-- Automation access (destructive grant) -->
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:60ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Automation access</h2>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">
+      The MCP server (<span class="mono">oriel mcp</span>) can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window, your own clicks here in the UI are never affected.
+    </p>
+    <div class="mt-4 flex flex-wrap items-center gap-2">
+      {#if grant.active}
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-tint-2)] px-2.5 py-1 text-[12px] font-medium text-[var(--accent)]">
+          Unlocked · {fmtRemaining(grant.remainingSeconds)} left
+        </span>
+        <button class="btn btn-sm btn-default" onclick={() => requestGrant(6)} disabled={grant.busy}>Extend 6h</button>
+        <button class="btn btn-sm btn-default" onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
+      {:else}
+        <span class="text-[13px] text-[var(--text-3)]">Destructive actions are <span class="font-medium text-[var(--text-2)]">locked</span> for automation.</span>
+        <button class="btn btn-sm btn-primary" onclick={() => requestGrant(0.25)} disabled={grant.busy}>Allow 15m</button>
+        <button class="btn btn-sm btn-default" onclick={() => requestGrant(6)} disabled={grant.busy}>Allow 6h</button>
+        <button class="btn btn-sm btn-default" onclick={() => requestGrant(24 * 6)} disabled={grant.busy}>Allow 6d</button>
       {/if}
     </div>
+    <p class="mt-2 text-[12px] text-[var(--text-3)]">
+      Same window the <span class="mono">oriel ai allow-destructive</span> CLI opens. It auto-relocks when it lapses.
+    </p>
   </section>
-  </div>
 
-  <div class="flex flex-col gap-4">
   <!-- Secrets -->
-  <section class="rise card p-5" style="animation-delay:90ms">
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:80ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Secrets</h2>
     <p class="mt-1 text-[13px] text-[var(--text-2)]">
       Mask environment-variable values in the container inspect panel, and redact secret-shaped tokens from container logs, so API keys don't leak from screenshots or screen-shares. Masking is enforced server-side.
@@ -309,116 +287,8 @@
     </p>
   </section>
 
-  <!-- Automation access (destructive grant) -->
-  <section class="rise card p-5" style="animation-delay:95ms">
-    <h2 class="text-[14px] font-semibold tracking-tight">Automation access</h2>
-    <p class="mt-1 text-[13px] text-[var(--text-2)]">
-      The MCP server (<span class="mono">oriel mcp</span>) can run <em>read</em> actions any time. <em>Destructive</em> ones (remove, prune) stay locked until you open a time-boxed window, your own clicks here in the UI are never affected.
-    </p>
-    <div class="mt-4 flex flex-wrap items-center gap-2">
-      {#if grant.active}
-        <span class="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent-tint-2)] px-2.5 py-1 text-[12px] font-medium text-[var(--accent)]">
-          Unlocked · {fmtRemaining(grant.remainingSeconds)} left
-        </span>
-        <button class="btn btn-sm btn-default" onclick={() => requestGrant(6)} disabled={grant.busy}>Extend 6h</button>
-        <button class="btn btn-sm btn-default" onclick={() => lockGrant()} disabled={grant.busy}>Lock now</button>
-      {:else}
-        <span class="text-[13px] text-[var(--text-3)]">Destructive actions are <span class="font-medium text-[var(--text-2)]">locked</span> for automation.</span>
-        <button class="btn btn-sm btn-primary" onclick={() => requestGrant(0.25)} disabled={grant.busy}>Allow 15m</button>
-        <button class="btn btn-sm btn-default" onclick={() => requestGrant(6)} disabled={grant.busy}>Allow 6h</button>
-        <button class="btn btn-sm btn-default" onclick={() => requestGrant(24 * 6)} disabled={grant.busy}>Allow 6d</button>
-      {/if}
-    </div>
-    <p class="mt-2 text-[12px] text-[var(--text-3)]">
-      Same window the <span class="mono">oriel ai allow-destructive</span> CLI opens. It auto-relocks when it lapses.
-    </p>
-  </section>
-
-  <!-- AI activity (audit log) -->
-  <section class="rise card p-5" style="animation-delay:98ms">
-    <div class="flex items-center justify-between gap-2">
-      <h2 class="text-[14px] font-semibold tracking-tight">AI activity</h2>
-      <button class="btn btn-sm btn-default" onclick={loadAudit} disabled={audit.loading}>{audit.loading ? 'Loading…' : 'Refresh'}</button>
-    </div>
-    <p class="mt-1 text-[12px] text-[var(--text-3)]">Every tool call an MCP client or assistant made, newest first. Your own clicks here aren't recorded.</p>
-
-    {#if audit.error}
-      <p class="mt-3 text-[12px] text-[var(--red)]">{audit.error}</p>
-    {:else if !audit.entries.length}
-      <p class="mt-3 text-[13px] text-[var(--text-3)]">No AI activity yet. Point an MCP client at <span class="mono">oriel mcp</span> and its calls show up here.</p>
-    {:else}
-      <div class="mt-3 flex max-h-72 flex-col gap-1.5 overflow-y-auto">
-        {#each audit.entries as e, i (i)}
-          <div class="flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px]">
-            <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full {e.ok ? 'bg-emerald-500' : 'bg-[var(--red)]'}" title={e.ok ? 'ok' : 'failed'}></span>
-            <div class="min-w-0 flex-1">
-              <div class="flex items-baseline justify-between gap-2">
-                <span class="mono font-medium text-[var(--text)]">{e.tool}</span>
-                <span class="shrink-0 text-[11px] text-[var(--text-3)]">{fmtTime(e.time)}</span>
-              </div>
-              {#if e.args}<div class="mono mt-0.5 truncate text-[var(--text-3)]" title={argStr(e.args)}>{argStr(e.args)}</div>{/if}
-              {#if e.error}<div class="mt-0.5 text-[var(--red)]">{e.error}</div>{/if}
-            </div>
-          </div>
-        {/each}
-      </div>
-    {/if}
-  </section>
-
-  <!-- Updates -->
-  <section class="rise card p-5" style="animation-delay:100ms">
-    <h2 class="text-[14px] font-semibold tracking-tight">Updates</h2>
-    <p class="mt-0.5 text-[12px] text-[var(--text-3)]">Current version <span class="mono text-[var(--text-2)]">{verLabel}</span>.</p>
-
-    <div class="mt-4">
-      {#if update.phase === 'restarting'}
-        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Restarting Oriel, this page will reconnect…</div>
-      {:else if update.phase === 'applying'}
-        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Downloading &amp; verifying…</div>
-      {:else if update.phase === 'done'}
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="text-[13px] text-[var(--text-2)]">Installed <span class="mono">v{update.latest}</span>, restart to apply.</span>
-          <button class="btn btn-primary btn-sm" onclick={() => restartService()}>Restart now</button>
-        </div>
-      {:else if update.packageManager === 'homebrew'}
-        <p class="text-[13px] text-[var(--text-3)]">Installed via Homebrew, update with <span class="mono">brew upgrade oriel</span>.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
-      {:else if update.packageManager === 'container'}
-        <p class="text-[13px] text-[var(--text-3)]">Running in a container, update with <span class="mono">docker pull ghcr.io/paradoxinfinite/oriel</span> and recreate it.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
-      {:else if !update.managed}
-        <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
-      {:else if update.available}
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="text-[13px] text-[var(--text-2)]">Update available: <span class="mono font-medium text-[var(--text)]">v{update.latest}</span></span>
-          <button class="btn btn-primary btn-sm" onclick={promptUpdate}>Update now</button>
-        </div>
-      {:else}
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <span class="text-[13px] text-[var(--text-3)]">{update.checking ? 'Checking…' : "You're on the latest version."}</span>
-          <div class="flex items-center gap-3">
-            <button class="btn btn-default btn-sm" onclick={() => checkNow()} disabled={update.checking}>{update.checking ? 'Checking…' : 'Check for updates'}</button>
-            <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-[12px] text-[var(--accent)] hover:underline">Releases ↗</a>
-          </div>
-        </div>
-      {/if}
-      {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}
-    </div>
-
-    <div class="mt-5 border-t border-[var(--border)] pt-4">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <span class="text-[13px] font-medium">Release channel</span>
-        <div class="seg">
-          <button class="seg-btn {self.updateChannel === 'stable' ? 'on' : ''}" onclick={() => setChannel('stable')}>Stable</button>
-          <button class="seg-btn {self.updateChannel === 'edge' ? 'on' : ''}" onclick={() => setChannel('edge')}>Edge</button>
-        </div>
-      </div>
-      <p class="mt-2 text-[12px] text-[var(--text-3)]">
-        <span class="mono">Stable</span> tracks confirmed releases. <span class="mono">Edge</span> gets the newest builds first, including pre-releases. On Edge you stay on a build until the next stable catches up; switching back never downgrades you.
-      </p>
-    </div>
-  </section>
-
   <!-- Authentication -->
-  <section class="rise card p-5" style="animation-delay:110ms">
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:100ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Authentication</h2>
     <p class="mt-1 text-[13px] text-[var(--text-2)]">
       An optional access token gates non-loopback and MCP-over-HTTP access. Local use never needs it; with it on, the browser logs in once over your private network.
@@ -469,7 +339,7 @@
   </section>
 
   <!-- Remote access -->
-  <section class="rise card p-5" style="animation-delay:120ms">
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:120ms">
     <h2 class="text-[14px] font-semibold tracking-tight">Remote access</h2>
     <p class="mt-0.5 text-[12px] text-[var(--text-3)]">By default Oriel only answers on <span class="mono">localhost</span>. To reach it over a private network (Tailscale, a reverse proxy, a domain), add those hostnames.</p>
     <p class="mt-2 rounded-lg bg-[var(--red-tint)] px-3 py-2 text-[12px] text-[var(--red)]">Oriel controls Docker. Only add hosts you reach over a trusted private network, never expose it to the public internet. Set an access token above to require a login for remote access.</p>
@@ -490,5 +360,100 @@
     </div>
     {#if remote.error}<p class="mt-2 text-[12px] text-[var(--red)]">{remote.error}</p>{/if}
   </section>
-  </div>
+
+  <!-- Updates -->
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:140ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">Updates</h2>
+    <p class="mt-0.5 text-[12px] text-[var(--text-3)]">Current version <span class="mono text-[var(--text-2)]">{verLabel}</span>.</p>
+
+    <div class="mt-4">
+      {#if update.phase === 'restarting'}
+        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Restarting Oriel, this page will reconnect…</div>
+      {:else if update.phase === 'applying'}
+        <div class="flex items-center gap-2 text-[13px] text-[var(--text-2)]"><span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent"></span> Downloading &amp; verifying…</div>
+      {:else if update.phase === 'done'}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-2)]">Installed <span class="mono">v{update.latest}</span>, restart to apply.</span>
+          <button class="btn btn-primary btn-sm" onclick={() => restartService()}>Restart now</button>
+        </div>
+      {:else if update.packageManager === 'homebrew'}
+        <p class="text-[13px] text-[var(--text-3)]">Installed via Homebrew, update with <span class="mono">brew upgrade oriel</span>.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+      {:else if update.packageManager === 'container'}
+        <p class="text-[13px] text-[var(--text-3)]">Running in a container, update with <span class="mono">docker pull ghcr.io/paradoxinfinite/oriel</span> and recreate it.{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+      {:else if !update.managed}
+        <p class="text-[13px] text-[var(--text-3)]">In-app updates need a service install (<span class="mono">oriel service install</span>).{#if update.available}{' '}A new version <span class="mono">v{update.latest}</span> is out, <a href={update.url} target="_blank" rel="noopener" class="text-[var(--accent)] hover:underline">see release ↗</a>.{/if}</p>
+      {:else if update.available}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-2)]">Update available: <span class="mono font-medium text-[var(--text)]">v{update.latest}</span></span>
+          <button class="btn btn-primary btn-sm" onclick={promptUpdate}>Update now</button>
+        </div>
+      {:else}
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <span class="text-[13px] text-[var(--text-3)]">{update.checking ? 'Checking…' : "You're on the latest version."}</span>
+          <div class="flex items-center gap-3">
+            <button class="btn btn-default btn-sm" onclick={() => checkNow()} disabled={update.checking}>{update.checking ? 'Checking…' : 'Check for updates'}</button>
+            <a href={update.url || 'https://github.com/ParadoxInfinite/oriel/releases'} target="_blank" rel="noopener" class="text-[12px] text-[var(--accent)] hover:underline">Releases ↗</a>
+          </div>
+        </div>
+      {/if}
+      {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}
+    </div>
+
+    <div class="mt-5 border-t border-[var(--border)] pt-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="text-[13px] font-medium">Release channel</span>
+        <div class="seg">
+          <button class="seg-btn {self.updateChannel === 'stable' ? 'on' : ''}" onclick={() => setChannel('stable')}>Stable</button>
+          <button class="seg-btn {self.updateChannel === 'edge' ? 'on warn' : ''}" onclick={() => setChannel('edge')}>Edge</button>
+        </div>
+      </div>
+      {#if self.updateChannel === 'edge'}
+        <p class="mt-3 flex items-start gap-2 rounded-lg bg-[var(--amber-tint)] px-3 py-2 text-[12px] text-[var(--amber)]">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="mt-0.5 shrink-0"><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+          <span>On Edge you get pre-releases that are less tested. You stay on a build until the next stable catches up; switching back to Stable never downgrades you.</span>
+        </p>
+      {:else}
+        <p class="mt-2 text-[12px] text-[var(--text-3)]">
+          <span class="mono">Stable</span> tracks confirmed releases. <span class="mono">Edge</span> gets the newest builds first, including pre-releases.
+        </p>
+      {/if}
+    </div>
+  </section>
+
+  <!-- Compose discovery (summary; full UI in a dialog) -->
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:160ms">
+    <div class="flex items-start justify-between gap-2">
+      <h2 class="text-[14px] font-semibold tracking-tight">Compose discovery</h2>
+      <button class="btn btn-sm btn-default" onclick={() => (showDiscovery = true)}>Manage</button>
+    </div>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">Find Docker Compose projects on disk so you can deploy them from the Stacks tab.</p>
+    <p class="mt-2 text-[12px] text-[var(--text-3)]">
+      {#if discovery.config.roots.length}
+        {discovery.config.roots.length} {discovery.config.roots.length === 1 ? 'directory' : 'directories'} ({enabledRoots} enabled) · {totalProjects} project{totalProjects === 1 ? '' : 's'} found
+      {:else}
+        No directories added yet. Add one to deploy stacks from disk.
+      {/if}
+    </p>
+  </section>
+
+  <!-- AI activity (summary; full log in a dialog) -->
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:180ms">
+    <div class="flex items-start justify-between gap-2">
+      <h2 class="text-[14px] font-semibold tracking-tight">AI activity</h2>
+      <button class="btn btn-sm btn-default" onclick={() => (showAudit = true)}>View activity</button>
+    </div>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">Tool calls an MCP client or assistant made. Your own clicks here aren't recorded.</p>
+    <p class="mt-2 text-[12px] text-[var(--text-3)]">
+      {#if audit.error}
+        <span class="text-[var(--red)]">{audit.error}</span>
+      {:else if audit.entries.length}
+        {audit.entries.length} recent call{audit.entries.length === 1 ? '' : 's'} · last {fmtTime(audit.entries[0].time)}
+      {:else}
+        No AI activity yet. Point an MCP client at <span class="mono">oriel mcp</span>.
+      {/if}
+    </p>
+  </section>
 </div>
+
+{#if showDiscovery}<ComposeDiscoveryDialog onClose={() => (showDiscovery = false)} />{/if}
+{#if showAudit}<AuditLogDialog onClose={() => (showAudit = false)} />{/if}

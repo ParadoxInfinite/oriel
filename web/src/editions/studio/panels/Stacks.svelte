@@ -41,7 +41,7 @@
 <div class="mx-auto flex max-w-4xl flex-col gap-4">
   <div class="rise flex items-center gap-2.5">
     <span class="text-[13px] text-[var(--text-2)]"><span class="font-semibold text-[var(--text)]">{stacks.list.length}</span> compose stacks</span>
-    <button class="btn btn-default ml-auto btn-sm" onclick={() => navigate?.('Settings')}><Icon name="settings" size={13} /> Compose discovery</button>
+    <button class="btn btn-default ml-auto btn-sm" onclick={() => navigate?.('Settings', { kind: 'discovery' })}><Icon name="settings" size={13} /> Compose discovery</button>
   </div>
 
   {#if stacks.error}

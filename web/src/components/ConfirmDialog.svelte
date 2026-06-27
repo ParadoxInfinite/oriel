@@ -44,9 +44,11 @@
       <div class="px-5 pb-4 pt-5">
         <div class="flex items-center gap-2.5">
           <span
-            class="grid h-7 w-7 shrink-0 place-items-center rounded-full {confirmState.danger
+            class="grid h-7 w-7 shrink-0 place-items-center rounded-full {confirmState.tone === 'danger'
               ? 'bg-danger/15 text-danger'
-              : 'bg-accent/15 text-accent'}"
+              : confirmState.tone === 'warn'
+                ? 'bg-warn/15 text-warn'
+                : 'bg-accent/15 text-accent'}"
           >
             <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M12 9v4" /><path d="M12 17h.01" />
@@ -74,9 +76,11 @@
         </button>
         <button
           bind:this={confirmEl}
-          class="rounded-lg px-3.5 py-1.5 text-[13px] font-medium shadow-sm transition-[filter] hover:brightness-110 {confirmState.danger
+          class="rounded-lg px-3.5 py-1.5 text-[13px] font-medium shadow-sm transition-[filter] hover:brightness-110 {confirmState.tone === 'danger'
             ? 'bg-danger text-white'
-            : 'bg-accent text-accent-fg'}"
+            : confirmState.tone === 'warn'
+              ? 'bg-warn text-bg'
+              : 'bg-accent text-accent-fg'}"
           onclick={() => resolveConfirm(true)}
         >
           {confirmState.confirmLabel}
