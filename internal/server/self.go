@@ -25,8 +25,9 @@ type selfStats struct {
 	MaskLogs   string `json:"maskLogs"`  // UI log masking: "sensitive" | "off"
 	EnvReveal  string `json:"envReveal"` // reveal policy: "off" | "local" | "remote"
 
-	SessionTTLMinutes int `json:"sessionTTLMinutes"` // GUI session idle timeout (0 = default); raw setting, for the UI input
-	LoginFreeAttempts int `json:"loginFreeAttempts"` // login tries before backoff (0 = default)
+	SessionTTLMinutes int    `json:"sessionTTLMinutes"` // GUI session idle timeout (0 = default); raw setting, for the UI input
+	LoginFreeAttempts int    `json:"loginFreeAttempts"` // login tries before backoff (0 = default)
+	UpdateChannel     string `json:"updateChannel"`     // "stable" | "edge"
 }
 
 // currentSelf samples this process's footprint. Shared by the REST handler and
@@ -47,6 +48,7 @@ func (s *Server) currentSelf(ctx context.Context) selfStats {
 		EnvReveal:         normReveal(cfg.EnvReveal),
 		SessionTTLMinutes: cfg.SessionTTLMinutes,
 		LoginFreeAttempts: cfg.LoginFreeAttempts,
+		UpdateChannel:     normChannel(cfg.UpdateChannel),
 	}
 }
 
