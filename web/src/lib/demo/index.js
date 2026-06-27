@@ -73,6 +73,7 @@ export async function demoGet(path) {
     case '/api/colima/status': return clone(db.colima)
     case '/api/self': return { ...clone(seed.self), maskEnv: db.maskEnv, maskLogs: db.maskLogs, envReveal: db.envReveal, sessionTTLMinutes: db.sessionTTLMinutes, loginFreeAttempts: db.loginFreeAttempts, updateChannel: db.updateChannel }
     case '/api/auth': return { enabled: !!db.authToken, authenticated: true, localAdmin: true }
+    case '/api/audit': return demoAudit()
     case '/api/grant': return grantStatus()
     case '/api/update': return clone(seed.update)
     case '/api/remote': return { hosts: clone(db.remoteHosts) }
@@ -247,6 +248,18 @@ export async function demoDelete(path) {
   await delay()
   if (path === '/api/grant') { db.grantExpiresMs = 0; return grantStatus() }
   return null
+}
+
+// A few sample agent tool calls for the demo's AI-activity panel.
+function demoAudit() {
+  const t = (mins) => new Date(clock - mins * 60_000).toISOString()
+  return [
+    { time: t(1), tool: 'container.logs', args: { id: 'api', tail: 200 }, ok: true },
+    { time: t(2), tool: 'container.inspect', args: { id: 'api' }, ok: true },
+    { time: t(2), tool: 'container.list', ok: true },
+    { time: t(8), tool: 'container.restart', args: { id: 'api' }, ok: true },
+    { time: t(20), tool: 'image.remove', args: { id: 'ghost:4.2' }, ok: false, error: 'destructive action locked: open a grant window' },
+  ]
 }
 
 function grantStatus() {

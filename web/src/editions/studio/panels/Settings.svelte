@@ -6,6 +6,7 @@
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
   import { grant, loadGrant, requestGrant, lockGrant, fmtRemaining } from '../../../platform/index.js'
   import { auth, logout } from '../../../platform/index.js'
+  import { audit, loadAudit } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
   import Icon from '../lib/Icon.svelte'
@@ -16,6 +17,17 @@
   const hostForm = new RemoteHostForm()
   onMount(loadRemote)
   onMount(loadGrant)
+  onMount(loadAudit)
+
+  // AI-activity rendering helpers.
+  const argStr = (args) => Object.entries(args || {}).map(([k, v]) => `${k}=${v}`).join('  ')
+  function fmtTime(iso) {
+    try {
+      return new Date(iso).toLocaleString()
+    } catch {
+      return iso
+    }
+  }
   // Secret-masking + reveal policy (Settings → Secrets), saved via /api/config.
   async function saveSecret(patch) {
     const prev = { maskEnv: self.maskEnv, maskLogs: self.maskLogs, envReveal: self.envReveal }
@@ -320,6 +332,37 @@
     <p class="mt-2 text-[12px] text-[var(--text-3)]">
       Same window the <span class="mono">oriel ai allow-destructive</span> CLI opens. It auto-relocks when it lapses.
     </p>
+  </section>
+
+  <!-- AI activity (audit log) -->
+  <section class="rise card p-5" style="animation-delay:98ms">
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="text-[14px] font-semibold tracking-tight">AI activity</h2>
+      <button class="btn btn-sm btn-default" onclick={loadAudit} disabled={audit.loading}>{audit.loading ? 'Loading…' : 'Refresh'}</button>
+    </div>
+    <p class="mt-1 text-[12px] text-[var(--text-3)]">Every tool call an MCP client or assistant made, newest first. Your own clicks here aren't recorded.</p>
+
+    {#if audit.error}
+      <p class="mt-3 text-[12px] text-[var(--red)]">{audit.error}</p>
+    {:else if !audit.entries.length}
+      <p class="mt-3 text-[13px] text-[var(--text-3)]">No AI activity yet. Point an MCP client at <span class="mono">oriel mcp</span> and its calls show up here.</p>
+    {:else}
+      <div class="mt-3 flex max-h-72 flex-col gap-1.5 overflow-y-auto">
+        {#each audit.entries as e, i (i)}
+          <div class="flex items-start gap-2 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] px-3 py-2 text-[12px]">
+            <span class="mt-1 h-1.5 w-1.5 shrink-0 rounded-full {e.ok ? 'bg-emerald-500' : 'bg-[var(--red)]'}" title={e.ok ? 'ok' : 'failed'}></span>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-baseline justify-between gap-2">
+                <span class="mono font-medium text-[var(--text)]">{e.tool}</span>
+                <span class="shrink-0 text-[11px] text-[var(--text-3)]">{fmtTime(e.time)}</span>
+              </div>
+              {#if e.args}<div class="mono mt-0.5 truncate text-[var(--text-3)]" title={argStr(e.args)}>{argStr(e.args)}</div>{/if}
+              {#if e.error}<div class="mt-0.5 text-[var(--red)]">{e.error}</div>{/if}
+            </div>
+          </div>
+        {/each}
+      </div>
+    {/if}
   </section>
 
   <!-- Updates -->

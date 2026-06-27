@@ -60,6 +60,10 @@ export { self } from '../lib/self.svelte.js'
  *  `logout()`. The token gate + browser session login (see SECURITY.md). */
 export { auth, logout } from '../lib/auth.svelte.js'
 
+/** AI activity (audit log): `audit` state `{ entries, loading, error }` + `loadAudit()`.
+ *  Each entry → `{ time, tool, args, ok, error }`. Agent calls only, not UI clicks. */
+export { audit, loadAudit } from '../lib/audit.svelte.js'
+
 /** Remote-access allow-list (non-loopback Hosts permitted to reach /api).
  *  `RemoteHostForm` is the headless "add a host" input both editions render. */
 export { remote, loadRemote, addRemoteHost, removeRemoteHost, RemoteHostForm } from '../lib/remote.svelte.js'
