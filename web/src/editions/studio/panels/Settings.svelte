@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { toast } from '../../../platform/index.js'
+  import { toast, confirm } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
@@ -56,6 +56,32 @@
     } catch (e) {
       Object.assign(self, prev)
       toast(e?.message || 'Could not save', 'error')
+    }
+  }
+
+  // Self-update channel (Settings → Updates). Opting into edge is gated by a
+  // confirm so the "you stay on a build until the next stable catches up" behavior
+  // is explicit; switching back to stable is the safe direction and isn't gated.
+  async function setChannel(channel) {
+    if (channel === self.updateChannel) return
+    if (channel === 'edge') {
+      const ok = await confirm({
+        title: 'Switch to the Edge channel?',
+        message:
+          "Edge gets the newest builds first, including pre-releases that are less tested. You stay on a build until the next stable release catches up; switching back to Stable doesn't downgrade you, it just waits for stable to reach you. Use Edge to help test; keep Stable for everyday use.",
+        confirmLabel: 'Switch to Edge',
+        danger: false,
+      })
+      if (!ok) return
+    }
+    const prev = self.updateChannel
+    self.updateChannel = channel
+    try {
+      await apiPut('/api/config', { updateChannel: channel })
+      checkNow() // re-check against the new channel
+    } catch (e) {
+      self.updateChannel = prev
+      toast(e?.message || 'Could not change channel', 'error')
     }
   }
 
@@ -331,6 +357,19 @@
       {/if}
       {#if update.error}<p class="mt-2 text-[12px] text-[var(--red)]">{update.error}</p>{/if}
     </div>
+
+    <div class="mt-5 border-t border-[var(--border)] pt-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <span class="text-[13px] font-medium">Release channel</span>
+        <div class="seg">
+          <button class="seg-btn {self.updateChannel === 'stable' ? 'on' : ''}" onclick={() => setChannel('stable')}>Stable</button>
+          <button class="seg-btn {self.updateChannel === 'edge' ? 'on' : ''}" onclick={() => setChannel('edge')}>Edge</button>
+        </div>
+      </div>
+      <p class="mt-2 text-[12px] text-[var(--text-3)]">
+        <span class="mono">Stable</span> tracks confirmed releases. <span class="mono">Edge</span> gets the newest builds first, including pre-releases. On Edge you stay on a build until the next stable catches up; switching back never downgrades you.
+      </p>
+    </div>
   </section>
 
   <!-- Authentication -->
@@ -348,7 +387,7 @@
           <button class="btn btn-sm btn-default" onclick={() => setToken({ clear: true }, 'Could not clear token')} disabled={tokenBusy}>Clear</button>
         {/if}
       {:else}
-        <span class="text-[13px] text-[var(--text-3)]">No token — loopback-only access.</span>
+        <span class="text-[13px] text-[var(--text-3)]">No token, loopback-only access.</span>
         {#if auth.localAdmin}
           <button class="btn btn-sm btn-primary" onclick={() => setToken({ generate: true }, 'Could not set token')} disabled={tokenBusy}>Generate token</button>
         {/if}
@@ -361,7 +400,7 @@
 
     {#if revealedToken}
       <div class="mt-3 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3">
-        <p class="text-[12px] text-[var(--text-2)]">Copy this now — it won't be shown again:</p>
+        <p class="text-[12px] text-[var(--text-2)]">Copy this now, it won't be shown again:</p>
         <code class="mono mt-1 block break-all text-[12px] text-[var(--text)]">{revealedToken}</code>
       </div>
     {/if}

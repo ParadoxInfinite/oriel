@@ -28,6 +28,7 @@ type updateInfo struct {
 	Current         string `json:"current"`
 	Latest          string `json:"latest"`
 	UpdateAvailable bool   `json:"updateAvailable"`
+	Channel         string `json:"channel"`                  // which release channel this check used
 	Managed         bool   `json:"managed"`                  // service-managed install → self-update is offered
 	PackageManager  string `json:"packageManager,omitempty"` // e.g. "homebrew" → update via the package manager, not in-app
 	URL             string `json:"url"`
@@ -40,10 +41,20 @@ type ghRelease struct {
 	TagName     string `json:"tag_name"`
 	HTMLURL     string `json:"html_url"`
 	PublishedAt string `json:"published_at"`
+	Draft       bool   `json:"draft"`
+	Prerelease  bool   `json:"prerelease"`
 	Assets      []struct {
 		Name string `json:"name"`
 		URL  string `json:"browser_download_url"`
 	} `json:"assets"`
+}
+
+// normChannel maps a settings value to a known channel, defaulting to stable.
+func normChannel(s string) string {
+	if s == "edge" {
+		return "edge"
+	}
+	return "stable"
 }
 
 func (r *ghRelease) assetURL(name string) string {
@@ -89,9 +100,12 @@ var updateClient = &http.Client{
 // for updates" button) lowers the staleness floor to an hour, but never below it.
 func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	force := r.URL.Query().Has("force")
+	channel := normChannel(loadSettings().UpdateChannel)
 
 	updateMu.Lock()
-	if updateCache != nil {
+	// A cached answer is only good for the channel it was fetched on; a channel
+	// switch must re-check.
+	if updateCache != nil && updateCache.Channel == channel {
 		ttl := passiveTTL
 		if force {
 			ttl = manualTTL
@@ -110,7 +124,7 @@ func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 
 	// Fetch without the lock so concurrent checks don't serialize behind a slow
 	// (up to 10s) GitHub round-trip. A rare double fetch just refreshes twice.
-	info := s.fetchLatestRelease(r.Context())
+	info := s.fetchLatestRelease(r.Context(), channel)
 
 	updateMu.Lock()
 	updateCache = &info
@@ -119,9 +133,9 @@ func (s *Server) handleUpdateCheck(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, info)
 }
 
-func (s *Server) fetchLatestRelease(ctx context.Context) updateInfo {
-	info := updateInfo{Current: s.version, Managed: service.IsManaged(), PackageManager: service.PackageManager()}
-	rel, err := githubLatestRelease(ctx)
+func (s *Server) fetchLatestRelease(ctx context.Context, channel string) updateInfo {
+	info := updateInfo{Current: s.version, Channel: channel, Managed: service.IsManaged(), PackageManager: service.PackageManager()}
+	rel, err := githubReleaseForChannel(ctx, channel)
 	if err != nil {
 		info.Error = err.Error()
 		return info
@@ -160,6 +174,44 @@ func githubLatestRelease(ctx context.Context) (*ghRelease, error) {
 	return &rel, nil
 }
 
+// githubReleaseForChannel returns the release a channel should track. stable is
+// GitHub's "latest" (newest non-prerelease); edge is the newest published release
+// of any kind (so a pre-release `-rc` tag is offered to opt-in testers before it's
+// promoted to stable). GitHub lists releases newest-first.
+func githubReleaseForChannel(ctx context.Context, channel string) (*ghRelease, error) {
+	if normChannel(channel) != "edge" {
+		return githubLatestRelease(ctx)
+	}
+	reqCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet,
+		"https://api.github.com/repos/"+updateRepo+"/releases?per_page=10", nil)
+	if err != nil {
+		return nil, fmt.Errorf("could not build request")
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", "oriel-update-check")
+
+	resp, err := updateClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("could not reach GitHub")
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GitHub returned %d", resp.StatusCode)
+	}
+	var list []ghRelease
+	if err := decodeCapped(resp.Body, &list); err != nil {
+		return nil, fmt.Errorf("unexpected response from GitHub")
+	}
+	for i := range list { // newest-first; skip drafts (unauth never sees them, but be safe)
+		if !list[i].Draft {
+			return &list[i], nil
+		}
+	}
+	return nil, fmt.Errorf("no releases found")
+}
+
 // isNewer reports whether latest is a strictly higher version than current. A
 // non-release current ("dev" or empty) never reports an update, local builds
 // shouldn't nag.
@@ -179,6 +231,68 @@ func compareSemver(a, b string) int {
 		case pa[i] < pb[i]:
 			return -1
 		}
+	}
+	// Equal core (major.minor.patch): a pre-release has LOWER precedence than the
+	// release it precedes (1.0.0-rc.1 < 1.0.0), so edge testers move off an rc onto
+	// the final tag. SemVer §11.
+	return comparePrerelease(prerelease(a), prerelease(b))
+}
+
+// prerelease returns the pre-release part of a version (the bit after '-', before
+// any '+build'), or "" for a normal release.
+func prerelease(v string) string {
+	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
+	if plus := strings.IndexByte(v, '+'); plus >= 0 {
+		v = v[:plus]
+	}
+	if dash := strings.IndexByte(v, '-'); dash >= 0 {
+		return v[dash+1:]
+	}
+	return ""
+}
+
+// comparePrerelease orders two pre-release strings by SemVer rules: no pre-release
+// outranks any pre-release; otherwise compare dot-separated identifiers, numeric
+// ones numerically and the rest lexically, with a smaller set ranking lower when
+// all shared identifiers are equal.
+func comparePrerelease(a, b string) int {
+	if a == b {
+		return 0
+	}
+	if a == "" { // a is the final release, b is a pre-release
+		return 1
+	}
+	if b == "" {
+		return -1
+	}
+	ai, bi := strings.Split(a, "."), strings.Split(b, ".")
+	for i := 0; i < len(ai) && i < len(bi); i++ {
+		an, aErr := strconv.Atoi(ai[i])
+		bn, bErr := strconv.Atoi(bi[i])
+		switch {
+		case aErr == nil && bErr == nil: // both numeric: compare as numbers
+			if an != bn {
+				return cmpInt(an, bn)
+			}
+		case aErr == nil: // numeric identifiers rank below alphanumeric ones
+			return -1
+		case bErr == nil:
+			return 1
+		default:
+			if ai[i] != bi[i] {
+				return strings.Compare(ai[i], bi[i])
+			}
+		}
+	}
+	return cmpInt(len(ai), len(bi)) // all shared equal: fewer identifiers ranks lower
+}
+
+func cmpInt(a, b int) int {
+	switch {
+	case a > b:
+		return 1
+	case a < b:
+		return -1
 	}
 	return 0
 }
@@ -227,7 +341,7 @@ func (s *Server) handleUpdateApply(w http.ResponseWriter, r *http.Request) {
 		exe = resolved // follow a symlinked launcher to the real binary; keep exe on failure
 	}
 
-	rel, err := githubLatestRelease(r.Context())
+	rel, err := githubReleaseForChannel(r.Context(), normChannel(loadSettings().UpdateChannel))
 	if err != nil {
 		httpError(w, http.StatusBadGateway, err.Error())
 		return
