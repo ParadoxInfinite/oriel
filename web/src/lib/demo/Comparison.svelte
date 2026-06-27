@@ -69,6 +69,7 @@
       rows: [
         { label: 'Built-in MCP server (drive via AI)', cells: [{ v: 'y', note: 'safety-gated' }, { v: '~', note: 'MCP Toolkit runs other servers' }, 'n', 'n', 'n', 'n'] },
         { label: 'Secret masking + destructive grant', cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
+        { label: 'Audit log of AI actions', cells: ['y', 'n', 'n', 'n', 'n', { v: '~', note: 'Business edition' }] },
         { label: 'Headless / scriptable', cells: [{ v: 'y', note: 'oriel mcp, CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, 'n', { v: 'y', note: 'HTTP API' }] },
       ],
     },
@@ -88,7 +89,6 @@
         { label: 'In-browser shell / exec', cells: [{ v: 'n', tag: 'road' }, 'y', 'y', 'y', 'y', 'y'] },
         { label: 'Kubernetes', cells: [{ v: 'n', tag: 'scope' }, 'y', 'y', 'y', 'n', 'y'] },
         { label: 'Multi-host / clusters / teams', cells: [{ v: 'n', tag: 'design', note: 'single-operator, single-host' }, 'n', 'n', 'n', 'n', 'y'] },
-        { label: 'Audit log of AI actions', cells: ['y', 'n', 'n', 'n', 'n', { v: '~', note: 'Business edition' }] },
         { label: 'Maturity & ecosystem', cells: [{ v: 'New (2026)', note: 'small, moving fast' }, { v: 'Huge', note: 'industry default, extensions' }, { v: 'Growing', note: 'popular on Mac' }, { v: 'Red Hat-backed', note: 'extensions' }, { v: 'Popular OSS', note: 'big following' }, { v: 'Mature', note: 'large enterprise base' }] },
       ],
     },
