@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte'
-  import { toast } from '../../../platform/index.js'
+  import { toast, confirm } from '../../../platform/index.js'
   import { discovery, ensureDiscovery, updateRoot, removeRoot, rootResult, setFilter, removePattern, FILTER_MODES, DiscoveryForm, THEMES_DOC_URL } from '../../../platform/index.js'
   import { self, update, checkNow, restartService, promptUpdate, apiPut } from '../../../platform/index.js'
   import { remote, loadRemote, removeRemoteHost, RemoteHostForm } from '../../../platform/index.js'
@@ -59,8 +59,21 @@
     }
   }
 
-  // Self-update channel (Settings → Updates). Switching re-checks against it.
+  // Self-update channel (Settings → Updates). Opting into edge is gated by a
+  // confirm so the "you stay on a build until the next stable catches up" behavior
+  // is explicit; switching back to stable is the safe direction and isn't gated.
   async function setChannel(channel) {
+    if (channel === self.updateChannel) return
+    if (channel === 'edge') {
+      const ok = await confirm({
+        title: 'Switch to the Edge channel?',
+        message:
+          "Edge gets the newest builds first, including pre-releases that are less tested. You stay on a build until the next stable release catches up; switching back to Stable doesn't downgrade you, it just waits for stable to reach you. Use Edge to help test; keep Stable for everyday use.",
+        confirmLabel: 'Switch to Edge',
+        danger: false,
+      })
+      if (!ok) return
+    }
     const prev = self.updateChannel
     self.updateChannel = channel
     try {
@@ -354,7 +367,7 @@
         </div>
       </div>
       <p class="mt-2 text-[12px] text-[var(--text-3)]">
-        <span class="mono">Stable</span> tracks confirmed releases. <span class="mono">Edge</span> gets the newest builds first, including pre-releases, to test before they're promoted.
+        <span class="mono">Stable</span> tracks confirmed releases. <span class="mono">Edge</span> gets the newest builds first, including pre-releases. On Edge you stay on a build until the next stable catches up; switching back never downgrades you.
       </p>
     </div>
   </section>
