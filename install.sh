@@ -1,21 +1,21 @@
 #!/bin/sh
 # ---------------------------------------------------------------------------
-# Oriel installer, downloads the right release binary for your platform,
+# Oriel installer: downloads the right release binary for your platform,
 # VERIFIES it against the published SHA256SUMS, and installs it onto your PATH.
 #
-# Running root-equivalent software from a piped script? Read it first. Or skip
-# this and use the explicit per-platform commands in the README, they do
-# exactly what this does, one step at a time.
+# Running root-equivalent software from a piped script? Read it first, or use
+# the explicit per-platform commands in the README instead.
 #
 # Run interactively and it asks where to install and whether to set up the
-# background service. For unattended installs, set these and it won't prompt:
-#     ORIEL_INSTALL_DIR=/path   install location (default: /usr/local/bin or ~/.local/bin)
-#     ORIEL_SERVICE=1           also install + start the background service (0 to skip)
+# background service. For unattended installs, set any of:
+#     ORIEL_INSTALL_DIR=/path        install location (default: /usr/local/bin or ~/.local/bin)
+#     ORIEL_SERVICE=1                also install + start the background service (0 to skip)
+#     ORIEL_CHANNEL=stable|edge      release channel (default stable; edge = newest, incl. pre-releases)
+#     ORIEL_UNINSTALL=1              remove Oriel (and its login service) instead of installing
 # ---------------------------------------------------------------------------
 set -eu
 
 REPO="ParadoxInfinite/oriel"
-BASE="https://github.com/$REPO/releases/latest/download"
 
 die() { echo "oriel-install: $*" >&2; exit 1; }
 
@@ -39,6 +39,83 @@ confirm() { # confirm PROMPT  → 0 if yes
   case "$_c" in y | Y | yes | YES) return 0 ;; *) return 1 ;; esac
 }
 
+# --- pick a downloader -----------------------------------------------------
+if command -v curl >/dev/null 2>&1; then
+  fetch() { curl -fSL "$1" -o "$2"; }   # to a file
+  fetch_out() { curl -fsSL "$1"; }      # to stdout
+elif command -v wget >/dev/null 2>&1; then
+  fetch() { wget -qO "$2" "$1"; }
+  fetch_out() { wget -qO- "$1"; }
+else
+  die "need curl or wget"
+fi
+
+# --- detect an existing install --------------------------------------------
+existing=$(command -v oriel 2>/dev/null || true)
+
+resolve() { # follow symlinks to the real file (macOS readlink has no -f)
+  _p=$1
+  while [ -L "$_p" ]; do
+    _l=$(readlink "$_p")
+    case "$_l" in /*) _p=$_l ;; *) _p=$(dirname "$_p")/$_l ;; esac
+  done
+  printf '%s' "$_p"
+}
+
+# Is the oriel we'd touch managed by Homebrew? Check the RESOLVED path, not the
+# brew DB: a user can have both a brew oriel and a script one, so we must defer to
+# brew only when the binary actually on PATH is the brew-managed file (brew stores
+# formulae under Cellar/, casks under Caskroom/).
+is_brew_oriel() {
+  [ -n "$existing" ] || return 1
+  case "$(resolve "$existing")" in
+    */Cellar/* | */Caskroom/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# --- uninstall -------------------------------------------------------------
+if [ "${ORIEL_UNINSTALL:-}" = 1 ]; then
+  [ -n "$existing" ] || { echo "Oriel doesn't appear to be installed."; exit 0; }
+  if is_brew_oriel; then
+    echo "Oriel was installed with Homebrew. Uninstall it with:"
+    echo "  brew uninstall oriel"
+    exit 0
+  fi
+  target=$(resolve "$existing")
+  "$existing" service uninstall >/dev/null 2>&1 || true # remove the login service if present
+  rm -f "$target" && echo "Removed $target"
+  echo "Your settings in the OS config dir were left in place; delete them for a clean slate."
+  exit 0
+fi
+
+# --- release channel -------------------------------------------------------
+CHANNEL="${ORIEL_CHANNEL:-stable}"
+case "$CHANNEL" in
+  stable | edge) ;;
+  *) die "ORIEL_CHANNEL must be 'stable' or 'edge'" ;;
+esac
+
+# --- already installed? upgrade in place; never clobber a package manager ---
+if [ -n "$existing" ]; then
+  cur=$("$existing" version 2>/dev/null || echo "an existing build")
+  if is_brew_oriel; then
+    echo "Oriel ($cur) is already installed via Homebrew."
+    echo "Upgrade it with:  brew upgrade oriel"
+    echo "(Re-running this script would overwrite the Homebrew copy and desync brew, so it won't.)"
+    exit 0
+  fi
+  echo "Oriel is already installed ($cur) at $existing."
+  if [ "$INTERACTIVE" = 1 ]; then
+    confirm "Replace it with the latest $CHANNEL build? [y/N]: " || { echo "Left the existing install in place."; exit 0; }
+  else
+    echo "Replacing it with the latest $CHANNEL build…"
+  fi
+  # Upgrade in place: install over the existing binary's directory unless the
+  # caller pinned ORIEL_INSTALL_DIR.
+  : "${ORIEL_INSTALL_DIR:=$(dirname "$(resolve "$existing")")}"
+fi
+
 # --- detect platform -------------------------------------------------------
 os=$(uname -s)
 case "$os" in
@@ -54,13 +131,17 @@ case "$arch" in
 esac
 asset="oriel-${os}-${arch}"
 
-# --- pick a downloader -----------------------------------------------------
-if command -v curl >/dev/null 2>&1; then
-  fetch() { curl -fSL "$1" -o "$2"; }
-elif command -v wget >/dev/null 2>&1; then
-  fetch() { wget -qO "$2" "$1"; }
+# --- resolve the download base for the channel -----------------------------
+if [ "$CHANNEL" = edge ]; then
+  # Newest release of ANY kind (GitHub lists newest-first; the first tag_name
+  # is it, pre-release or not). No jq dependency.
+  tag=$(fetch_out "https://api.github.com/repos/$REPO/releases" 2>/dev/null \
+    | grep -m1 '"tag_name":' | sed 's/.*"tag_name":[ ]*"\([^"]*\)".*/\1/')
+  [ -n "$tag" ] || die "could not resolve the latest edge release from GitHub"
+  BASE="https://github.com/$REPO/releases/download/$tag"
+  echo "Channel: edge ($tag)"
 else
-  die "need curl or wget"
+  BASE="https://github.com/$REPO/releases/latest/download"
 fi
 
 # --- download + verify -----------------------------------------------------
@@ -122,10 +203,11 @@ if [ "$want_service" = 1 ]; then
   {
     echo
     echo "Behind a reverse proxy or reaching Oriel over a private network?"
-    echo "  $dir/oriel config base-path /oriel       # serve under a sub-path"
-    echo "  $dir/oriel remote allow <hostname>       # allow a host to reach /api"
-    echo "  $dir/oriel doctor                        # check it's all wired up"
-    echo "  ⚠ Oriel has no auth, only allow hosts on a trusted private network."
+    echo "  $dir/oriel config base-path /oriel          # serve under a sub-path"
+    echo "  $dir/oriel config auth-token --generate     # require a login for remote access"
+    echo "  $dir/oriel remote allow <hostname>          # allow a host to reach /api"
+    echo "  $dir/oriel doctor                           # check it's all wired up"
+    echo "  ⚠ Driving Docker is root-equivalent; only allow hosts on a trusted private network."
   } > /dev/tty 2>/dev/null || true
 else
   echo
