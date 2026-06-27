@@ -83,6 +83,9 @@ func isHomebrewPath(p string) bool {
 // Such installs must update via `brew upgrade`, an in-app self-update would
 // overwrite Homebrew-tracked files and desync brew's state.
 func PackageManager() string {
+	if inContainer() {
+		return "container" // updated by pulling the image, not an in-place self-update
+	}
 	exe, err := os.Executable()
 	if err != nil {
 		return ""
@@ -94,6 +97,18 @@ func PackageManager() string {
 		return "homebrew"
 	}
 	return ""
+}
+
+// inContainer reports whether Oriel is running inside its container image, so the
+// UI points at `docker pull` rather than an in-place self-update (which would
+// vanish on the next container start). The image sets ORIEL_CONTAINER; the
+// /.dockerenv fallback covers a hand-built image that didn't.
+func inContainer() bool {
+	if os.Getenv("ORIEL_CONTAINER") != "" {
+		return true
+	}
+	_, err := os.Stat("/.dockerenv")
+	return err == nil
 }
 
 // stableBrewBin returns the Homebrew `bin` symlink that resolves to `resolved`,
