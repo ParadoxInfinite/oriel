@@ -1,4 +1,20 @@
 {
+  "app.connectionLost": "Live connection lost, reconnecting…",
+  "imageActions.tagged": "Tagged {ref}",
+  "imageActions.removed": "Removed {name}",
+  "imageActions.untag.title": "Remove this tag?",
+  "imageActions.untag.msg": "“{tag}” will be removed.",
+  "imageActions.untag.last": " It is the only tag, so the image itself will be deleted.",
+  "imageActions.untag.kept": " The image and its other tags stay.",
+  "imageActions.untag.confirm": "Remove tag",
+  "imageActions.removeImage.title": "Remove image?",
+  "imageActions.removeImage.subjectMany": "All {count} tags of this image",
+  "imageActions.removeImage.subjectOne": "“{tag}”",
+  "imageActions.removeImage.deleted": "{subject} will be deleted.",
+  "imageActions.removeImage.inUse": {
+    "one": " It is used by {count} container and will be force-removed.",
+    "other": " It is used by {count} containers and will be force-removed."
+  },
   "action.start": "Start",
   "action.stop": "Stop",
   "action.restart": "Restart",

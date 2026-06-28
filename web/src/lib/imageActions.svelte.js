@@ -2,6 +2,7 @@ import { invoke } from './invoke.js'
 import { confirm } from './confirm.svelte.js'
 import { containersForImage, suggestTag } from './containers.svelte.js'
 import { refreshImages } from './resources.svelte.js'
+import { t, tn } from './locale.svelte.js'
 
 // Headless controller for the image tag / used-by / remove flows. Both editions
 // instantiate it and bind their own markup, so the behaviour lives in one place.
@@ -23,7 +24,7 @@ export class ImageActions {
   async applyTag() {
     if (!this.tagRef.trim() || this.tagging) return
     this.tagging = true
-    const ok = await invoke('image.tag', { id: this.tagImage.id, ref: this.tagRef.trim() }, { success: `Tagged ${this.tagRef.trim()}` })
+    const ok = await invoke('image.tag', { id: this.tagImage.id, ref: this.tagRef.trim() }, { success: t('imageActions.tagged', { ref: this.tagRef.trim() }) })
     this.tagging = false
     if (ok) {
       this.tagImage = null
@@ -34,25 +35,28 @@ export class ImageActions {
   async untag(img, tag) {
     const last = img.tags.length <= 1
     const ok = await confirm({
-      title: 'Remove this tag?',
-      message: `“${tag}” will be removed.${last ? ' It is the only tag, so the image itself will be deleted.' : ' The image and its other tags stay.'}`,
-      confirmLabel: 'Remove tag',
+      title: t('imageActions.untag.title'),
+      message: t('imageActions.untag.msg', { tag }) + (last ? t('imageActions.untag.last') : t('imageActions.untag.kept')),
+      confirmLabel: t('imageActions.untag.confirm'),
     })
     if (!ok) return
-    await invoke('image.remove', { id: tag, force: false }, { success: `Removed ${tag}` })
+    await invoke('image.remove', { id: tag, force: false }, { success: t('imageActions.removed', { name: tag }) })
     refreshImages()
   }
 
   async removeImage(img) {
     const inUse = img.containers > 0
     const many = img.tags.length > 1
+    const subject = many
+      ? t('imageActions.removeImage.subjectMany', { count: img.tags.length })
+      : t('imageActions.removeImage.subjectOne', { tag: img.tags[0] })
     const ok = await confirm({
-      title: 'Remove image?',
-      message: `${many ? `All ${img.tags.length} tags of this image` : `“${img.tags[0]}”`} will be deleted.${inUse ? ` It is used by ${img.containers} container(s) and will be force-removed.` : ''}`,
-      confirmLabel: 'Remove',
+      title: t('imageActions.removeImage.title'),
+      message: t('imageActions.removeImage.deleted', { subject }) + (inUse ? tn('imageActions.removeImage.inUse', img.containers) : ''),
+      confirmLabel: t('action.remove'),
     })
     if (!ok) return
-    await invoke('image.remove', { id: img.id, force: inUse }, { success: `Removed ${img.tags[0]}` })
+    await invoke('image.remove', { id: img.id, force: inUse }, { success: t('imageActions.removed', { name: img.tags[0] }) })
     refreshImages()
   }
 }

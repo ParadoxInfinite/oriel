@@ -6,7 +6,7 @@
   import { startUpdateChecks, stopUpdateChecks } from './lib/update.svelte.js'
   import { togglePalette } from './lib/palette.svelte.js'
   import { resumeOps } from './lib/op.svelte.js'
-  import { loadManifest } from './lib/locale.svelte.js'
+  import { loadManifest, t } from './lib/locale.svelte.js'
 
   import { activeEdition, loadDiskThemes } from './editions/registry.svelte.js'
   import { overlayTheme, overlayVars } from './lib/overlayTheme.svelte.js'
@@ -79,7 +79,7 @@
 
   {#if !connection.ok}
     <div role="status" style="position:fixed;top:0;left:0;right:0;z-index:60;padding:5px 12px;text-align:center;font-size:12px;font-weight:500;background:#b45309;color:#fff;">
-      Live connection lost, reconnecting…
+      {t('app.connectionLost')}
     </div>
   {/if}
 
