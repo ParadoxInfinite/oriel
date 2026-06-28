@@ -1,15 +1,21 @@
 <script>
   // Shown only in the VITE_DEMO (GitHub Pages) build. A small fixed pill making
   // clear nothing here is a real Docker host and that a refresh resets state.
+  import { t, locale, AVAILABLE, setLocale } from '../locale.svelte.js'
   let dismissed = $state(false)
 </script>
 
 {#if !dismissed}
   <div class="demo-pill">
     <span class="dot"></span>
-    <span class="txt"><strong>Demo</strong> · mock data, no real Docker, a refresh resets it.</span>
-    <a href="https://github.com/ParadoxInfinite/oriel" target="_blank" rel="noreferrer">GitHub ↗</a>
-    <button aria-label="Dismiss" onclick={() => (dismissed = true)}>×</button>
+    <span class="txt"><strong>{t('demo.banner.tag')}</strong> · {t('demo.banner.text')}</span>
+    {#if AVAILABLE.length > 1}
+      <select class="lang" value={locale.tag} aria-label={t('demo.banner.language')} onchange={(e) => setLocale(e.currentTarget.value)}>
+        {#each AVAILABLE as l (l.tag)}<option value={l.tag}>{l.name}</option>{/each}
+      </select>
+    {/if}
+    <a href="https://github.com/ParadoxInfinite/oriel" target="_blank" rel="noreferrer">{t('demo.banner.github')}</a>
+    <button aria-label={t('demo.banner.dismiss')} onclick={() => (dismissed = true)}>×</button>
   </div>
 {/if}
 
@@ -49,6 +55,16 @@
     flex: none;
   }
   a:hover { text-decoration: underline; }
+  .lang {
+    flex: none;
+    padding: 2px 6px;
+    font-size: 12px;
+    color: var(--text, #e7e7ea);
+    background: var(--chip-bg, #2a2a30);
+    border: 1px solid var(--border, #34343a);
+    border-radius: 999px;
+    cursor: pointer;
+  }
   button {
     flex: none;
     width: 20px;

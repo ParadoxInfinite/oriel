@@ -8,6 +8,16 @@ import { apiGet } from './api.js'
 
 const KEY = 'oriel.locale'
 
+// The static demo (GitHub Pages) has no backend to proxy catalogs, so it reads
+// them straight from the CDN the backend would otherwise fetch.
+const DEMO = __ORIEL_DEMO__
+const DEMO_CDN = 'https://cdn.jsdelivr.net/gh/ParadoxInfinite/oriel@main/web/src/i18n'
+async function fetchJSON(url) {
+  const r = await fetch(url)
+  if (!r.ok) throw new Error(`HTTP ${r.status}`)
+  return r.json()
+}
+
 // Locales the UI offers. English ships in the bundle; loadManifest() appends any
 // others the backend reports as published. A live array so the picker updates.
 export const AVAILABLE = $state([{ tag: 'en', name: 'English' }])
@@ -76,7 +86,7 @@ export function tn(key, count, params) {
 async function loadCatalog(tag) {
   if (BUNDLED[tag]) return BUNDLED[tag]
   try {
-    const cat = await apiGet(`/api/i18n/${tag}`)
+    const cat = DEMO ? await fetchJSON(`${DEMO_CDN}/${tag}.json`) : await apiGet(`/api/i18n/${tag}`)
     if (cat && typeof cat === 'object') return cat
   } catch {
     /* offline or not published: stay on English */
@@ -88,7 +98,7 @@ async function loadCatalog(tag) {
 // offered. Best-effort: with no network or no catalogs, the UI stays English.
 export async function loadManifest() {
   try {
-    const list = await apiGet('/api/i18n')
+    const list = DEMO ? await fetchJSON(`${DEMO_CDN}/manifest.json`) : await apiGet('/api/i18n')
     if (!Array.isArray(list)) return
     for (const e of list) {
       if (e?.tag && !AVAILABLE.some((l) => l.tag === e.tag)) {

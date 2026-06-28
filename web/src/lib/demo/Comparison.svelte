@@ -7,6 +7,7 @@
   import { cubicOut } from 'svelte/easing'
   import { compare } from './compare.svelte.js'
   import { trapFocus } from '../focustrap.js'
+  import { t } from '../locale.svelte.js'
 
   // Deep link: /#compare opens this straight away, so the README can point at it.
   onMount(() => {
@@ -20,86 +21,87 @@
 
   // A cell is 'y' (yes), 'n' (no), '~' (partial), a string (verbatim), or an
   // object {v, tag, note} that pairs a value with a roadmap/by-design label.
-  const groups = [
+  // $derived so labels/notes re-translate when the language switches.
+  const groups = $derived([
     {
-      title: 'Cost & licensing',
+      title: t('demo.compare.group.cost'),
       rows: [
-        { label: 'License', cells: ['Apache-2.0', 'Proprietary', 'Proprietary', 'Apache-2.0', 'MIT', 'zlib (CE) / paid (Business)'] },
-        { label: 'Free for commercial use', cells: ['y', { v: '~', note: 'free under ~250 staff / $10M' }, { v: 'n', note: 'paid for commercial' }, 'y', 'y', { v: '~', note: 'CE free; Business paid' }] },
-        { label: 'Account / sign-in required', cells: ['n', { v: '~', note: 'increasingly pushed' }, 'n', 'n', 'n', { v: 'y', note: 'it has user logins' }] },
+        { label: t('demo.compare.row.license'), cells: ['Apache-2.0', t('demo.compare.cell.proprietary'), t('demo.compare.cell.proprietary'), 'Apache-2.0', 'MIT', t('demo.compare.cell.licenseZlib')] },
+        { label: t('demo.compare.row.freeCommercial'), cells: ['y', { v: '~', note: t('demo.compare.note.freeUnder250') }, { v: 'n', note: t('demo.compare.note.paidCommercial') }, 'y', 'y', { v: '~', note: t('demo.compare.note.ceFreeBizPaid') }] },
+        { label: t('demo.compare.row.account'), cells: ['n', { v: '~', note: t('demo.compare.note.pushed') }, 'n', 'n', 'n', { v: 'y', note: t('demo.compare.note.userLogins') }] },
       ],
     },
     {
-      title: 'Footprint & install',
+      title: t('demo.compare.group.footprint'),
       rows: [
-        { label: 'Distribution', cells: ['Single static binary', 'Installer', 'Installer', 'Installer', 'Single binary', 'Container'] },
-        { label: 'Download / size', cells: ['~13 MB binary', '~600 MB → ~1.5 GB app', '~150 MB app', '~250 MB app', '~25 MB binary', '~300 MB image'] },
-        { label: 'Idle RAM *', cells: ['~15-30 MB', '~3-4 GB', { v: '~0.2-1 GB', note: 'dynamic' }, '~2 GB', '~tens of MB', '~200-300 MB'] },
-        { label: 'Bundles its own VM / engine', cells: [{ v: 'n', note: 'uses your engine' }, { v: 'y', note: 'lock-in' }, { v: 'y', note: 'lock-in' }, { v: 'y', note: 'Podman machine' }, 'n', 'n'] },
+        { label: t('demo.compare.row.distribution'), cells: [t('demo.compare.cell.distSingleStatic'), t('demo.compare.cell.distInstaller'), t('demo.compare.cell.distInstaller'), t('demo.compare.cell.distInstaller'), t('demo.compare.cell.distSingleBinary'), t('demo.compare.cell.distContainer')] },
+        { label: t('demo.compare.row.size'), cells: [t('demo.compare.cell.size13'), t('demo.compare.cell.size600'), t('demo.compare.cell.size150'), t('demo.compare.cell.size250'), t('demo.compare.cell.size25'), t('demo.compare.cell.size300')] },
+        { label: t('demo.compare.row.idleRam'), cells: ['~15-30 MB', '~3-4 GB', { v: '~0.2-1 GB', note: t('demo.compare.note.dynamic') }, '~2 GB', t('demo.compare.cell.ramTens'), '~200-300 MB'] },
+        { label: t('demo.compare.row.bundlesVm'), cells: [{ v: 'n', note: t('demo.compare.note.usesYourEngine') }, { v: 'y', note: t('demo.compare.note.lockin') }, { v: 'y', note: t('demo.compare.note.lockin') }, { v: 'y', note: t('demo.compare.note.podmanMachine') }, 'n', 'n'] },
       ],
     },
     {
-      title: 'Engine support',
+      title: t('demo.compare.group.engine'),
       rows: [
-        { label: 'Bring-your-own engine', cells: [{ v: 'Any engine / socket', note: 'Colima · Docker · OrbStack · Podman · remote, no lock-in' }, { v: 'Bundled', note: 'lock-in' }, { v: 'Bundled', note: 'lock-in' }, { v: 'Podman', note: '+ Docker-compat socket' }, 'Any Docker socket', 'Any Docker / K8s endpoint'] },
-        { label: 'Manages the VM lifecycle', cells: [{ v: 'y', note: 'Colima start/stop' }, { v: 'y', note: 'its own' }, { v: 'y', note: 'its own' }, { v: 'y', note: 'Podman machine' }, 'n', 'n'] },
+        { label: t('demo.compare.row.byoEngine'), cells: [{ v: t('demo.compare.cell.byoAny'), note: t('demo.compare.note.byoEngines') }, { v: t('demo.compare.cell.byoBundled'), note: t('demo.compare.note.lockin') }, { v: t('demo.compare.cell.byoBundled'), note: t('demo.compare.note.lockin') }, { v: 'Podman', note: t('demo.compare.note.dockerCompat') }, t('demo.compare.cell.byoAnyDocker'), t('demo.compare.cell.byoAnyK8s')] },
+        { label: t('demo.compare.row.vmLifecycle'), cells: [{ v: 'y', note: t('demo.compare.note.colimaStartStop') }, { v: 'y', note: t('demo.compare.note.itsOwn') }, { v: 'y', note: t('demo.compare.note.itsOwn') }, { v: 'y', note: t('demo.compare.note.podmanMachine') }, 'n', 'n'] },
       ],
     },
     {
-      title: 'Interface',
+      title: t('demo.compare.group.interface'),
       rows: [
-        { label: 'Type', cells: ['Web GUI', 'Desktop app', 'Native app', 'Desktop app', 'Terminal (TUI)', 'Web UI (server)'] },
-        { label: 'Runs in the browser', cells: ['y', 'n', 'n', 'n', 'n', 'y'] },
-        { label: 'Themes / swappable editions', cells: ['y', 'n', 'n', '~', 'n', '~'] },
-        { label: 'Command palette', cells: [{ v: 'y', note: '⌘K / Ctrl-K' }, 'n', 'n', 'n', { v: '~', note: 'keyboard-driven' }, 'n'] },
+        { label: t('demo.compare.row.interfaceType'), cells: [t('demo.compare.cell.typeWebGui'), t('demo.compare.cell.typeDesktop'), t('demo.compare.cell.typeNative'), t('demo.compare.cell.typeDesktop'), t('demo.compare.cell.typeTerminal'), t('demo.compare.cell.typeWebServer')] },
+        { label: t('demo.compare.row.runsBrowser'), cells: ['y', 'n', 'n', 'n', 'n', 'y'] },
+        { label: t('demo.compare.row.themes'), cells: ['y', 'n', 'n', '~', 'n', '~'] },
+        { label: t('demo.compare.row.commandPalette'), cells: [{ v: 'y', note: '⌘K / Ctrl-K' }, 'n', 'n', 'n', { v: '~', note: t('demo.compare.note.keyboardDriven') }, 'n'] },
       ],
     },
     {
-      title: 'Features',
+      title: t('demo.compare.group.features'),
       rows: [
-        { label: 'Containers: logs · stats · inspect', cells: ['y', 'y', 'y', 'y', 'y', 'y'] },
-        { label: 'Images: pull · search · prune · tag', cells: ['y', 'y', 'y', 'y', '~', 'y'] },
-        { label: 'Compose: manage', cells: ['y', 'y', 'y', 'y', 'y', 'y'] },
-        { label: 'Compose: discover from disk', cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
-        { label: 'Dashboard: CPU/mem/disk history', cells: ['y', '~', '~', '~', '~', 'y'] },
+        { label: t('demo.compare.row.containers'), cells: ['y', 'y', 'y', 'y', 'y', 'y'] },
+        { label: t('demo.compare.row.images'), cells: ['y', 'y', 'y', 'y', '~', 'y'] },
+        { label: t('demo.compare.row.composeManage'), cells: ['y', 'y', 'y', 'y', 'y', 'y'] },
+        { label: t('demo.compare.row.composeDiscover'), cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
+        { label: t('demo.compare.row.dashboard'), cells: ['y', '~', '~', '~', '~', 'y'] },
       ],
     },
     {
-      title: 'AI & automation',
+      title: t('demo.compare.group.ai'),
       rows: [
-        { label: 'Built-in MCP server (drive via AI)', cells: [{ v: 'y', note: 'safety-gated' }, { v: '~', note: 'MCP Toolkit runs other servers' }, 'n', 'n', 'n', 'n'] },
-        { label: 'Secret masking + destructive grant', cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
-        { label: 'Audit log of AI actions', cells: ['y', 'n', 'n', 'n', 'n', { v: '~', note: 'Business edition' }] },
-        { label: 'Headless / scriptable', cells: [{ v: 'y', note: 'oriel mcp, CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, 'n', { v: 'y', note: 'HTTP API' }] },
+        { label: t('demo.compare.row.mcp'), cells: [{ v: 'y', note: t('demo.compare.note.safetyGated') }, { v: '~', note: t('demo.compare.note.mcpToolkit') }, 'n', 'n', 'n', 'n'] },
+        { label: t('demo.compare.row.secretMasking'), cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
+        { label: t('demo.compare.row.auditLog'), cells: ['y', 'n', 'n', 'n', 'n', { v: '~', note: t('demo.compare.note.businessEdition') }] },
+        { label: t('demo.compare.row.headless'), cells: [{ v: 'y', note: 'oriel mcp, CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, { v: '~', note: 'CLI' }, 'n', { v: 'y', note: 'HTTP API' }] },
       ],
     },
     {
-      title: 'Access & security',
+      title: t('demo.compare.group.access'),
       rows: [
-        { label: 'Runs locally, no server', cells: ['y', 'y', 'y', 'y', 'y', { v: 'n', note: 'it is the server' }] },
-        { label: 'Remote access', cells: [{ v: '~', note: 'reverse proxy + token, private net' }, 'n', 'n', '~', 'n', { v: 'y', note: 'built for it' }] },
+        { label: t('demo.compare.row.runsLocally'), cells: ['y', 'y', 'y', 'y', 'y', { v: 'n', note: t('demo.compare.note.itIsServer') }] },
+        { label: t('demo.compare.row.remoteAccess'), cells: [{ v: '~', note: t('demo.compare.note.reverseProxy') }, 'n', 'n', '~', 'n', { v: 'y', note: t('demo.compare.note.builtForIt') }] },
       ],
     },
     {
-      title: "Where Oriel is weaker, and what we'll do about it",
+      title: t('demo.compare.group.weaker'),
       honest: true,
       rows: [
-        { label: 'Windows', cells: [{ v: 'n', tag: 'demand' }, 'y', { v: 'n', note: 'macOS only' }, 'y', 'y', { v: 'y', note: 'server' }] },
-        { label: 'Native desktop app', cells: [{ v: 'n', tag: 'design', note: 'web UI on purpose' }, { v: 'y', note: 'Electron' }, { v: 'y', note: 'native' }, { v: 'y', note: 'Electron' }, { v: 'n', note: 'terminal' }, { v: 'n', note: 'web' }] },
-        { label: 'In-browser shell / exec', cells: [{ v: 'n', tag: 'road' }, 'y', 'y', 'y', 'y', 'y'] },
+        { label: 'Windows', cells: [{ v: 'n', tag: 'demand' }, 'y', { v: 'n', note: t('demo.compare.note.macosOnly') }, 'y', 'y', { v: 'y', note: t('demo.compare.note.server') }] },
+        { label: t('demo.compare.row.nativeApp'), cells: [{ v: 'n', tag: 'design', note: t('demo.compare.note.webUiPurpose') }, { v: 'y', note: 'Electron' }, { v: 'y', note: t('demo.compare.note.native') }, { v: 'y', note: 'Electron' }, { v: 'n', note: t('demo.compare.note.terminal') }, { v: 'n', note: t('demo.compare.note.web') }] },
+        { label: t('demo.compare.row.browserShell'), cells: [{ v: 'n', tag: 'road' }, 'y', 'y', 'y', 'y', 'y'] },
         { label: 'Kubernetes', cells: [{ v: 'n', tag: 'scope' }, 'y', 'y', 'y', 'n', 'y'] },
-        { label: 'Multi-host / clusters / teams', cells: [{ v: 'n', tag: 'design', note: 'single-operator, single-host' }, 'n', 'n', 'n', 'n', 'y'] },
-        { label: 'Maturity & ecosystem', cells: [{ v: 'New (2026)', note: 'small, moving fast' }, { v: 'Huge', note: 'industry default, extensions' }, { v: 'Growing', note: 'popular on Mac' }, { v: 'Red Hat-backed', note: 'extensions' }, { v: 'Popular OSS', note: 'big following' }, { v: 'Mature', note: 'large enterprise base' }] },
+        { label: t('demo.compare.row.multiHost'), cells: [{ v: 'n', tag: 'design', note: t('demo.compare.note.singleOperator') }, 'n', 'n', 'n', 'n', 'y'] },
+        { label: t('demo.compare.row.maturity'), cells: [{ v: t('demo.compare.cell.maturityNew'), note: t('demo.compare.note.smallMovingFast') }, { v: t('demo.compare.cell.maturityHuge'), note: t('demo.compare.note.industryDefault') }, { v: t('demo.compare.cell.maturityGrowing'), note: t('demo.compare.note.popularMac') }, { v: t('demo.compare.cell.maturityRedHat'), note: t('demo.compare.note.extensions') }, { v: t('demo.compare.cell.maturityOss'), note: t('demo.compare.note.bigFollowing') }, { v: t('demo.compare.cell.maturityMature'), note: t('demo.compare.note.largeEnterprise') }] },
       ],
     },
-  ]
+  ])
 
-  const TAGS = {
-    road: { label: 'on the roadmap', cls: 'road' },
-    design: { label: 'by design', cls: 'design' },
-    scope: { label: 'out of scope', cls: 'design' },
-    demand: { label: 'demand-gated', cls: 'demand' },
-  }
+  const TAGS = $derived({
+    road: { label: t('demo.compare.tag.road'), cls: 'road' },
+    design: { label: t('demo.compare.tag.design'), cls: 'design' },
+    scope: { label: t('demo.compare.tag.scope'), cls: 'design' },
+    demand: { label: t('demo.compare.tag.demand'), cls: 'demand' },
+  })
 
   function close() {
     compare.open = false
@@ -117,17 +119,17 @@
       role="dialog"
       tabindex="-1"
       aria-modal="true"
-      aria-label="Oriel compared to alternatives"
+      aria-label={t('demo.compare.dialogAria')}
       use:trapFocus
       in:scale={{ duration: 210, start: 0.97, opacity: 0, easing: cubicOut }}
       out:scale={{ duration: 130, start: 0.98, opacity: 0, easing: cubicOut }}
     >
       <header class="cmp-head">
         <div>
-          <h2>How Oriel compares</h2>
-          <p>The full breakdown, including where it loses. Tiers and figures drift; treat as a snapshot.</p>
+          <h2>{t('demo.compare.title')}</h2>
+          <p>{t('demo.compare.subtitle')}</p>
         </div>
-        <button class="cmp-x" aria-label="Close" onclick={close}>×</button>
+        <button class="cmp-x" aria-label={t('demo.compare.close')} onclick={close}>×</button>
       </header>
 
       <div class="cmp-scroll">
@@ -135,7 +137,7 @@
           <thead>
             <tr>
               <th class="rowhead"></th>
-              {#each tools as t}<th class:me={t === 'Oriel'}>{t}</th>{/each}
+              {#each tools as tool}<th class:me={tool === 'Oriel'}>{tool}</th>{/each}
             </tr>
           </thead>
           <tbody>
@@ -162,20 +164,20 @@
         </table>
       </div>
 
-      <p class="cmp-fn">* Idle RAM is the tool itself. Oriel, lazydocker, and Portainer drive the engine you already run (its RAM is separate); Docker Desktop, OrbStack, and Podman Desktop bundle a Linux VM, so theirs includes it. Figures are rough, vary by machine and settings, and drift over time.</p>
+      <p class="cmp-fn">{t('demo.compare.footnote')}</p>
 
       <footer class="cmp-foot">
         <div class="legend">
-          <span class="tag road">on the roadmap</span> building it
+          <span class="tag road">{t('demo.compare.tag.road')}</span> {t('demo.compare.legend.road')}
           <span class="sep">·</span>
-          <span class="tag design">by design</span> we deliberately won't
+          <span class="tag design">{t('demo.compare.tag.design')}</span> {t('demo.compare.legend.design')}
           <span class="sep">·</span>
-          <span class="tag demand">demand-gated</span> only if enough ask
+          <span class="tag demand">{t('demo.compare.tag.demand')}</span> {t('demo.compare.legend.demand')}
         </div>
         <div class="foot-actions">
-          <a href="https://github.com/ParadoxInfinite/oriel/blob/main/ROADMAP.md" target="_blank" rel="noreferrer">Roadmap ↗</a>
-          <a href="https://github.com/ParadoxInfinite/oriel/issues" target="_blank" rel="noreferrer">Wrong? Open an issue ↗</a>
-          <button class="cmp-done" onclick={close}>Done</button>
+          <a href="https://github.com/ParadoxInfinite/oriel/blob/main/ROADMAP.md" target="_blank" rel="noreferrer">{t('demo.compare.roadmapLink')}</a>
+          <a href="https://github.com/ParadoxInfinite/oriel/issues" target="_blank" rel="noreferrer">{t('demo.compare.issueLink')}</a>
+          <button class="cmp-done" onclick={close}>{t('demo.compare.done')}</button>
         </div>
       </footer>
     </div>
