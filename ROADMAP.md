@@ -7,13 +7,10 @@ way to push something up the list is to open an
 
 ## Up next
 
-- **In-browser container shell.** An interactive `exec` terminal into a running
-  container, straight from the UI, built on the existing exec-streaming seam.
-
-## After that
-
-- **Translations (i18n).** The keyboard/screen-reader accessibility pass has
-  shipped; localization is the remaining half, so the UI isn't English-only.
+- **More languages.** The translation framework shipped in 0.10.0; the next step
+  is real translations — contributed as plain JSON, see
+  [CONTRIBUTING](CONTRIBUTING.md) — and localizing the backend-generated messages
+  that still render in English.
 
 ## Further out
 
@@ -37,6 +34,8 @@ These aren't planned on their own. They happen only if the gate below is met.
 
 Highlights by release; the full history is in the [CHANGELOG](CHANGELOG.md).
 
+- **v0.10.0** · An in-browser shell into any running container, a translatable UI
+  (i18n) with on-demand language catalogs, and a Code of Conduct.
 - **v0.9.0** · Browser login for remote access (a session cookie over your private
   overlay), stable/edge update channels, the GUI as a loopback-only Linux
   container, and an audit log of AI actions.

@@ -85,12 +85,13 @@ Needs any Docker Engine–compatible runtime + the `docker` CLI. [Colima](https:
 ## Features
 
 - **Containers:** live CPU/mem, exit codes, bulk actions, streaming logs, full inspect.
+- **In-browser shell:** open an interactive terminal into any running container, straight from its details drawer.
 - **AI control (MCP):** any MCP client drives Docker/Colima through the same validated, secret-masked tools, with destructive actions behind a grant. [More ↓](#ai-control-mcp)
 - **Images:** pull with registry search, prune, one-click tag.
 - **Compose:** manage stacks, plus discover & deploy projects from disk.
 - **Dashboard:** CPU history, memory, disk, uptime/outage tracking.
 - **Command palette** (`⌘K`): fuzzy-run any action or jump to any view.
-- **Editions & themes:** swap the whole UI (Studio, or drop in your own), light/dark/system, custom accents.
+- **Editions, themes & languages:** swap the whole UI (Studio, or drop in your own), light/dark/system, custom accents, and a translatable interface (English ships; other languages load on demand).
 - **Light & live:** ~15–30 MB RAM, one SSE stream (no polling), checksum-verified self-update.
 
 ## How it compares
@@ -109,9 +110,7 @@ The usual ways to run containers on a Mac or Linux box, and where Oriel fits. (F
 
 It's the only one here an AI can drive directly, through the same checks the UI gives you. Reach for it over Docker Desktop / OrbStack (no paid license, bundled VM, or menu-bar app), over lazydocker (a real graphical UI, not a terminal one), or over Portainer (a binary you run for yourself, not a server to deploy and lock down).
 
-For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-host, in-browser shell), see the <a href="https://paradoxinfinite.github.io/oriel/#compare" target="_blank" rel="noopener">exhaustive comparison in the live demo</a>.
-
-> **Coming:** an in-browser shell and UI translations (i18n). [Roadmap](ROADMAP.md).
+For the full breakdown, including where Oriel loses (Windows, Kubernetes, multi-host), see the <a href="https://paradoxinfinite.github.io/oriel/#compare" target="_blank" rel="noopener">exhaustive comparison in the live demo</a>.
 
 ## AI control (MCP)
 

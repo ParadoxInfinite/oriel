@@ -25,6 +25,10 @@ host.** Through the API you can:
 - run `docker compose up` against any compose file on disk (`POST /api/stacks/up`);
 - **browse and open any directory** the user can read (`GET /api/fs/list`,
   `POST /api/fs/open`);
+- **open an interactive shell in any running container** and run arbitrary
+  commands in it (`GET /api/containers/{id}/shell`) — a UI-only feature gated by
+  the same loopback/token model as the rest of the API, never exposed over MCP,
+  and disablable in Settings → Container shell;
 - and, because the Docker daemon can mount the host filesystem and run
   privileged containers, escalate to full host control.
 
