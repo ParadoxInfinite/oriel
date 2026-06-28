@@ -1,4 +1,5 @@
 import { streamPost, apiGet, apiPost, sse } from './api.js'
+import { t, tn } from './locale.svelte.js'
 import { toast } from './toast.svelte.js'
 import { refreshContainers } from './containers.svelte.js'
 import { refreshImages, refreshVolumes, refreshNetworks } from './resources.svelte.js'
@@ -56,7 +57,7 @@ function finishEntry(o, ok, error) {
   o.done = true
   o.cancelling = false
   if (!ok) {
-    o.error = error || 'cancelled'
+    o.error = error || t('op.cancelled')
     return
   }
   const last = o.lines[o.lines.length - 1]
@@ -116,15 +117,15 @@ async function startJob(path, body, title, kind) {
 // sel: { containers, images, networks, cache, volumes } booleans.
 export function startSystemPrune(sel) {
   const q = new URLSearchParams(Object.fromEntries(Object.entries(sel).map(([k, v]) => [k, v ? 'true' : 'false'])))
-  return startJob(`/api/ops/system-prune?${q}`, null, 'Reclaiming disk space', 'system-prune')
+  return startJob(`/api/ops/system-prune?${q}`, null, t('op.systemPrune.title'), 'system-prune')
 }
 
 // items: [{ id, size }]. The server reports how much was reclaimed.
 export function startImagePrune(items) {
-  return startJob('/api/ops/image-prune', { items }, `Pruning ${items.length} image${items.length === 1 ? '' : 's'}`, 'image-prune')
+  return startJob('/api/ops/image-prune', { items }, tn('op.imagePrune.titleN', items.length), 'image-prune')
 }
 export function startVolumePrune(items) {
-  return startJob('/api/ops/volume-prune', { items }, `Pruning ${items.length} volume${items.length === 1 ? '' : 's'}`, 'volume-prune')
+  return startJob('/api/ops/volume-prune', { items }, tn('op.volumePrune.titleN', items.length), 'volume-prune')
 }
 
 // cancelOp asks the server to stop a background job; its "done" event follows.

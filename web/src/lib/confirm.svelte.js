@@ -1,11 +1,13 @@
 // Global confirmation gate. Resolves true/false so call sites read:
 // `if (!(await confirm({...}))) return`. When `checkbox` is given it instead
 // resolves `{ ok, checked }` (e.g. for a "Don't ask again" option).
+import { t } from './locale.svelte.js'
+
 export const confirmState = $state({
   open: false,
   title: '',
   message: '',
-  confirmLabel: 'Confirm',
+  confirmLabel: t('common.confirm'),
   tone: 'danger', // 'danger' (red) | 'warn' (amber) | 'accent'; drives icon + button color
   checkbox: null, // label string, or null for the plain boolean form
   checked: false,
@@ -21,9 +23,9 @@ export function confirm(opts = {}) {
     resolver = null
     prev(false)
   }
-  confirmState.title = opts.title ?? 'Are you sure?'
+  confirmState.title = opts.title ?? t('confirm.defaultTitle')
   confirmState.message = opts.message ?? ''
-  confirmState.confirmLabel = opts.confirmLabel ?? 'Confirm'
+  confirmState.confirmLabel = opts.confirmLabel ?? t('common.confirm')
   // `tone` is the source of truth; `danger:false` stays supported as a shorthand
   // for the neutral accent tone (back-compat with existing call sites).
   confirmState.tone = opts.tone ?? (opts.danger === false ? 'accent' : 'danger')

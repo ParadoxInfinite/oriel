@@ -126,6 +126,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("PUT /api/config", s.handlePutConfig)
 	s.mux.HandleFunc("GET /api/themes", s.handleListThemes)
 	s.mux.HandleFunc("GET /api/themes/{file}", s.handleServeTheme)
+	s.mux.HandleFunc("GET /api/i18n", s.handleI18nManifest)
+	s.mux.HandleFunc("GET /api/i18n/{locale}", s.handleI18nCatalog)
 	s.mux.HandleFunc("GET /api/update", s.handleUpdateCheck)
 	s.mux.HandleFunc("POST /api/update/apply", s.handleUpdateApply)
 	s.mux.HandleFunc("POST /api/update/restart", s.handleUpdateRestart)

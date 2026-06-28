@@ -1,5 +1,5 @@
 <script>
-  import { fmt, registerEscape, trapFocus } from '../../../platform/index.js'
+  import { fmt, registerEscape, trapFocus, t } from '../../../platform/index.js'
 
   // items: [{ id, primary, secondary?, size }]. onPrune receives the chosen items.
   let { title, note = '', items, onClose, onPrune } = $props()
@@ -31,14 +31,14 @@
 </script>
 
 <div class="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm" role="presentation" onclick={(e) => e.target === e.currentTarget && !busy && onClose()}>
-  <div class="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label="Prune preview" tabindex="-1" use:trapFocus>
+  <div class="flex max-h-[82vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--panel)] shadow-[var(--shadow-lg)]" role="dialog" aria-modal="true" aria-label={t('prune.preview.aria')} tabindex="-1" use:trapFocus>
     <div class="flex items-center justify-between gap-3 border-b border-[var(--border)] px-5 py-3.5">
       <div>
         <h2 class="text-[14px] font-semibold tracking-tight">{title}</h2>
         {#if note}<p class="mt-0.5 text-xs text-[var(--text-3)]">{note}</p>{/if}
       </div>
       {#if items.length}
-        <button class="btn btn-ghost btn-sm shrink-0" onclick={toggleAll}>{allOn ? 'Deselect all' : 'Select all'}</button>
+        <button class="btn btn-ghost btn-sm shrink-0" onclick={toggleAll}>{allOn ? t('prune.preview.deselectAll') : t('prune.preview.selectAll')}</button>
       {/if}
     </div>
 
@@ -53,16 +53,16 @@
           <span class="mono shrink-0 text-xs text-[var(--text-2)]">{fmt.bytes(it.size)}</span>
         </label>
       {:else}
-        <div class="px-5 py-12 text-center text-sm text-[var(--text-2)]">Nothing to prune, all clean.</div>
+        <div class="px-5 py-12 text-center text-sm text-[var(--text-2)]">{t('prune.preview.empty')}</div>
       {/each}
     </div>
 
     <div class="flex items-center justify-between gap-3 border-t border-[var(--border)] px-5 py-3">
-      <span class="text-xs text-[var(--text-2)]">{chosen.length} of {items.length} · <span class="mono font-medium text-[var(--green)]">{fmt.bytes(total)}</span> reclaimable</span>
+      <span class="text-xs text-[var(--text-2)]">{t('prune.preview.count', { chosen: chosen.length, total: items.length })} · <span class="mono font-medium text-[var(--green)]">{fmt.bytes(total)}</span> {t('prune.preview.reclaimable')}</span>
       <div class="flex gap-2">
-        <button class="btn btn-default btn-sm" onclick={onClose} disabled={busy}>Cancel</button>
+        <button class="btn btn-default btn-sm" onclick={onClose} disabled={busy}>{t('common.cancel')}</button>
         <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick={run} disabled={busy || chosen.length === 0}>
-          {busy ? 'Starting…' : `Prune ${chosen.length}`}
+          {busy ? t('prune.preview.starting') : t('prune.preview.submit', { count: chosen.length })}
         </button>
       </div>
     </div>

@@ -1,17 +1,19 @@
 <script>
   // Maps a docker container/compose state to a labelled status pill.
+  import { t } from '../../../platform/index.js'
+
   let { state } = $props()
 
-  const MAP = {
-    running: { cls: 'on', label: 'Running' },
-    exited: { cls: 'off', label: 'Exited' },
-    created: { cls: 'off', label: 'Created' },
-    paused: { cls: 'warn', label: 'Paused' },
-    restarting: { cls: 'warn', label: 'Restarting' },
-    removing: { cls: 'warn', label: 'Removing' },
-    dead: { cls: 'bad', label: 'Dead' },
-  }
-  const m = $derived(MAP[state] ?? { cls: 'off', label: state || 'Unknown' })
+  const MAP = $derived({
+    running: { cls: 'on', label: t('status.running') },
+    exited: { cls: 'off', label: t('status.exited') },
+    created: { cls: 'off', label: t('status.created') },
+    paused: { cls: 'warn', label: t('status.paused') },
+    restarting: { cls: 'warn', label: t('status.restarting') },
+    removing: { cls: 'warn', label: t('status.removing') },
+    dead: { cls: 'bad', label: t('status.dead') },
+  })
+  const m = $derived(MAP[state] ?? { cls: 'off', label: state || t('status.unknown') })
 </script>
 
 <span class="pill {m.cls}"><span class="dot"></span>{m.label}</span>

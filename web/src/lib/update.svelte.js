@@ -1,6 +1,7 @@
 // Lazy, run-once update check, the backend pings GitHub (cached) only when asked.
 // Self-update (apply + restart) is offered only for service-managed installs.
 import { apiGet, apiPost } from './api.js'
+import { t } from './locale.svelte.js'
 import { self } from './self.svelte.js'
 import { confirm } from './confirm.svelte.js'
 
@@ -85,7 +86,7 @@ export async function applyUpdate() {
       update.phase = 'done'
       return true
     }
-    update.error = d?.message || 'Already up to date.'
+    update.error = d?.message || t('update.alreadyUpToDate')
     update.phase = ''
     return false
   } catch (e) {
@@ -107,7 +108,7 @@ export async function restartService() {
     // "restart scheduled". A throw is a genuine error (e.g. not managed).
     await apiPost('/api/update/restart')
   } catch (e) {
-    update.error = e.message || 'Restart failed'
+    update.error = e.message || t('update.restartFailed')
     update.phase = ''
     return
   }
@@ -135,11 +136,11 @@ export function canSelfUpdate() {
 // Settings button and the siderail pill so both hit the same gate.
 export async function promptUpdate() {
   const res = await confirm({
-    title: 'Update Oriel?',
-    message: `Download v${update.latest}, verify its checksum, and replace the binary. Oriel must restart to apply.`,
-    confirmLabel: 'Update',
+    title: t('update.confirm.title'),
+    message: t('update.confirm.message', { version: update.latest }),
+    confirmLabel: t('update.confirm.action'),
     danger: false,
-    checkbox: 'Restart automatically when done',
+    checkbox: t('update.confirm.restartCheckbox'),
     checked: true,
   })
   if (!res || !res.ok) return

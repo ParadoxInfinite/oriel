@@ -2,6 +2,7 @@
   import { confirmState, resolveConfirm } from '../lib/confirm.svelte.js'
   import { registerEscape } from '../lib/modalStack.svelte.js'
   import { trapFocus } from '../lib/focustrap.js'
+  import { t } from '../platform/index.js'
 
   let confirmEl = $state(null)
 
@@ -72,7 +73,7 @@
           class="rounded-lg border border-border bg-surface px-3.5 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg"
           onclick={() => resolveConfirm(false)}
         >
-          Cancel
+          {t('common.cancel')}
         </button>
         <button
           bind:this={confirmEl}

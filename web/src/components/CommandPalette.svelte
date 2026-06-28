@@ -13,7 +13,7 @@
   } from '../lib/resources.svelte.js'
   import { navigate, VIEWS } from '../lib/nav.svelte.js'
   import { stacks, refreshStacks } from '../lib/stacks.svelte.js'
-  import { stackOp } from '../platform/index.js'
+  import { stackOp, t, tn } from '../platform/index.js'
   import { fuzzyScore } from '../lib/fuzzy.js'
   import { invoke } from '../lib/invoke.js'
   import { confirm } from '../lib/confirm.svelte.js'
@@ -43,13 +43,12 @@
   function containerActions(c) {
     const running = c.state === 'running'
     const acts = []
-    if (!running) acts.push({ verb: 'Start', tool: 'container.start', args: { id: c.id } })
-    if (running) acts.push({ verb: 'Stop', tool: 'container.stop', args: { id: c.id } })
-    if (running) acts.push({ verb: 'Restart', tool: 'container.restart', args: { id: c.id } })
-    acts.push({ verb: 'Remove', tool: 'container.remove', args: { id: c.id, force: running }, danger: true })
+    if (!running) acts.push({ verb: t('action.start'), label: t('palette.startContainer'), tool: 'container.start', args: { id: c.id } })
+    if (running) acts.push({ verb: t('action.stop'), label: t('palette.stopContainer'), tool: 'container.stop', args: { id: c.id } })
+    if (running) acts.push({ verb: t('action.restart'), label: t('palette.restartContainer'), tool: 'container.restart', args: { id: c.id } })
+    acts.push({ verb: t('action.remove'), label: t('palette.removeContainer'), tool: 'container.remove', args: { id: c.id, force: running }, danger: true })
     return acts.map((a) => ({
       ...a,
-      label: `${a.verb} container`,
       target: c.name,
       key: `${a.tool}:${c.id}`,
     }))
@@ -62,8 +61,8 @@
     // last tag). Removing by bare id errors on a multi-tagged image.
     return [
       {
-        verb: 'Remove',
-        label: 'Remove image',
+        verb: t('action.remove'),
+        label: t('palette.removeImage'),
         target: imageName(img),
         tool: 'image.remove',
         args: { id: tagged ? tag : img.id, force: img.containers > 0 },
@@ -76,8 +75,8 @@
   function volumeActions(v) {
     return [
       {
-        verb: 'Remove',
-        label: 'Remove volume',
+        verb: t('action.remove'),
+        label: t('palette.removeVolume'),
         target: v.name,
         tool: 'volume.remove',
         args: { name: v.name, force: false },
@@ -92,8 +91,8 @@
     if (DEFAULT_NETWORKS.has(n.name)) return []
     return [
       {
-        verb: 'Remove',
-        label: 'Remove network',
+        verb: t('action.remove'),
+        label: t('palette.removeNetwork'),
         target: n.name,
         tool: 'network.remove',
         args: { id: n.id },
@@ -107,23 +106,22 @@
   // same live progress + cancel as the Stacks view buttons. Marked with `op`.
   function stackActions(s) {
     const acts = []
-    if (s.running < s.total) acts.push({ verb: 'Start', op: 'start' })
-    if (s.running > 0) acts.push({ verb: 'Stop', op: 'stop' })
-    acts.push({ verb: 'Restart', op: 'restart' })
-    acts.push({ verb: 'Down', op: 'down', danger: true })
+    if (s.running < s.total) acts.push({ verb: t('action.start'), label: t('palette.startStack'), op: 'start' })
+    if (s.running > 0) acts.push({ verb: t('action.stop'), label: t('palette.stopStack'), op: 'stop' })
+    acts.push({ verb: t('action.restart'), label: t('palette.restartStack'), op: 'restart' })
+    acts.push({ verb: t('palette.down'), label: t('palette.downStack'), op: 'down', danger: true })
     return acts.map((a) => ({
       ...a,
-      label: `${a.verb} stack`,
       target: s.name,
       key: `stack.${a.op}:${s.name}`,
     }))
   }
 
   // Entity-free maintenance actions, always available.
-  const globalActions = [
-    { verb: 'Prune', label: 'Prune unused images', target: 'dangling images', tool: 'image.prune', args: {}, danger: true, key: 'image.prune' },
-    { verb: 'Prune', label: 'Prune unused volumes', target: 'unused volumes', tool: 'volume.prune', args: {}, danger: true, key: 'volume.prune' },
-  ]
+  const globalActions = $derived([
+    { verb: t('palette.prune'), label: t('palette.pruneImages'), target: t('palette.danglingImages'), tool: 'image.prune', args: {}, danger: true, key: 'image.prune' },
+    { verb: t('palette.prune'), label: t('palette.pruneVolumes'), target: t('palette.unusedVolumes'), tool: 'volume.prune', args: {}, danger: true, key: 'volume.prune' },
+  ])
 
   // Navigation entries carry a `nav` payload instead of a tool: they move the
   // active view rather than invoke anything. Reads with no good toast form (logs,
@@ -132,17 +130,18 @@
     return [
       {
         nav: { view: 'Containers', target: { kind: 'container', container: c, open: 'logs' } },
-        label: 'View logs',
+        label: t('palette.viewLogs'),
         target: c.name,
         key: `logs:${c.id}`,
       },
     ]
   }
-  const viewJumps = VIEWS.map((v) => ({ nav: { view: v }, label: `Go to ${v}`, target: '', key: `nav:${v}` }))
-  const readJumps = [
-    { nav: { view: 'Dashboard' }, label: 'Disk usage', target: 'dashboard', key: 'nav:disk' },
-    { nav: { view: 'Dashboard' }, label: 'Colima status', target: 'dashboard', key: 'nav:colima' },
-  ]
+  const viewLabel = (v) => t(`nav.${v.toLowerCase()}`)
+  const viewJumps = $derived(VIEWS.map((v) => ({ nav: { view: v }, label: t('palette.goTo', { view: viewLabel(v) }), target: '', key: `nav:${v}` })))
+  const readJumps = $derived([
+    { nav: { view: 'Dashboard' }, label: t('palette.diskUsage'), target: 'dashboard', key: 'nav:disk' },
+    { nav: { view: 'Dashboard' }, label: t('palette.colimaStatus'), target: 'dashboard', key: 'nav:colima' },
+  ])
 
   const items = $derived([
     ...containers.list.flatMap(containerActions),
@@ -193,13 +192,13 @@
   })
 
   function confirmMessage(it) {
-    if (it.tool === 'image.prune') return 'All dangling images will be permanently removed.'
-    if (it.tool === 'volume.prune') return 'All unused volumes will be permanently removed.'
-    if (it.op === 'down') return `All containers in “${it.target}” will be stopped and removed.`
+    if (it.tool === 'image.prune') return t('palette.confirm.pruneImages')
+    if (it.tool === 'volume.prune') return t('palette.confirm.pruneVolumes')
+    if (it.op === 'down') return t('palette.confirm.stackDown', { name: it.target })
     if (it.tool === 'container.remove' && it.args.force) {
-      return `“${it.target}” is running. It will be force-stopped, then permanently removed.`
+      return t('palette.confirm.containerRemoveRunning', { name: it.target })
     }
-    return `“${it.target}” will be permanently removed.`
+    return t('palette.confirm.removeDefault', { name: it.target })
   }
 
   function refreshAfter(tool) {
@@ -218,7 +217,7 @@
     }
     if (it.op) {
       if (it.danger) {
-        const ok = await confirm({ title: `${it.verb} stack?`, message: confirmMessage(it), confirmLabel: it.verb })
+        const ok = await confirm({ title: t('palette.confirmTitle', { action: it.label }), message: confirmMessage(it), confirmLabel: it.verb })
         if (!ok) return
       }
       // Streams in the op tray (cancellable), same as the Stacks view buttons.
@@ -227,13 +226,13 @@
     }
     if (it.danger) {
       const ok = await confirm({
-        title: `${it.label}?`,
+        title: t('palette.confirmTitle', { action: it.label }),
         message: confirmMessage(it),
         confirmLabel: it.verb,
       })
       if (!ok) return
     }
-    await invoke(it.tool, it.args, { success: `${it.verb} · ${it.target}` })
+    await invoke(it.tool, it.args, { success: t('common.opSuccess', { verb: it.verb, name: it.target }) })
     refreshAfter(it.tool)
   }
 
@@ -261,7 +260,7 @@
       class="w-full max-w-lg overflow-hidden rounded-[var(--overlay-radius)] border border-border bg-surface shadow-[var(--overlay-shadow)]"
       role="dialog"
       aria-modal="true"
-      aria-label="Command palette"
+      aria-label={t('palette.ariaLabel')}
       tabindex="-1"
       use:trapFocus
     >
@@ -269,16 +268,16 @@
         bind:this={inputEl}
         bind:value={query}
         onkeydown={onKeydown}
-        placeholder="Run a command…  (e.g. stop postgres)"
+        placeholder={t('palette.placeholder')}
         class="w-full bg-transparent px-4 py-3.5 text-sm outline-none placeholder:text-muted"
       />
       <div class="max-h-80 overflow-auto border-t border-border">
         {#if !query.trim()}
           <div class="px-4 py-6 text-center text-sm text-muted">
-            Type to search actions across containers, images, volumes &amp; networks
+            {t('palette.hint')}
           </div>
         {:else if filtered.length === 0}
-          <div class="px-4 py-6 text-center text-sm text-muted">No matching actions</div>
+          <div class="px-4 py-6 text-center text-sm text-muted">{t('palette.noResults')}</div>
         {:else}
           {#each filtered as it, i (it.key)}
             <button
@@ -296,8 +295,8 @@
       <div
         class="flex items-center justify-between border-t border-border px-4 py-2 text-[11px] text-muted"
       >
-        <span>↑↓ navigate · ↵ run · esc close</span>
-        <span>{filtered.length} actions</span>
+        <span>{t('palette.footerHelp')}</span>
+        <span>{tn('palette.actionsCount', filtered.length)}</span>
       </div>
     </div>
   </div>

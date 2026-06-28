@@ -1,10 +1,10 @@
 <script>
-  import { baseName } from '../../../platform/index.js'
+  import { baseName, t } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
 
   // `field` is a platform PathField instance; `onEnter` fires on Enter with no
   // suggestion highlighted (i.e. "accept what I typed").
-  let { field, placeholder = '/absolute/path', onEnter } = $props()
+  let { field, placeholder = t('path.placeholder'), onEnter } = $props()
 
   let el = $state(null)
   let dropUp = $state(false)
