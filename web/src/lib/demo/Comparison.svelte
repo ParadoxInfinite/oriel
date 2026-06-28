@@ -64,6 +64,7 @@
         { label: t('demo.compare.row.composeManage'), cells: ['y', 'y', 'y', 'y', 'y', 'y'] },
         { label: t('demo.compare.row.composeDiscover'), cells: ['y', 'n', 'n', 'n', 'n', 'n'] },
         { label: t('demo.compare.row.dashboard'), cells: ['y', '~', '~', '~', '~', 'y'] },
+        { label: t('demo.compare.row.browserShell'), cells: ['y', 'y', 'y', 'y', 'y', 'y'] },
       ],
     },
     {
@@ -88,7 +89,6 @@
       rows: [
         { label: 'Windows', cells: [{ v: 'n', tag: 'demand' }, 'y', { v: 'n', note: t('demo.compare.note.macosOnly') }, 'y', 'y', { v: 'y', note: t('demo.compare.note.server') }] },
         { label: t('demo.compare.row.nativeApp'), cells: [{ v: 'n', tag: 'design', note: t('demo.compare.note.webUiPurpose') }, { v: 'y', note: 'Electron' }, { v: 'y', note: t('demo.compare.note.native') }, { v: 'y', note: 'Electron' }, { v: 'n', note: t('demo.compare.note.terminal') }, { v: 'n', note: t('demo.compare.note.web') }] },
-        { label: t('demo.compare.row.browserShell'), cells: [{ v: 'n', tag: 'road' }, 'y', 'y', 'y', 'y', 'y'] },
         { label: 'Kubernetes', cells: [{ v: 'n', tag: 'scope' }, 'y', 'y', 'y', 'n', 'y'] },
         { label: t('demo.compare.row.multiHost'), cells: [{ v: 'n', tag: 'design', note: t('demo.compare.note.singleOperator') }, 'n', 'n', 'n', 'n', 'y'] },
         { label: t('demo.compare.row.maturity'), cells: [{ v: t('demo.compare.cell.maturityNew'), note: t('demo.compare.note.smallMovingFast') }, { v: t('demo.compare.cell.maturityHuge'), note: t('demo.compare.note.industryDefault') }, { v: t('demo.compare.cell.maturityGrowing'), note: t('demo.compare.note.popularMac') }, { v: t('demo.compare.cell.maturityRedHat'), note: t('demo.compare.note.extensions') }, { v: t('demo.compare.cell.maturityOss'), note: t('demo.compare.note.bigFollowing') }, { v: t('demo.compare.cell.maturityMature'), note: t('demo.compare.note.largeEnterprise') }] },
@@ -97,7 +97,6 @@
   ])
 
   const TAGS = $derived({
-    road: { label: t('demo.compare.tag.road'), cls: 'road' },
     design: { label: t('demo.compare.tag.design'), cls: 'design' },
     scope: { label: t('demo.compare.tag.scope'), cls: 'design' },
     demand: { label: t('demo.compare.tag.demand'), cls: 'demand' },
@@ -168,8 +167,6 @@
 
       <footer class="cmp-foot">
         <div class="legend">
-          <span class="tag road">{t('demo.compare.tag.road')}</span> {t('demo.compare.legend.road')}
-          <span class="sep">·</span>
           <span class="tag design">{t('demo.compare.tag.design')}</span> {t('demo.compare.legend.design')}
           <span class="sep">·</span>
           <span class="tag demand">{t('demo.compare.tag.demand')}</span> {t('demo.compare.legend.demand')}

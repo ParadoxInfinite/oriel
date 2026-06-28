@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-06-28
+
+The interface becomes translatable, and you can open a shell straight into a
+running container.
+
+### Added
+
+- **In-browser container shell.** Open an interactive terminal into a running
+  container from its details drawer (a new **Shell** tab). It runs over a
+  WebSocket to the backend, which attaches a PTY to a `docker exec`. UI-only and
+  gated by the same access model as the rest of the API; it is not exposed over
+  MCP, and can be turned off in **Settings → Container shell**. The terminal
+  (xterm.js) is fetched on demand and cached, so it adds nothing to the binary or
+  the main bundle.
+- **Translatable UI (i18n).** Every panel, dialog, and message can be localized.
+  English is bundled and is the per-key fallback, so a partial translation just
+  shows English for what it leaves out. Choose a language in **Settings →
+  Language**. Other languages are JSON catalogs fetched on demand from a CDN, so a
+  translation reaches users without a new release; only English is published so
+  far. The live demo is translated too, with its own language switcher.
+- **Translation contributions.** A guide in [CONTRIBUTING.md](CONTRIBUTING.md), a
+  catalog validator that runs in CI (`npm run check-i18n`), and an issue template,
+  so new languages can be submitted as plain JSON pull requests.
+- **Code of Conduct** (Contributor Covenant 2.1).
+
 ## [0.9.0] - 2026-06-27
 
 Self-hosting grows up: log into the GUI from a browser over your private network,
