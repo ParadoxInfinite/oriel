@@ -150,6 +150,8 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/containers", s.handleContainers)
 	s.mux.HandleFunc("GET /api/containers/{id}/inspect", s.handleContainerInspect)
 	s.mux.HandleFunc("GET /api/containers/{id}/logs", s.handleContainerLogs)
+	s.mux.HandleFunc("GET /api/containers/{id}/shell", s.handleContainerShell)
+	s.mux.HandleFunc("GET /api/term/{file}", s.handleTermAsset)
 	s.mux.HandleFunc("GET /api/containers/{id}/logs/before", s.handleContainerLogsBefore)
 
 	// Compose stacks + discovery.

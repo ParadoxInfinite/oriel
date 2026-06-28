@@ -35,6 +35,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		SessionTTLMinutes *int    `json:"sessionTTLMinutes"`
 		LoginFreeAttempts *int    `json:"loginFreeAttempts"`
 		UpdateChannel     *string `json:"updateChannel"` // "stable" | "edge"
+		ShellDisabled     *bool   `json:"shellDisabled"` // turn the container shell off/on
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid body"})
@@ -70,6 +71,9 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 			channelChanged = *body.UpdateChannel != c.UpdateChannel
 			c.UpdateChannel = *body.UpdateChannel
 		}
+		if body.ShellDisabled != nil {
+			c.ShellDisabled = *body.ShellDisabled
+		}
 		cur = *c
 	}); err != nil {
 		writeJSON(w, http.StatusInternalServerError, errorBody(err))
@@ -93,6 +97,7 @@ func (s *Server) handlePutConfig(w http.ResponseWriter, r *http.Request) {
 		"sessionTTLMinutes": cur.SessionTTLMinutes,
 		"loginFreeAttempts": cur.LoginFreeAttempts,
 		"updateChannel":     normChannel(cur.UpdateChannel),
+		"shell":             !cur.ShellDisabled,
 		"restarting":        restarting,
 	})
 	if restarting {

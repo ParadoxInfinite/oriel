@@ -1,6 +1,7 @@
 <script>
   import { tick } from 'svelte'
-  import { apiGet, fmt, LogsController, registerEscape, trapFocus, t } from '../../../platform/index.js'
+  import { apiGet, fmt, LogsController, registerEscape, trapFocus, t, self } from '../../../platform/index.js'
+  import ContainerShell from './ContainerShell.svelte'
   import Icon from './Icon.svelte'
   import StatusPill from './StatusPill.svelte'
 
@@ -8,7 +9,19 @@
 
   $effect(() => registerEscape(onClose))
 
-  let tab = $state('logs') // 'logs' | 'inspect'
+  let tab = $state('logs') // 'logs' | 'inspect' | 'shell'
+
+  // The shell tab shows only for a running container when the backend build has
+  // it enabled. If it disappears (container stops), fall back to logs.
+  const shellOn = $derived(self.shell && container.state === 'running')
+  const tabs = $derived([
+    ['logs', t('drawer.tab.logs')],
+    ['inspect', t('drawer.tab.inspect')],
+    ...(shellOn ? [['shell', t('drawer.tab.shell')]] : []),
+  ])
+  $effect(() => {
+    if (tab === 'shell' && !shellOn) tab = 'logs'
+  })
 
   // ── Logs (100 latest + lazy older, memory-bounded) ─────────────────────────
   const logs = new LogsController()
@@ -114,7 +127,7 @@
     </div>
 
     <div class="flex shrink-0 gap-1 border-b border-[var(--border)] bg-[var(--panel)] px-3">
-      {#each [['logs', t('drawer.tab.logs')], ['inspect', t('drawer.tab.inspect')]] as [id, label]}
+      {#each tabs as [id, label]}
         <button class="relative px-3 py-2 text-[13px] font-medium transition-colors {tab === id ? 'text-[var(--accent)]' : 'text-[var(--text-2)] hover:text-[var(--text)]'}" onclick={() => (tab = id)}>
           {label}
           {#if tab === id}<span class="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[var(--accent)]"></span>{/if}
@@ -150,7 +163,7 @@
       {#if paused}
         <button class="shrink-0 border-t border-[var(--border)] bg-[var(--panel-2)] py-1.5 text-center text-xs text-[var(--accent)]" onclick={() => { paused = false; logs.setFollowing(true); scroller.scrollTop = scroller.scrollHeight }}>{t('drawer.logs.jumpToLatest')}</button>
       {/if}
-    {:else}
+    {:else if tab === 'inspect'}
       <div class="min-h-0 flex-1 overflow-auto p-5">
         {#if inspectErr}
           <div class="card border-[color-mix(in_srgb,var(--red)_40%,var(--border))] p-4 text-sm text-[var(--red)]">{inspectErr}</div>
@@ -208,6 +221,8 @@
           {/if}
         {/if}
       </div>
+    {:else}
+      <ContainerShell {container} />
     {/if}
   </div>
 </div>
