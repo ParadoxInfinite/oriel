@@ -1,5 +1,5 @@
 <script>
-  import { containers, refreshContainers, stats, invoke, confirm, fmt, createSort, sortRows, takeTarget } from '../../../platform/index.js'
+  import { containers, refreshContainers, stats, invoke, confirm, fmt, createSort, sortRows, takeTarget, t, tn } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import StatusPill from '../lib/StatusPill.svelte'
   import SortHeader from '../lib/SortHeader.svelte'
@@ -25,14 +25,15 @@
 
   const sort = createSort('name')
   // `w` feeds the colgroup so numeric columns stay tight and Name absorbs the rest.
-  const columns = [
-    { label: 'Name', key: 'name', get: (c) => c.name, w: null },
-    { label: 'Status', key: 'state', get: (c) => c.state, w: '150px' },
-    { label: 'CPU', key: 'cpu', get: (c) => stats.byId[c.id]?.cpu ?? -1, right: true, w: '92px' },
-    { label: 'Memory', key: 'memory', get: (c) => stats.byId[c.id]?.mem ?? -1, right: true, w: '104px' },
-    { label: 'Ports', w: '150px' },
+  // Derived so labels re-translate when the locale switches.
+  const columns = $derived([
+    { label: t('containers.col.name'), key: 'name', get: (c) => c.name, w: null },
+    { label: t('containers.col.status'), key: 'state', get: (c) => c.state, w: '150px' },
+    { label: t('containers.col.cpu'), key: 'cpu', get: (c) => stats.byId[c.id]?.cpu ?? -1, right: true, w: '92px' },
+    { label: t('containers.col.memory'), key: 'memory', get: (c) => stats.byId[c.id]?.mem ?? -1, right: true, w: '104px' },
+    { label: t('containers.col.ports'), w: '150px' },
     { label: '', w: '188px' },
-  ]
+  ])
 
   const filtered = $derived(
     containers.list.filter((c) => {
@@ -55,19 +56,19 @@
       .sort((a, b) => (!a.name ? 1 : !b.name ? -1 : a.name.localeCompare(b.name)))
   })
 
-  async function act(e, c, tool, verb) {
+  async function act(e, c, tool, verbKey) {
     e.stopPropagation()
     const isRunning = c.state === 'running'
     if (tool === 'container.remove') {
       const ok = await confirm({
-        title: 'Remove container?',
-        message: `“${c.name}” will be permanently removed.${isRunning ? ' It is running and will be force-stopped first.' : ''}`,
-        confirmLabel: 'Remove',
+        title: t('containers.confirm.remove.title'),
+        message: t('containers.confirm.remove.msg', { name: c.name }) + (isRunning ? t('containers.confirm.remove.running') : ''),
+        confirmLabel: t('action.remove'),
       })
       if (!ok) return
     }
     const args = tool === 'container.remove' ? { id: c.id, force: isRunning } : { id: c.id }
-    await invoke(tool, args, { success: `${verb} · ${c.name}` })
+    await invoke(tool, args, { success: t('common.opSuccess', { verb: t(verbKey), name: c.name }) })
     refreshContainers()
   }
 
@@ -83,20 +84,20 @@
   function toggleAll() {
     selectedIds = allSelected ? new Set() : new Set(rows.map((c) => c.id))
   }
-  async function bulk(tool, verb, predicate) {
+  async function bulk(tool, verbKey, predicate) {
     const targets = rows.filter((c) => selectedIds.has(c.id) && predicate(c))
     if (!targets.length) return
     if (tool === 'container.remove') {
       const ok = await confirm({
-        title: `Remove ${targets.length} container(s)?`,
-        message: `${targets.length} selected container(s) will be permanently removed. Running ones are force-stopped first.`,
-        confirmLabel: 'Remove',
+        title: tn('containers.confirm.removeN.title', targets.length),
+        message: tn('containers.confirm.removeN.msg', targets.length),
+        confirmLabel: t('action.remove'),
       })
       if (!ok) return
     }
     for (const c of targets) {
       const args = tool === 'container.remove' ? { id: c.id, force: c.state === 'running' } : { id: c.id }
-      await invoke(tool, args, { success: `${verb} · ${c.name}` })
+      await invoke(tool, args, { success: t('common.opSuccess', { verb: t(verbKey), name: c.name }) })
     }
     selectedIds = new Set()
     refreshContainers()
@@ -118,23 +119,23 @@
   <div class="rise flex flex-wrap items-center gap-3">
     <div class="relative w-full sm:w-auto">
       <Icon name="box" size={15} class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-3)]" />
-      <input bind:value={filter} placeholder="Search containers…" class="input has-icon w-full sm:w-72" />
+      <input bind:value={filter} placeholder={t('containers.search.placeholder')} class="input has-icon w-full sm:w-72" />
     </div>
-    <span class="text-[13px] text-[var(--text-3)]">{filtered.length} of {containers.list.length}</span>
+    <span class="text-[13px] text-[var(--text-3)]">{t('containers.count', { shown: filtered.length, total: containers.list.length })}</span>
     <button class="btn {groupByStack ? 'btn-primary' : 'btn-default'} ml-auto btn-sm" onclick={() => (groupByStack = !groupByStack)}>
-      <Icon name="layers" size={14} /> Group by stack
+      <Icon name="layers" size={14} /> {t('containers.groupByStack')}
     </button>
   </div>
 
   {#if selectedIds.size}
     <div class="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--accent)] bg-[var(--accent-tint)] px-3 py-2">
-      <span class="text-[13px] font-medium text-[var(--accent)]">{selectedIds.size} selected</span>
+      <span class="text-[13px] font-medium text-[var(--accent)]">{t('containers.selected', { count: selectedIds.size })}</span>
       <div class="ml-auto flex gap-1.5">
-        <button class="btn btn-default btn-sm" onclick={() => bulk('container.start', 'Started', (c) => c.state === 'exited' || c.state === 'created')}><Icon name="play" size={13} /> Start</button>
-        <button class="btn btn-default btn-sm" onclick={() => bulk('container.stop', 'Stopped', (c) => c.state === 'running')}><Icon name="stop" size={13} /> Stop</button>
-        <button class="btn btn-default btn-sm" onclick={() => bulk('container.restart', 'Restarted', (c) => c.state === 'running')}><Icon name="restart" size={13} /> Restart</button>
-        <button class="btn btn-danger btn-sm" onclick={() => bulk('container.remove', 'Removed', () => true)}><Icon name="trash" size={13} /> Remove</button>
-        <button class="btn btn-ghost btn-sm" onclick={() => (selectedIds = new Set())}>Clear</button>
+        <button class="btn btn-default btn-sm" onclick={() => bulk('container.start', 'verb.started', (c) => c.state === 'exited' || c.state === 'created')}><Icon name="play" size={13} /> {t('action.start')}</button>
+        <button class="btn btn-default btn-sm" onclick={() => bulk('container.stop', 'verb.stopped', (c) => c.state === 'running')}><Icon name="stop" size={13} /> {t('action.stop')}</button>
+        <button class="btn btn-default btn-sm" onclick={() => bulk('container.restart', 'verb.restarted', (c) => c.state === 'running')}><Icon name="restart" size={13} /> {t('action.restart')}</button>
+        <button class="btn btn-danger btn-sm" onclick={() => bulk('container.remove', 'verb.removed', () => true)}><Icon name="trash" size={13} /> {t('action.remove')}</button>
+        <button class="btn btn-ghost btn-sm" onclick={() => (selectedIds = new Set())}>{t('action.clear')}</button>
       </div>
     </div>
   {/if}
@@ -144,7 +145,7 @@
   {:else if filtered.length === 0}
     <div class="card grid place-items-center gap-2 py-20 text-center">
       <Icon name="box" size={26} class="text-[var(--text-3)]" />
-      <p class="text-sm text-[var(--text-2)]">{containers.list.length ? 'No containers match your search.' : 'No containers yet.'}</p>
+      <p class="text-sm text-[var(--text-2)]">{containers.list.length ? t('containers.empty.noMatch') : t('containers.empty.none')}</p>
     </div>
   {:else}
     <!-- Table layout: sm and up -->
@@ -156,7 +157,7 @@
         </colgroup>
         <thead>
           <tr class="border-b border-[var(--border)]">
-            <th class="th"><input type="checkbox" checked={allSelected} onchange={toggleAll} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label="Select all" /></th>
+            <th class="th"><input type="checkbox" checked={allSelected} onchange={toggleAll} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label={t('containers.aria.selectAll')} /></th>
             {#each columns as col}
               <th class="th {col.right ? 'text-right' : ''}"><SortHeader {col} {sort} /></th>
             {/each}
@@ -169,13 +170,13 @@
               {@const open = !collapsed[key]}
               <tr class="border-b border-[var(--border)] bg-[var(--panel-2)]">
                 <td class="px-4 py-2" onclick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" checked={groupAllSelected(g.items)} indeterminate={groupAnySelected(g.items) && !groupAllSelected(g.items)} onchange={(e) => toggleGroup(g.items, e)} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label="Select {g.name || 'standalone'} stack" />
+                  <input type="checkbox" checked={groupAllSelected(g.items)} indeterminate={groupAnySelected(g.items) && !groupAllSelected(g.items)} onchange={(e) => toggleGroup(g.items, e)} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label={t('containers.aria.selectStack', { name: g.name || t('containers.standaloneLower') })} />
                 </td>
                 <td colspan="6" class="p-0">
                   <button class="flex w-full items-center gap-2 px-4 py-2 text-left" onclick={() => (collapsed[key] = open)}>
                     <svg class="text-[var(--text-3)] transition-transform {open ? 'rotate-90' : ''}" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
                     <Icon name="layers" size={13} class="text-[var(--text-3)]" />
-                    <span class="text-[13px] font-semibold">{g.name || 'Standalone'}</span>
+                    <span class="text-[13px] font-semibold">{g.name || t('containers.standalone')}</span>
                     <span class="count">{g.items.length}</span>
                   </button>
                 </td>
@@ -200,10 +201,10 @@
               <button class="flex min-w-0 flex-1 items-center gap-2 text-left" onclick={() => (collapsed[key] = open)}>
                 <svg class="shrink-0 text-[var(--text-3)] transition-transform {open ? 'rotate-90' : ''}" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6" /></svg>
                 <Icon name="layers" size={13} class="shrink-0 text-[var(--text-3)]" />
-                <span class="truncate text-[13px] font-semibold">{g.name || 'Standalone'}</span>
+                <span class="truncate text-[13px] font-semibold">{g.name || t('containers.standalone')}</span>
                 <span class="count">{g.items.length}</span>
               </button>
-              <input type="checkbox" checked={groupAllSelected(g.items)} indeterminate={groupAnySelected(g.items) && !groupAllSelected(g.items)} onchange={(e) => toggleGroup(g.items, e)} class="h-4 w-4 shrink-0" style="accent-color:var(--accent)" aria-label="Select {g.name || 'standalone'} stack" />
+              <input type="checkbox" checked={groupAllSelected(g.items)} indeterminate={groupAnySelected(g.items) && !groupAllSelected(g.items)} onchange={(e) => toggleGroup(g.items, e)} class="h-4 w-4 shrink-0" style="accent-color:var(--accent)" aria-label={t('containers.aria.selectStack', { name: g.name || t('containers.standaloneLower') })} />
             </div>
             {#if open}<div class="flex flex-col gap-2.5">{#each g.items as c (c.id)}{@render card(c)}{/each}</div>{/if}
           </div>
@@ -221,7 +222,7 @@
   {@const code = exitCode(c.status)}
   <tr class="tr cursor-pointer border-b border-[var(--border)] last:border-0 {selectedIds.has(c.id) ? 'bg-[var(--accent-tint)]' : ''}" onclick={() => (selected = c)}>
     <td class="px-4 py-2.5" onclick={(e) => e.stopPropagation()}>
-      <input type="checkbox" checked={selectedIds.has(c.id)} onchange={(e) => toggleOne(c.id, e)} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label="Select {c.name}" />
+      <input type="checkbox" checked={selectedIds.has(c.id)} onchange={(e) => toggleOne(c.id, e)} class="h-3.5 w-3.5 align-middle" style="accent-color:var(--accent)" aria-label={t('containers.aria.selectOne', { name: c.name })} />
     </td>
     <td class="px-4 py-2.5">
       <div class="truncate text-[13px] font-medium">{c.name}</div>
@@ -243,19 +244,19 @@
     <td class="px-4 py-2.5">
       <div class="flex flex-wrap gap-1">
         {#each c.ports.filter((p) => p.public) as p}
-          <span class="chip" title={`host ${p.public} → container ${p.private} · ${p.type}`}>{p.public}→{p.private}</span>
+          <span class="chip" title={t('containers.port.title', { public: p.public, private: p.private, type: p.type })}>{p.public}→{p.private}</span>
         {/each}
       </div>
     </td>
     <td class="px-4 py-2.5">
       <div class="flex items-center justify-end gap-1.5">
         {#if running}
-          <button class="btn btn-default btn-sm" onclick={(e) => act(e, c, 'container.restart', 'Restarted')}><Icon name="restart" size={13} /> Restart</button>
-          <button class="btn btn-default btn-sm" onclick={(e) => act(e, c, 'container.stop', 'Stopped')}><Icon name="stop" size={13} /> Stop</button>
+          <button class="btn btn-default btn-sm" onclick={(e) => act(e, c, 'container.restart', 'verb.restarted')}><Icon name="restart" size={13} /> {t('action.restart')}</button>
+          <button class="btn btn-default btn-sm" onclick={(e) => act(e, c, 'container.stop', 'verb.stopped')}><Icon name="stop" size={13} /> {t('action.stop')}</button>
         {:else}
-          <button class="btn btn-default btn-sm" onclick={(e) => act(e, c, 'container.start', 'Started')}><Icon name="play" size={13} /> Start</button>
+          <button class="btn btn-default btn-sm" onclick={(e) => act(e, c, 'container.start', 'verb.started')}><Icon name="play" size={13} /> {t('action.start')}</button>
         {/if}
-        <button class="btn btn-danger btn-icon btn-sm" title="Remove" aria-label="Remove" onclick={(e) => act(e, c, 'container.remove', 'Removed')}><Icon name="trash" size={14} /></button>
+        <button class="btn btn-danger btn-icon btn-sm" title={t('action.remove')} aria-label={t('action.remove')} onclick={(e) => act(e, c, 'container.remove', 'verb.removed')}><Icon name="trash" size={14} /></button>
       </div>
     </td>
   </tr>
@@ -268,7 +269,7 @@
   {@const ports = c.ports.filter((p) => p.public)}
   <div class="card p-3 {selectedIds.has(c.id) ? 'border-[var(--accent)] bg-[var(--accent-tint)]' : ''}">
     <div class="flex items-start gap-2.5">
-      <input type="checkbox" checked={selectedIds.has(c.id)} onchange={(e) => toggleOne(c.id, e)} class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:var(--accent)" aria-label="Select {c.name}" />
+      <input type="checkbox" checked={selectedIds.has(c.id)} onchange={(e) => toggleOne(c.id, e)} class="mt-0.5 h-4 w-4 shrink-0" style="accent-color:var(--accent)" aria-label={t('containers.aria.selectOne', { name: c.name })} />
       <button class="min-w-0 flex-1 text-left" onclick={() => (selected = c)}>
         <div class="flex items-center gap-2">
           <span class="truncate text-sm font-medium">{c.name}</span>
@@ -280,27 +281,27 @@
         <div class="mono truncate text-[11.5px] text-[var(--text-3)]">{c.image}</div>
         {#if running && st}
           <div class="mono tnum mt-2 flex gap-4 text-[12px] text-[var(--text-2)]">
-            <span>CPU {st.cpu.toFixed(1)}%</span>
-            <span>MEM {fmt.bytes(st.mem)}</span>
+            <span>{t('containers.stat.cpu')} {st.cpu.toFixed(1)}%</span>
+            <span>{t('containers.stat.mem')} {fmt.bytes(st.mem)}</span>
           </div>
         {:else if c.status}
           <div class="mono mt-2 truncate text-[11px] text-[var(--text-3)]" title={c.status}>{c.status}</div>
         {/if}
         {#if ports.length}
           <div class="mt-2 flex flex-wrap gap-1">
-            {#each ports as p}<span class="chip" title={`host ${p.public} → container ${p.private} · ${p.type}`}>{p.public}→{p.private}</span>{/each}
+            {#each ports as p}<span class="chip" title={t('containers.port.title', { public: p.public, private: p.private, type: p.type })}>{p.public}→{p.private}</span>{/each}
           </div>
         {/if}
       </button>
     </div>
     <div class="mt-3 flex gap-2">
       {#if running}
-        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.restart', 'Restarted')}><Icon name="restart" size={14} /> Restart</button>
-        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.stop', 'Stopped')}><Icon name="stop" size={14} /> Stop</button>
+        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.restart', 'verb.restarted')}><Icon name="restart" size={14} /> {t('action.restart')}</button>
+        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.stop', 'verb.stopped')}><Icon name="stop" size={14} /> {t('action.stop')}</button>
       {:else}
-        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.start', 'Started')}><Icon name="play" size={14} /> Start</button>
+        <button class="btn btn-default btn-sm flex-1" onclick={(e) => act(e, c, 'container.start', 'verb.started')}><Icon name="play" size={14} /> {t('action.start')}</button>
       {/if}
-      <button class="btn btn-danger btn-icon btn-sm" title="Remove" aria-label="Remove" onclick={(e) => act(e, c, 'container.remove', 'Removed')}><Icon name="trash" size={15} /></button>
+      <button class="btn btn-danger btn-icon btn-sm" title={t('action.remove')} aria-label={t('action.remove')} onclick={(e) => act(e, c, 'container.remove', 'verb.removed')}><Icon name="trash" size={15} /></button>
     </div>
   </div>
 {/snippet}

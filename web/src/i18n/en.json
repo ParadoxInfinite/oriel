@@ -1,0 +1,52 @@
+{
+  "action.start": "Start",
+  "action.stop": "Stop",
+  "action.restart": "Restart",
+  "action.remove": "Remove",
+  "action.clear": "Clear",
+
+  "verb.started": "Started",
+  "verb.stopped": "Stopped",
+  "verb.restarted": "Restarted",
+  "verb.removed": "Removed",
+  "common.opSuccess": "{verb} · {name}",
+
+  "settings.language.title": "Language",
+  "settings.language.desc": "The interface language. Saved to this browser.",
+  "settings.language.label": "Display language",
+
+  "containers.search.placeholder": "Search containers…",
+  "containers.count": "{shown} of {total}",
+  "containers.groupByStack": "Group by stack",
+  "containers.selected": "{count} selected",
+  "containers.empty.noMatch": "No containers match your search.",
+  "containers.empty.none": "No containers yet.",
+  "containers.standalone": "Standalone",
+  "containers.standaloneLower": "standalone",
+
+  "containers.col.name": "Name",
+  "containers.col.status": "Status",
+  "containers.col.cpu": "CPU",
+  "containers.col.memory": "Memory",
+  "containers.col.ports": "Ports",
+
+  "containers.stat.cpu": "CPU",
+  "containers.stat.mem": "MEM",
+  "containers.port.title": "host {public} → container {private} · {type}",
+
+  "containers.aria.selectAll": "Select all",
+  "containers.aria.selectStack": "Select {name} stack",
+  "containers.aria.selectOne": "Select {name}",
+
+  "containers.confirm.remove.title": "Remove container?",
+  "containers.confirm.remove.msg": "“{name}” will be permanently removed.",
+  "containers.confirm.remove.running": " It is running and will be force-stopped first.",
+  "containers.confirm.removeN.title": {
+    "one": "Remove {count} container?",
+    "other": "Remove {count} containers?"
+  },
+  "containers.confirm.removeN.msg": {
+    "one": "{count} selected container will be permanently removed. Running ones are force-stopped first.",
+    "other": "{count} selected containers will be permanently removed. Running ones are force-stopped first."
+  }
+}

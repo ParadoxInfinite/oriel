@@ -10,6 +10,7 @@
   import { takeTarget } from '../../../platform/index.js'
   import { editions, edition, setEdition, diskThemes } from '../../../editions/registry.svelte.js'
   import { appearance, systemPref, ACCENTS, setMode, setAccent, addCustomAccent, removeCustomAccent } from '../theme.svelte.js'
+  import { t, locale, AVAILABLE, setLocale } from '../../../platform/index.js'
   import Icon from '../lib/Icon.svelte'
   import ComposeDiscoveryDialog from '../lib/ComposeDiscoveryDialog.svelte'
   import AuditLogDialog from '../lib/AuditLogDialog.svelte'
@@ -179,6 +180,18 @@
         <input bind:value={newName} placeholder="Name (optional)" class="input w-44" />
         <button class="btn btn-default btn-sm" onclick={addAccent}><Icon name="sparkles" size={14} /> Add accent</button>
       </div>
+    </div>
+  </section>
+
+  <!-- Language -->
+  <section class="rise card mb-4 break-inside-avoid p-5" style="animation-delay:20ms">
+    <h2 class="text-[14px] font-semibold tracking-tight">{t('settings.language.title')}</h2>
+    <p class="mt-0.5 text-[13px] text-[var(--text-2)]">{t('settings.language.desc')}</p>
+    <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+      <span class="text-[13px] font-medium">{t('settings.language.label')}</span>
+      <select class="input w-44" value={locale.tag} onchange={(e) => setLocale(e.currentTarget.value)}>
+        {#each AVAILABLE as l (l.tag)}<option value={l.tag}>{l.name}</option>{/each}
+      </select>
     </div>
   </section>
 
