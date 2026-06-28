@@ -66,6 +66,28 @@ web/src/
 - `make build` and `make test` should pass.
 - Note any new env vars, endpoints, or platform-SDK exports in your description.
 
+## Translations
+
+The UI is translatable and new languages are very welcome. English
+(`web/src/i18n/en.json`) is the source of truth and is bundled into the binary;
+every other language is a JSON catalog served on demand, so a translation ships
+without a new release.
+
+To add or update a language:
+
+1. Copy `web/src/i18n/en.json` to `web/src/i18n/<tag>.json` (a BCP-47 tag, e.g.
+   `de`, `pt-BR`). Translate the values, leaving the keys unchanged. Keys whose
+   English value is a `{ "one": …, "other": … }` object are plurals — translate
+   each form your language needs, keeping `other`.
+2. Add the language to `web/src/i18n/manifest.json`: `{ "tag": "<tag>", "name":
+   "<endonym>" }` (the name in its own language, e.g. `Deutsch`).
+3. Run `npm --prefix web run check-i18n` and fix anything it flags.
+
+A partial translation is fine — any key you leave out falls back to English, and
+the check reports your coverage. You don't need to keep a catalog in sync the
+moment English changes; untranslated keys just show English until someone fills
+them in.
+
 ## Security
 
 Oriel binds to `127.0.0.1` only and ships no model. If you find a security issue,

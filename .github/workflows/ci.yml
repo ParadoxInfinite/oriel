@@ -40,6 +40,9 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
+      - name: Validate translation catalogs
+        run: node web/scripts/check-i18n.mjs
+
       - name: Build frontend
         working-directory: web
         run: |
