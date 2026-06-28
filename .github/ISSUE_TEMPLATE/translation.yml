@@ -1,0 +1,43 @@
+name: Translation
+description: Add a new language, or claim/track work on one.
+labels: [translation, help wanted, good first issue]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping translate Oriel! English is the source of truth and is
+        bundled; other languages are JSON catalogs served on demand, so a
+        translation ships without a new release. See the **Translations** section
+        of [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md) for the steps.
+  - type: input
+    id: language
+    attributes:
+      label: Language
+      description: The language and its endonym (its name in itself).
+      placeholder: German (Deutsch)
+    validations:
+      required: true
+  - type: input
+    id: tag
+    attributes:
+      label: Locale tag
+      description: The BCP-47 tag for the catalog filename.
+      placeholder: de  ·  pt-BR  ·  zh-Hans
+    validations:
+      required: true
+  - type: checkboxes
+    id: steps
+    attributes:
+      label: Checklist
+      description: A partial translation is fine — missing keys fall back to English.
+      options:
+        - label: Copied `web/src/i18n/en.json` to `<tag>.json` and translated the values
+        - label: Added the language to `web/src/i18n/manifest.json`
+        - label: Ran `npm --prefix web run check-i18n` with no errors
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything worth flagging — partial coverage, terms you were unsure of, a request to claim this language.
+    validations:
+      required: false
