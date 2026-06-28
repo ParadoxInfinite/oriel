@@ -222,7 +222,7 @@
         {/if}
       </div>
     {:else}
-      <ContainerShell {container} />
+      {#key container.id}<ContainerShell {container} />{/key}
     {/if}
   </div>
 </div>

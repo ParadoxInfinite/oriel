@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 // A small, self-contained WebSocket server (RFC 6455) for the one place Oriel
@@ -36,10 +37,16 @@ const (
 // without bound. Shell input (keystrokes, a paste, a resize JSON) is tiny.
 const wsMaxMessage = 1 << 20 // 1 MiB
 
+// wsWriteTimeout bounds a single write so a peer that stops draining (a slept
+// laptop, a frozen tab) can't block the output goroutine forever and leak the
+// connection + the in-container exec along with it.
+const wsWriteTimeout = 15 * time.Second
+
 type wsConn struct {
 	conn net.Conn
 	br   *bufio.Reader
 	wmu  sync.Mutex // serialises writes (the output pump and control frames race)
+	once sync.Once  // Close is idempotent (the pump and the handler both call it)
 }
 
 // wsUpgrade completes the handshake and hijacks the connection. It returns an
@@ -110,14 +117,19 @@ func (c *wsConn) ReadMessage() (opcode byte, payload []byte, err error) {
 			_ = c.write(wsClose, nil)
 			return 0, nil, io.EOF
 		case wsContinuation:
+			if msgOp == 0 {
+				return 0, nil, fmt.Errorf("websocket: continuation frame with no start")
+			}
 			msg = append(msg, data...)
 		case wsText, wsBinary:
 			msg, msgOp = data, op
+		default:
+			return 0, nil, fmt.Errorf("websocket: unexpected opcode %d", op)
 		}
 		if len(msg) > wsMaxMessage {
 			return 0, nil, fmt.Errorf("websocket message too large")
 		}
-		if fin && op != wsPing && op != wsPong {
+		if fin { // a control frame already continued/returned above
 			return msgOp, msg, nil
 		}
 	}
@@ -175,6 +187,7 @@ func (c *wsConn) WriteBinary(p []byte) error { return c.write(wsBinary, p) }
 func (c *wsConn) write(opcode byte, payload []byte) error {
 	c.wmu.Lock()
 	defer c.wmu.Unlock()
+	_ = c.conn.SetWriteDeadline(time.Now().Add(wsWriteTimeout))
 	var head [10]byte
 	head[0] = 0x80 | opcode // FIN + opcode (we never fragment outbound)
 	n := len(payload)
@@ -205,8 +218,12 @@ func (c *wsConn) write(opcode byte, payload []byte) error {
 	return nil
 }
 
-// Close sends a close frame (best-effort) and drops the connection.
+// Close sends a close frame (best-effort) and drops the connection. Idempotent:
+// both the output pump and the handler call it on teardown.
 func (c *wsConn) Close() error {
-	_ = c.write(wsClose, nil)
-	return c.conn.Close()
+	c.once.Do(func() {
+		_ = c.write(wsClose, nil)
+		_ = c.conn.Close()
+	})
+	return nil
 }

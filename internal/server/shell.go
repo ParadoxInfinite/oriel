@@ -3,8 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -55,7 +53,6 @@ func (s *Server) handleContainerShell(w http.ResponseWriter, r *http.Request) {
 			n, rerr := sess.Conn.Reader.Read(buf)
 			if n > 0 {
 				if werr := ws.WriteBinary(buf[:n]); werr != nil {
-					println("SHELL write err:", werr.Error())
 					break
 				}
 			}
@@ -120,27 +117,15 @@ func (s *Server) handleTermAsset(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(b)
 }
 
-// termFetch returns a terminal asset from disk cache, downloading it once. The
-// version is pinned, so the cache is effectively permanent; bumping the version
-// downloads fresh. Uses the size-capped HTTP client shared with the i18n proxy.
+// termFetch returns a terminal asset from disk cache, downloading it once (bytes
+// capped by downloadCapped). The version is pinned, so the cache is effectively
+// permanent; bumping the version downloads fresh.
 func termFetch(ctx context.Context, name, url string) ([]byte, error) {
 	cache := userdata.Path(filepath.Join("assets", "xterm-"+xtermVersion, name))
 	if b, err := os.ReadFile(cache); err == nil && len(b) > 0 {
 		return b, nil
 	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := i18nClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("asset fetch: HTTP %d", resp.StatusCode)
-	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, maxTermAssetBytes))
+	b, err := downloadCapped(ctx, url, maxTermAssetBytes)
 	if err != nil {
 		return nil, err
 	}
