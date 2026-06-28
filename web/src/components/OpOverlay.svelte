@@ -1,6 +1,7 @@
 <script>
   import { ops, dismissOp, cancelOp, minimizeOp } from '../lib/op.svelte.js'
   import { registerEscape } from '../lib/modalStack.svelte.js'
+  import { t } from '../platform/index.js'
 
   // The modal shows the focused operation; the rest live in the sidebar tray.
   const cur = $derived(ops.list.find((o) => o.id === ops.focused) ?? null)
@@ -52,7 +53,7 @@
 
       <div class="flex items-center justify-between gap-3 border-t border-border bg-surface-2/40 px-5 py-3">
         {#if cur.jobId && !cur.done}
-          <span class="text-[11px] text-faint">Runs in the background, safe to close.</span>
+          <span class="text-[11px] text-faint">{t('op.background')}</span>
         {:else}
           <span></span>
         {/if}
@@ -63,7 +64,7 @@
               disabled={cur.cancelling}
               onclick={() => cancelOp(cur.id)}
             >
-              {cur.cancelling ? 'Cancelling…' : 'Cancel operation'}
+              {cur.cancelling ? t('op.cancelling') : t('op.cancel')}
             </button>
           {/if}
           {#if cur.done}
@@ -74,11 +75,11 @@
                   : 'border border-border bg-surface text-muted hover:bg-surface-2 hover:text-fg'}"
               onclick={() => dismissOp(cur.id)}
             >
-              Close
+              {t('common.close')}
             </button>
           {:else}
             <button class="rounded-lg border border-border bg-surface px-3.5 py-1.5 text-[13px] font-medium text-muted transition-colors hover:bg-surface-2 hover:text-fg" onclick={minimizeOp}>
-              Hide
+              {t('op.hide')}
             </button>
           {/if}
         </div>

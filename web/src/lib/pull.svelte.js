@@ -1,4 +1,5 @@
 import { streamPost } from './api.js'
+import { t } from './locale.svelte.js'
 import { refreshImages } from './resources.svelte.js'
 import { REGISTRY_SOURCES, REGISTRY_HOSTS, searchRegistry, listImageTags } from './registry.js'
 
@@ -141,7 +142,7 @@ export class PullController {
     this.pulling = true
     this.error = null
     this.done = false
-    this.status = 'Starting…'
+    this.status = t('pull.starting')
     try {
       await streamPost(`/api/images/pull?ref=${encodeURIComponent(this.ref.trim())}`, {
         onEvent: (name, data) => {
@@ -149,7 +150,7 @@ export class PullController {
           else if (name === 'done') {
             this.done = true
             if (!data.ok) this.error = data.error
-            else this.status = 'Done.'
+            else this.status = t('pull.done')
           }
         },
       })

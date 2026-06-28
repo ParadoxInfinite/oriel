@@ -1,4 +1,5 @@
 import { apiGet, apiPut, apiPost } from './api.js'
+import { t } from './locale.svelte.js'
 import { runOp } from './op.svelte.js'
 import { refreshStacks } from './stacks.svelte.js'
 import { confirm } from './confirm.svelte.js'
@@ -47,8 +48,8 @@ export function isRemote() {
 
 // The verb for the host-folder action, by access mode and server OS.
 export function revealLabel() {
-  if (isRemote()) return 'Copy path'
-  return self.os === 'darwin' ? 'Reveal in Finder' : 'Open folder'
+  if (isRemote()) return t('discovery.reveal.copyPath')
+  return self.os === 'darwin' ? t('discovery.reveal.finder') : t('discovery.reveal.folder')
 }
 
 // Open the directory on a local server, or copy the path when viewing remotely.
@@ -148,11 +149,11 @@ export async function confirmHide(d) {
   }
   if (!skip) {
     const res = await confirm({
-      title: `Hide “${d.alias || d.name}”?`,
-      message: 'It will be removed from the Available list (added to the deny filter). Unhide it any time in Settings → Compose discovery. Running stacks are never affected.',
-      confirmLabel: 'Hide',
+      title: t('discovery.hide.title', { name: d.alias || d.name }),
+      message: t('discovery.hide.message'),
+      confirmLabel: t('discovery.hide.confirm'),
       danger: false,
-      checkbox: "Don't ask again",
+      checkbox: t('common.dontAskAgain'),
     })
     if (!res?.ok) return
     if (res.checked) {
@@ -179,7 +180,7 @@ export function setAlias(name, alias) {
 // ── Deploy + path typeahead ───────────────────────────────────────────────────
 export function deployStack(d) {
   const q = `dir=${encodeURIComponent(d.dir)}&file=${encodeURIComponent(d.file)}`
-  return runOp(`Deploying ${d.alias || d.name}`, `/api/stacks/up?${q}`, () => {
+  return runOp(t('op.deploy.title', { name: d.alias || d.name }), `/api/stacks/up?${q}`, () => {
     refreshStacks()
     rescan()
   })

@@ -19,6 +19,8 @@
     canSelfUpdate,
     promptUpdate,
     OpTray,
+    t,
+    tn,
   } from '../../platform/index.js'
 
   // Version label: real builds show "vX.Y.Z"; local builds show "dev" as-is.
@@ -47,23 +49,33 @@
   // Keep the host's global overlays in sync with Studio's appearance + accent.
   $effect(() => setOverlayTheme(dark ? 'dark' : 'light', accent))
 
-  const NAV = [
-    { name: 'Dashboard', icon: 'dashboard' },
-    { name: 'Containers', icon: 'box' },
-    { name: 'Images', icon: 'harddrive' },
-    { name: 'Volumes', icon: 'database' },
-    { name: 'Networks', icon: 'network' },
-    { name: 'Stacks', icon: 'layers' },
-  ]
-  const SUBTITLES = {
-    Dashboard: 'Overview of your colima environment',
-    Containers: 'Running and stopped containers',
-    Images: 'Images stored on disk',
-    Volumes: 'Persistent volumes',
-    Networks: 'Container networks',
-    Stacks: 'Docker Compose projects',
-    Settings: 'Appearance, themes and AI',
-  }
+  // Translated view labels, keyed by the canonical view id (which drives routing).
+  const VIEW_LABELS = $derived({
+    Dashboard: t('nav.dashboard'),
+    Containers: t('nav.containers'),
+    Images: t('nav.images'),
+    Volumes: t('nav.volumes'),
+    Networks: t('nav.networks'),
+    Stacks: t('nav.stacks'),
+    Settings: t('nav.settings'),
+  })
+  const NAV = $derived([
+    { name: 'Dashboard', icon: 'dashboard', label: VIEW_LABELS.Dashboard },
+    { name: 'Containers', icon: 'box', label: VIEW_LABELS.Containers },
+    { name: 'Images', icon: 'harddrive', label: VIEW_LABELS.Images },
+    { name: 'Volumes', icon: 'database', label: VIEW_LABELS.Volumes },
+    { name: 'Networks', icon: 'network', label: VIEW_LABELS.Networks },
+    { name: 'Stacks', icon: 'layers', label: VIEW_LABELS.Stacks },
+  ])
+  const SUBTITLES = $derived({
+    Dashboard: t('nav.subtitle.dashboard'),
+    Containers: t('nav.subtitle.containers'),
+    Images: t('nav.subtitle.images'),
+    Volumes: t('nav.subtitle.volumes'),
+    Networks: t('nav.subtitle.networks'),
+    Stacks: t('nav.subtitle.stacks'),
+    Settings: t('nav.subtitle.settings'),
+  })
   // Active view comes from the shared nav seam so the palette can move it; the
   // sidebar buttons drive it through navigate().
   const active = $derived(nav.view)
@@ -80,7 +92,7 @@
   const s = $derived(status.data)
   const engine = $derived(s?.engine === 'docker' ? 'Docker' : 'Colima')
   const vmState = $derived(status.loading ? 'warn' : status.error ? 'bad' : s?.running ? 'on' : 'off')
-  const vmWord = $derived(status.loading ? 'Connecting' : status.error ? 'Offline' : s?.running ? 'Running' : 'Stopped')
+  const vmWord = $derived(status.loading ? t('nav.vm.connecting') : status.error ? t('nav.vm.offline') : s?.running ? t('nav.vm.running') : t('nav.vm.stopped'))
   const running = $derived(containers.list.filter((c) => c.state === 'running'))
   const samples = $derived(running.map((c) => stats.byId[c.id]).filter(Boolean))
   const usedMem = $derived(samples.reduce((a, x) => a + x.mem, 0))
@@ -97,7 +109,7 @@
 <div class="studio-root {dark ? 'dark' : ''}" style="--accent:{accent}">
   <!-- Mobile drawer backdrop -->
   {#if mobileNav}
-    <button class="fixed inset-0 z-30 bg-black/50 md:hidden" aria-label="Close menu" onclick={() => (mobileNav = false)}></button>
+    <button class="fixed inset-0 z-30 bg-black/50 md:hidden" aria-label={t('nav.closeMenu')} onclick={() => (mobileNav = false)}></button>
   {/if}
 
   <!-- Sidebar: static on md+, off-canvas drawer below -->
@@ -111,7 +123,7 @@
         <Icon name="box" size={16} stroke={2} />
       </div>
       <span class="text-[15px] font-semibold tracking-tight">Oriel</span>
-      <button class="ml-auto grid h-8 w-8 place-items-center rounded-lg text-[var(--text-3)] hover:bg-[var(--hover)] md:hidden" aria-label="Close menu" onclick={() => (mobileNav = false)}>
+      <button class="ml-auto grid h-8 w-8 place-items-center rounded-lg text-[var(--text-3)] hover:bg-[var(--hover)] md:hidden" aria-label={t('nav.closeMenu')} onclick={() => (mobileNav = false)}>
         <Icon name="x" size={18} />
       </button>
     </div>
@@ -120,13 +132,13 @@
       {#each NAV as item}
         <button class="nav {active === item.name ? 'on' : ''}" onclick={() => go(item.name)}>
           <Icon name={item.icon} size={17} class="nav-i" />
-          {item.name}
+          {item.label}
         </button>
       {/each}
       <div class="my-1.5 mx-2 border-t border-[var(--border)]"></div>
       <button class="nav {active === 'Settings' ? 'on' : ''}" onclick={() => go('Settings')}>
         <Icon name="settings" size={17} class="nav-i" />
-        Settings
+        {VIEW_LABELS.Settings}
       </button>
     </nav>
 
@@ -142,7 +154,7 @@
       </div>
       {#if s?.running && !status.error}
         <div class="mono tnum mt-2 flex items-center justify-between text-[11px] text-[var(--text-3)]">
-          <span>{running.length} running</span>
+          <span>{tn('nav.runningCount', running.length)}</span>
           <span>{fmt.bytes(usedMem)}</span>
         </div>
       {/if}
@@ -153,7 +165,7 @@
       <span class="text-[11px] font-medium tracking-wide text-[var(--text-3)]">Oriel</span>
       <div class="flex items-center gap-1.5">
         {#if update.available}
-          <button type="button" onclick={onUpdatePill} class="rounded-full bg-[var(--accent-tint-2)] px-2 py-0.5 font-mono text-[10px] font-medium text-[var(--accent)] hover:underline" title="Update available, v{update.latest} · {canSelfUpdate() ? 'install now' : 'open updates'}">update</button>
+          <button type="button" onclick={onUpdatePill} class="rounded-full bg-[var(--accent-tint-2)] px-2 py-0.5 font-mono text-[10px] font-medium text-[var(--accent)] hover:underline" title={t('nav.updateTitle', { version: update.latest, action: canSelfUpdate() ? t('nav.updateInstallNow') : t('nav.updateOpen') })}>{t('nav.updatePill')}</button>
         {/if}
         {#if verLabel}<span class="mono rounded-full border border-[var(--border)] bg-[var(--panel-2)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-2)]">{verLabel}</span>{/if}
       </div>
@@ -163,15 +175,15 @@
   <!-- Main -->
   <div class="flex min-w-0 flex-1 flex-col">
     <header class="flex h-[60px] shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-4 md:px-6">
-      <button class="-ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--text-2)] hover:bg-[var(--hover)] md:hidden" aria-label="Open menu" onclick={() => (mobileNav = true)}>
+      <button class="-ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[var(--text-2)] hover:bg-[var(--hover)] md:hidden" aria-label={t('nav.openMenu')} onclick={() => (mobileNav = true)}>
         <Icon name="menu" size={20} />
       </button>
       <div class="min-w-0">
-        <h1 class="truncate text-[15px] font-semibold leading-none tracking-tight">{active}</h1>
+        <h1 class="truncate text-[15px] font-semibold leading-none tracking-tight">{VIEW_LABELS[active]}</h1>
         <p class="mt-1 truncate text-xs text-[var(--text-3)]">{SUBTITLES[active]}</p>
       </div>
       <button class="btn btn-default ml-auto btn-sm" onclick={openPalette}>
-        <Icon name="command" size={13} /> <span class="hidden sm:inline">Run command</span>
+        <Icon name="command" size={13} /> <span class="hidden sm:inline">{t('nav.runCommand')}</span>
         <kbd class="mono ml-1 hidden rounded border border-[var(--border)] bg-[var(--panel-2)] px-1.5 text-[10px] text-[var(--text-3)] sm:inline">⌘K</kbd>
       </button>
     </header>

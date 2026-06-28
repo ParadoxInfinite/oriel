@@ -1,5 +1,6 @@
 <script>
   import { login } from '../lib/auth.svelte.js'
+  import { t } from '../platform/index.js'
 
   let token = $state('')
   let error = $state('')
@@ -14,7 +15,7 @@
       // On success the app swaps this screen out; leave busy set so the button
       // doesn't flash back to "Sign in" during the transition.
     } catch (e) {
-      error = e?.message || 'Sign in failed'
+      error = e?.message || t('login.failed')
       busy = false
     }
   }
@@ -27,15 +28,15 @@
 <div class="wrap">
   <form class="card" onsubmit={(e) => { e.preventDefault(); submit() }}>
     <div class="brand">Oriel</div>
-    <h1 class="title">Sign in</h1>
-    <p class="sub">This Oriel is protected. Enter your access token to continue.</p>
+    <h1 class="title">{t('login.signIn')}</h1>
+    <p class="sub">{t('login.subtitle')}</p>
 
     <input
       class="input field"
       type="password"
       autocomplete="current-password"
-      placeholder="Access token"
-      aria-label="Access token"
+      placeholder={t('login.token')}
+      aria-label={t('login.token')}
       bind:value={token}
       disabled={busy}
       use:focusOnMount
@@ -44,10 +45,10 @@
     {#if error}<p class="error" role="alert">{error}</p>{/if}
 
     <button class="btn btn-primary submit" type="submit" disabled={busy || !token.trim()}>
-      {busy ? 'Signing in…' : 'Sign in'}
+      {busy ? t('login.signingIn') : t('login.signIn')}
     </button>
 
-    <p class="hint">The token is set on the machine running Oriel: <span class="mono">oriel config auth-token</span>.</p>
+    <p class="hint">{t('login.hint')} <span class="mono">oriel config auth-token</span>.</p>
   </form>
 </div>
 

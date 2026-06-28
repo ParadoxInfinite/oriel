@@ -1,5 +1,6 @@
 <script>
   import { toasts, dismissToast } from '../lib/toast.svelte.js'
+  import { t } from '../platform/index.js'
 
   const color = {
     ok: 'border-ok/40 text-ok',
@@ -9,15 +10,15 @@
 </script>
 
 <div class="fixed bottom-4 right-4 z-[60] flex w-80 flex-col gap-2" aria-live="polite" aria-atomic="false">
-  {#each toasts.items as t (t.id)}
+  {#each toasts.items as item (item.id)}
     <button
       class="rounded-[--radius] border bg-surface px-4 py-2.5 text-left text-sm shadow-lg {color[
-        t.kind
+        item.kind
       ] || color.info}"
-      onclick={() => dismissToast(t.id)}
-      title="Dismiss"
+      onclick={() => dismissToast(item.id)}
+      title={t('toast.dismiss')}
     >
-      {t.message}
+      {item.message}
     </button>
   {/each}
 </div>

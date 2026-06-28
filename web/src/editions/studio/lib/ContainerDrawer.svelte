@@ -1,6 +1,6 @@
 <script>
   import { tick } from 'svelte'
-  import { apiGet, fmt, LogsController, registerEscape, trapFocus } from '../../../platform/index.js'
+  import { apiGet, fmt, LogsController, registerEscape, trapFocus, t } from '../../../platform/index.js'
   import Icon from './Icon.svelte'
   import StatusPill from './StatusPill.svelte'
 
@@ -86,14 +86,14 @@
   const rows = $derived(
     detail
       ? [
-          ['Image', detail.image],
-          ['Image ID', (detail.imageId || '').replace('sha256:', '').slice(0, 12)],
-          ['Command', detail.command],
-          ['Working dir', detail.workingDir || ', '],
-          ['Restart policy', detail.restartPolicy || 'no'],
-          ['Started', detail.startedAt && detail.running ? new Date(detail.startedAt).toLocaleString() : ', '],
-          ['Exit code', detail.running ? ', ' : String(detail.exitCode)],
-          ['Health', detail.health || ', '],
+          [t('drawer.inspect.image'), detail.image],
+          [t('drawer.inspect.imageId'), (detail.imageId || '').replace('sha256:', '').slice(0, 12)],
+          [t('drawer.inspect.command'), detail.command],
+          [t('drawer.inspect.workingDir'), detail.workingDir || ', '],
+          [t('drawer.inspect.restartPolicy'), detail.restartPolicy || 'no'],
+          [t('drawer.inspect.started'), detail.startedAt && detail.running ? new Date(detail.startedAt).toLocaleString() : ', '],
+          [t('drawer.inspect.exitCode'), detail.running ? ', ' : String(detail.exitCode)],
+          [t('drawer.inspect.health'), detail.health || ', '],
         ]
       : []
   )
@@ -101,7 +101,7 @@
 
 
 <div class="fixed inset-0 z-[60] flex justify-end bg-black/40 backdrop-blur-[1px]" role="presentation" onclick={(e) => e.target === e.currentTarget && onClose()}>
-  <div class="flex h-full w-full flex-col bg-[var(--bg)] shadow-[var(--shadow-lg)] md:w-[760px] md:max-w-[95vw] md:border-l md:border-[var(--border)]" role="dialog" aria-modal="true" aria-label="Container details" tabindex="-1" use:trapFocus>
+  <div class="flex h-full w-full flex-col bg-[var(--bg)] shadow-[var(--shadow-lg)] md:w-[760px] md:max-w-[95vw] md:border-l md:border-[var(--border)]" role="dialog" aria-modal="true" aria-label={t('drawer.aria')} tabindex="-1" use:trapFocus>
     <div class="flex shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--panel)] px-5 py-3">
       <div class="flex min-w-0 items-center gap-2.5">
         <StatusPill state={container.state} />
@@ -110,11 +110,11 @@
           <div class="mono truncate text-[11px] text-[var(--text-3)]">{container.image}</div>
         </div>
       </div>
-      <button class="btn btn-default btn-sm" onclick={onClose}>Close</button>
+      <button class="btn btn-default btn-sm" onclick={onClose}>{t('common.close')}</button>
     </div>
 
     <div class="flex shrink-0 gap-1 border-b border-[var(--border)] bg-[var(--panel)] px-3">
-      {#each [['logs', 'Logs'], ['inspect', 'Inspect']] as [id, label]}
+      {#each [['logs', t('drawer.tab.logs')], ['inspect', t('drawer.tab.inspect')]] as [id, label]}
         <button class="relative px-3 py-2 text-[13px] font-medium transition-colors {tab === id ? 'text-[var(--accent)]' : 'text-[var(--text-2)] hover:text-[var(--text)]'}" onclick={() => (tab = id)}>
           {label}
           {#if tab === id}<span class="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-[var(--accent)]"></span>{/if}
@@ -125,9 +125,9 @@
     {#if tab === 'logs'}
       <div bind:this={scroller} onscroll={onScroll} class="mono min-h-0 flex-1 overflow-auto bg-[var(--panel-2)] text-[12px] leading-relaxed">
         {#if logs.loadingOlder}
-          <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">Loading older lines…</div>
+          <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">{t('drawer.logs.loadingOlder')}</div>
         {:else if logs.noMore && logs.lines.length}
-          <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">Beginning of available logs</div>
+          <div class="px-3 py-1.5 text-center text-[11px] text-[var(--text-3)]">{t('drawer.logs.beginning')}</div>
         {/if}
         {#each logs.lines as l (l.seq)}
           <div class="flex gap-2.5 border-l-2 px-3 hover:bg-[var(--hover)] {streamEdge(l.stream)}">
@@ -140,22 +140,22 @@
             {#if logs.error}
               <span class="text-[var(--red)]">{logs.error}</span>
             {:else if !logs.connected}
-              <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span> Connecting…
+              <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span> {t('drawer.logs.connecting')}
             {:else}
-              No logs yet, this container hasn't written anything to stdout/stderr.
+              {t('drawer.logs.empty')}
             {/if}
           </div>
         {/if}
       </div>
       {#if paused}
-        <button class="shrink-0 border-t border-[var(--border)] bg-[var(--panel-2)] py-1.5 text-center text-xs text-[var(--accent)]" onclick={() => { paused = false; logs.setFollowing(true); scroller.scrollTop = scroller.scrollHeight }}>↓ Jump to latest</button>
+        <button class="shrink-0 border-t border-[var(--border)] bg-[var(--panel-2)] py-1.5 text-center text-xs text-[var(--accent)]" onclick={() => { paused = false; logs.setFollowing(true); scroller.scrollTop = scroller.scrollHeight }}>{t('drawer.logs.jumpToLatest')}</button>
       {/if}
     {:else}
       <div class="min-h-0 flex-1 overflow-auto p-5">
         {#if inspectErr}
           <div class="card border-[color-mix(in_srgb,var(--red)_40%,var(--border))] p-4 text-sm text-[var(--red)]">{inspectErr}</div>
         {:else if !detail}
-          <div class="flex items-center gap-2 text-sm text-[var(--text-3)]"><span class="h-4 w-4 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span> Loading…</div>
+          <div class="flex items-center gap-2 text-sm text-[var(--text-3)]"><span class="h-4 w-4 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--accent)]"></span> {t('common.loading')}</div>
         {:else}
           <div class="card overflow-hidden">
             {#each rows as [k, v], i}
@@ -167,7 +167,7 @@
           </div>
 
           {#if detail.networks?.length}
-            <div class="mt-4"><span class="eyebrow">Networks</span>
+            <div class="mt-4"><span class="eyebrow">{t('drawer.inspect.networks')}</span>
               <div class="mt-2 card overflow-hidden">
                 {#each detail.networks as n, i}
                   <div class="flex items-center justify-between gap-3 px-4 py-2.5 {i ? 'border-t border-[var(--border)]' : ''}">
@@ -179,7 +179,7 @@
           {/if}
 
           {#if detail.mounts?.length}
-            <div class="mt-4"><span class="eyebrow">Mounts</span>
+            <div class="mt-4"><span class="eyebrow">{t('drawer.inspect.mounts')}</span>
               <div class="mt-2 card overflow-hidden">
                 {#each detail.mounts as m, i}
                   <div class="px-4 py-2.5 {i ? 'border-t border-[var(--border)]' : ''}">
@@ -194,11 +194,11 @@
           {#if detail.env?.length}
             <div class="mt-4">
               <div class="flex items-center justify-between">
-                <span class="eyebrow">Environment · {detail.env.length}</span>
+                <span class="eyebrow">{t('drawer.inspect.environment')} · {detail.env.length}</span>
                 {#if detail.canReveal && (detail.envMasked || revealed)}
-                  <button class="text-[11px] font-medium text-[var(--accent)] hover:underline disabled:opacity-50" onclick={toggleReveal} disabled={revealing}>{revealing ? '…' : revealed ? 'Hide values' : 'Reveal values'}</button>
+                  <button class="text-[11px] font-medium text-[var(--accent)] hover:underline disabled:opacity-50" onclick={toggleReveal} disabled={revealing}>{revealing ? '…' : revealed ? t('drawer.inspect.hideValues') : t('drawer.inspect.revealValues')}</button>
                 {:else if detail.envMasked}
-                  <span class="text-[11px] text-[var(--text-3)]" title="Revealing secret values is limited to local access by policy">masked · local only</span>
+                  <span class="text-[11px] text-[var(--text-3)]" title={t('drawer.inspect.maskedTitle')}>{t('drawer.inspect.maskedLabel')}</span>
                 {/if}
               </div>
               <div class="mono mt-2 max-h-56 overflow-auto rounded-lg border border-[var(--border)] bg-[var(--panel-2)] p-3 text-[11.5px] leading-relaxed">
