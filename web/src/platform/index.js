@@ -122,7 +122,7 @@ export * as fmt from '../lib/format.js'
 /** i18n: t(key, params) and tn(key, count, params) translate against the active
  *  `locale`; AVAILABLE lists offered locales; setLocale(tag) switches + persists.
  *  English is bundled and is the per-key fallback; other locales lazy-load. */
-export { t, tn, locale, AVAILABLE, setLocale, initLocale } from '../lib/locale.svelte.js'
+export { t, tn, locale, AVAILABLE, setLocale, initLocale, loadManifest } from '../lib/locale.svelte.js'
 
 /** Headless image tag/used-by/remove controller, shared by both editions. */
 export { ImageActions } from '../lib/imageActions.svelte.js'

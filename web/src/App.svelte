@@ -6,6 +6,7 @@
   import { startUpdateChecks, stopUpdateChecks } from './lib/update.svelte.js'
   import { togglePalette } from './lib/palette.svelte.js'
   import { resumeOps } from './lib/op.svelte.js'
+  import { loadManifest } from './lib/locale.svelte.js'
 
   import { activeEdition, loadDiskThemes } from './editions/registry.svelte.js'
   import { overlayTheme, overlayVars } from './lib/overlayTheme.svelte.js'
@@ -47,6 +48,7 @@
     refreshStacks()
     startUpdateChecks() // checks now, then re-checks every few hours while open
     loadDiskThemes()
+    loadManifest() // add any locales published since this build
     resumeOps() // re-attach to any prune still running from before a refresh
   }
 

@@ -1,12 +1,16 @@
 // Translation layer. English is bundled and is always the fallback, so a missing
 // key in any other catalog shows English rather than breaking. The chosen locale
-// is a per-browser preference, persisted to localStorage like the theme.
+// is a per-browser preference, persisted to localStorage like the theme. Other
+// locales are fetched through the backend (/api/i18n) so they can be published
+// and updated without shipping a new binary.
 import en from '../i18n/en.json'
+import { apiGet } from './api.js'
 
 const KEY = 'oriel.locale'
 
-// Locales the UI offers; more are appended here as their catalogs become available.
-export const AVAILABLE = [{ tag: 'en', name: 'English' }]
+// Locales the UI offers. English ships in the bundle; loadManifest() appends any
+// others the backend reports as published. A live array so the picker updates.
+export const AVAILABLE = $state([{ tag: 'en', name: 'English' }])
 
 // Catalogs available without a network fetch. Always includes English.
 const BUNDLED = { en }
@@ -67,11 +71,33 @@ export function tn(key, count, params) {
   return interpolate(str, { count, ...params })
 }
 
-// Resolve the catalog for a tag. Only English is bundled today; other locales
-// resolve here when added.
+// Resolve the catalog for a tag: the bundled copy if there is one, otherwise the
+// backend proxy. A failed fetch yields English so the UI never lands stringless.
 async function loadCatalog(tag) {
   if (BUNDLED[tag]) return BUNDLED[tag]
+  try {
+    const cat = await apiGet(`/api/i18n/${tag}`)
+    if (cat && typeof cat === 'object') return cat
+  } catch {
+    /* offline or not published: stay on English */
+  }
   return en
+}
+
+// Pull the published-locale list from the backend and add any not already
+// offered. Best-effort: with no network or no catalogs, the UI stays English.
+export async function loadManifest() {
+  try {
+    const list = await apiGet('/api/i18n')
+    if (!Array.isArray(list)) return
+    for (const e of list) {
+      if (e?.tag && !AVAILABLE.some((l) => l.tag === e.tag)) {
+        AVAILABLE.push({ tag: e.tag, name: e.name || e.tag })
+      }
+    }
+  } catch {
+    /* offline or no manifest: English only */
+  }
 }
 
 // Switch the active locale, persist the choice, and update <html lang>.
