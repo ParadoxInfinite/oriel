@@ -2,11 +2,12 @@
   // Demo-only: a fixed, always-visible button that opens the comparison overlay.
   // The demo pill is dismissable; this isn't, so the comparison stays reachable.
   import { compare } from './compare.svelte.js'
+  import { t } from '../locale.svelte.js'
 </script>
 
-<button class="cmp-fab" onclick={() => (compare.open = true)} title="Compare Oriel to the alternatives">
+<button class="cmp-fab" onclick={() => (compare.open = true)} title={t('demo.compareButton.title')}>
   <span class="ic" aria-hidden="true">⚖</span>
-  <span>Compare vs others</span>
+  <span>{t('demo.compareButton.label')}</span>
 </button>
 
 <style>
