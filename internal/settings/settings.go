@@ -34,6 +34,8 @@ type Settings struct {
 	// GUI session login (only relevant when AuthToken is set). Both hot-reload.
 	SessionTTLMinutes int `json:"sessionTTLMinutes"` // browser session sliding idle timeout (0 = default 10080 / 7 days; min 1)
 	LoginFreeAttempts int `json:"loginFreeAttempts"` // login attempts before brute-force backoff starts (0 = default 5; min 1)
+
+	ShellDisabled bool `json:"shellDisabled"` // turn off the in-browser container shell (default false = enabled)
 }
 
 var mu sync.Mutex

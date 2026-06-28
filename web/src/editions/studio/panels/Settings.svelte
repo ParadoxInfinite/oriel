@@ -55,6 +55,18 @@
     }
   }
 
+  // Container shell on/off (Settings → Container shell), saved via /api/config.
+  async function setShell(enabled) {
+    self.shell = enabled // optimistic
+    try {
+      const d = await apiPut('/api/config', { shellDisabled: !enabled })
+      if (typeof d?.shell === 'boolean') self.shell = d.shell
+    } catch (e) {
+      self.shell = !enabled
+      toast(e?.message || t('settings.toast.saveFailed'), 'error')
+    }
+  }
+
   // Authentication: the token is local-machine-only (PUT /api/auth); the session
   // knobs are settable by any authenticated session (PUT /api/config).
   let tokenBusy = $state(false)
@@ -261,6 +273,16 @@
     <p class="mt-2 text-[12px] text-[var(--text-3)]">
       {t('settings.automation.cliNotePre')}<span class="mono">oriel ai allow-destructive</span>{t('settings.automation.cliNotePost')}
     </p>
+  </section>
+
+  <!-- Container shell -->
+  <section class="rise card mb-4 break-inside-avoid p-5">
+    <h2 class="text-[14px] font-semibold tracking-tight">{t('settings.shell.title')}</h2>
+    <p class="mt-1 text-[13px] text-[var(--text-2)]">{t('settings.shell.desc')}</p>
+    <label class="mt-4 flex items-center justify-between gap-3">
+      <span class="text-[13px] font-medium">{t('settings.shell.enable')}</span>
+      <input type="checkbox" checked={self.shell} onchange={(e) => setShell(e.currentTarget.checked)} class="h-4 w-4" style="accent-color:var(--accent)" />
+    </label>
   </section>
 
   <!-- Secrets -->

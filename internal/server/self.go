@@ -28,6 +28,7 @@ type selfStats struct {
 	SessionTTLMinutes int    `json:"sessionTTLMinutes"` // GUI session idle timeout (0 = default); raw setting, for the UI input
 	LoginFreeAttempts int    `json:"loginFreeAttempts"` // login tries before backoff (0 = default)
 	UpdateChannel     string `json:"updateChannel"`     // "stable" | "edge"
+	Shell             bool   `json:"shell"`             // is the in-browser container shell available (UI gates the feature on this)
 }
 
 // currentSelf samples this process's footprint. Shared by the REST handler and
@@ -49,6 +50,7 @@ func (s *Server) currentSelf(ctx context.Context) selfStats {
 		SessionTTLMinutes: cfg.SessionTTLMinutes,
 		LoginFreeAttempts: cfg.LoginFreeAttempts,
 		UpdateChannel:     normChannel(cfg.UpdateChannel),
+		Shell:             !cfg.ShellDisabled,
 	}
 }
 

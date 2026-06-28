@@ -88,7 +88,20 @@ func i18nFetch(ctx context.Context, name string) ([]byte, error) {
 }
 
 func i18nDownload(ctx context.Context, name string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, i18nCDNBase+"/"+name, nil)
+	b, err := downloadCapped(ctx, i18nCDNBase+"/"+name, maxCatalogBytes)
+	if err != nil {
+		return nil, err
+	}
+	if !json.Valid(b) {
+		return nil, fmt.Errorf("catalog fetch: response was not JSON")
+	}
+	return b, nil
+}
+
+// downloadCapped GETs url with the shared client, reading at most max bytes.
+// Callers layer their own caching/validation on top.
+func downloadCapped(ctx context.Context, url string, max int64) ([]byte, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -98,16 +111,9 @@ func i18nDownload(ctx context.Context, name string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("catalog fetch: HTTP %d", resp.StatusCode)
+		return nil, fmt.Errorf("download: HTTP %d", resp.StatusCode)
 	}
-	b, err := io.ReadAll(io.LimitReader(resp.Body, maxCatalogBytes))
-	if err != nil {
-		return nil, err
-	}
-	if !json.Valid(b) {
-		return nil, fmt.Errorf("catalog fetch: response was not JSON")
-	}
-	return b, nil
+	return io.ReadAll(io.LimitReader(resp.Body, max))
 }
 
 func freshCache(path string) ([]byte, bool) {
